@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { usePlaylists } from '../../stores/usePlaylists';
-import type { Playlist } from '../../types';
 
 interface AddToPlaylistModalProps {
   selectedSongIds: string[];

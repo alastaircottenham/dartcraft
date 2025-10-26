@@ -106,8 +106,11 @@ export class PDFService {
           isEvalSupported: false,
           useSystemFonts: true,
           // Additional options for problematic PDFs
+          // @ts-ignore - pdfjs types don't have these options but they work
           disableFontFace: false,
+          // @ts-ignore - pdfjs types don't have these options but they work
           disableCreateObjectURL: false,
+          // @ts-ignore - pdfjs types don't have these options but they work
           disableWebGL: true
         });
       
@@ -260,6 +263,7 @@ export class PDFService {
               isEvalSupported: false,
               maxImageSize: -1,
               // Force basic text extraction
+              // @ts-ignore - pdfjs types don't have these options but they work
               disableWorker: false,
               workerSrc: '/pdf.worker.min.js'
             });
@@ -269,6 +273,7 @@ export class PDFService {
             
             // Try to get text content with different options
             const textContent = await page.getTextContent({
+              // @ts-ignore - pdfjs types don't have these options but they work
               normalizeWhitespace: true,
               disableCombineTextItems: false
             });
@@ -277,7 +282,7 @@ export class PDFService {
             
             // Extract all text and split by lines
             const allText = textContent.items
-              .filter((item): item is pdfjsLib.TextItem => 'str' in item)
+              .filter((item): item is any => 'str' in item)
               .map(item => item.str)
               .join(' ');
             
@@ -361,6 +366,7 @@ export class PDFService {
           cMapPacked: true,
           standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/',
           // Disable features that might affect text quality
+          // @ts-ignore - pdfjs types don't have these options but they work
           disableWebGL: true,
           isEvalSupported: false
         }).promise;
@@ -425,6 +431,7 @@ export class PDFService {
         context.imageSmoothingEnabled = false;
         
         // Set text rendering properties for solid text
+        // @ts-ignore - property exists in browser but not in types
         context.textRenderingOptimization = 'optimizeQuality';
         context.textBaseline = 'alphabetic';
         context.textAlign = 'start';

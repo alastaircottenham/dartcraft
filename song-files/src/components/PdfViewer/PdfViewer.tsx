@@ -43,7 +43,7 @@ export default function PdfViewer({
   const [useFallbackViewer, setUseFallbackViewer] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [showFloatingToolbar, setShowFloatingToolbar] = useState(false);
-  const [canvasDisplaySize, setCanvasDisplaySize] = useState({ width: 0, height: 0 });
+  const [, setCanvasDisplaySize] = useState({ width: 0, height: 0 });
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -130,7 +130,7 @@ export default function PdfViewer({
   };
 
   // Debounced version of updateCanvasDisplaySize to prevent excessive updates
-  const debouncedUpdateCanvasDisplaySize = useRef<NodeJS.Timeout | null>(null);
+  const debouncedUpdateCanvasDisplaySize = useRef<ReturnType<typeof setTimeout> | null>(null);
   const updateCanvasDisplaySizeDebounced = () => {
     if (debouncedUpdateCanvasDisplaySize.current) {
       clearTimeout(debouncedUpdateCanvasDisplaySize.current);
@@ -438,7 +438,7 @@ export default function PdfViewer({
       )}
 
       <div className="flex-1 relative overflow-hidden">
-        {console.log('Render state:', { useFallbackViewer, pdfBlobUrl, error })}
+
         {useFallbackViewer && pdfBlobUrl ? (
           // Fallback PDF viewer using iframe with blob URL - Centered
           <div className="w-full h-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center overflow-hidden">
@@ -505,7 +505,7 @@ export default function PdfViewer({
               onStrokeComplete={handleStrokeComplete}
               onStrokeUpdate={handleStrokeUpdate}
               onStrokesRemove={handleStrokesRemove}
-              canvasRef={canvasRef}
+              canvasRef={canvasRef as React.RefObject<HTMLCanvasElement>}
             />
           </div>
         )}

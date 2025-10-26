@@ -28,7 +28,7 @@ export default function SongCard({
 }: SongCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -83,15 +83,15 @@ export default function SongCard({
   };
 
   // Touch events for mobile/iOS - simplified approach
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = () => {
     startLongPress();
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = () => {
     cancelLongPress();
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = () => {
     cancelLongPress(); // Cancel long press if user moves finger
   };
 

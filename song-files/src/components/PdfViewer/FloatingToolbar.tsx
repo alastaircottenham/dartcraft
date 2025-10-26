@@ -38,7 +38,7 @@ const strokeWidths = [
 ];
 
 export default function FloatingToolbar({
-  isDrawing,
+  // isDrawing,
   drawingTool,
   strokeColor,
   strokeWidth,

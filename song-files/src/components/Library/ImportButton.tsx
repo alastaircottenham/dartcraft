@@ -6,7 +6,7 @@ import { generateUUID } from '../../services/uuid.service';
 import { fsService } from '../../services/fs.service';
 import { pdfService } from '../../services/pdf.service';
 import { renameService } from '../../services/rename.service';
-import type { SongMeta, ImportResult } from '../../types';
+import type { SongMeta, ImportResult, RenameData } from '../../types';
 import { Capacitor } from '@capacitor/core';
 
 interface ImportButtonProps {
@@ -37,8 +37,16 @@ export default function ImportButton({ onImportComplete, className }: ImportButt
         if (result.files && result.files.length > 0) {
           const importResults: ImportResult[] = [];
           
-          for (const file of result.files) {
+          for (const pickedFile of result.files) {
             try {
+              // Convert PickedFile to File
+              if (!pickedFile.path) {
+                throw new Error('File path is undefined');
+              }
+              const response = await fetch(pickedFile.path);
+              const blob = await response.blob();
+              const file = new File([blob], pickedFile.name, { type: 'application/pdf' });
+              
               const importResult = await importFile(file);
               if (importResult) {
                 importResults.push(importResult);
@@ -46,9 +54,9 @@ export default function ImportButton({ onImportComplete, className }: ImportButt
             } catch (error) {
               if (error instanceof Error && error.message === 'Manual input required') {
                 // Don't add to results, the manual input dialog will handle this
-                console.log('Manual input required for file:', file.name);
+                console.log('Manual input required for file:', pickedFile.name);
               } else {
-                console.error('Failed to import file:', file.name, error);
+                console.error('Failed to import file:', pickedFile.name, error);
                 importResults.push({
                   success: false,
                   error: error instanceof Error ? error.message : 'Unknown error'
