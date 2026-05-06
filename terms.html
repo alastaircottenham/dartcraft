@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Terms of Sale — DartCraft</title>
+  <link rel="icon" href="/assets/favicon.png" type="image/png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050607; --card: #0e0f14; --border: rgba(255,255,255,0.08);
+      --border-2: rgba(255,255,255,0.05); --text: #F5F5F0; --text-2: #A5ABB8; --text-3: #5A6070;
+      --accent: #7C5CFF; --sans: 'Space Grotesk', sans-serif; --body: 'Inter', sans-serif; --mono: 'JetBrains Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--body); min-height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { opacity: 0.8; }
+
+    .site-header { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(5,6,7,0.72); backdrop-filter: blur(14px) saturate(140%); border-bottom: 1px solid var(--border-2); }
+    .site-header-inner { max-width: 1200px; margin: 0 auto; padding: 18px 32px; }
+    .site-header a img { height: 42px; width: auto; display: block; }
+
+    .page { flex: 1; max-width: 760px; margin: 0 auto; padding: 120px 32px 100px; width: 100%; }
+
+    .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
+    h1 { font-family: var(--sans); font-weight: 700; font-size: clamp(32px, 5vw, 52px); letter-spacing: -0.025em; line-height: 1.05; margin-bottom: 12px; }
+    .updated { font-family: var(--mono); font-size: 12px; color: var(--text-3); margin-bottom: 56px; }
+
+    h2 { font-family: var(--sans); font-weight: 600; font-size: 20px; letter-spacing: -0.01em; margin: 48px 0 14px; color: var(--text); }
+    p { font-size: 15px; line-height: 1.7; color: var(--text-2); margin-bottom: 14px; }
+    ul { padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    ul li { font-size: 15px; line-height: 1.6; color: var(--text-2); padding-left: 20px; position: relative; }
+    ul li::before { content: '—'; position: absolute; left: 0; color: var(--text-3); }
+
+    .divider { height: 1px; background: var(--border-2); margin: 56px 0; }
+
+    footer { padding: 32px; border-top: 1px solid var(--border-2); text-align: center; font-size: 13px; color: var(--text-3); font-family: var(--mono); }
+
+    @media (max-width: 600px) { .page { padding: 48px 24px 80px; } .logo { padding: 22px 24px; } }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <a href="/Dartcraft.html" aria-label="DartCraft">
+      <img src="/assets/dartcraft-logo.png" alt="DartCraft" onerror="this.style.display='none'"/>
+    </a>
+  </div>
+</header>
+
+<main class="page">
+  <div class="eyebrow">Legal</div>
+  <h1>Terms of sale</h1>
+  <p class="updated">Last updated: May 2026</p>
+
+  <p>Please read these terms carefully before placing an order. By completing a purchase through this website you agree to the terms set out below.</p>
+
+  <h2>1. Products</h2>
+  <p>DartCraft sells AutoDarts-compatible hardware kits including printed camera rings, LED lighting, cameras, and complete systems. All products are described on the product pages and order confirmation.</p>
+  <ul>
+    <li>Products are DIY hardware kits. Self-installation is required.</li>
+    <li>A dartboard is not included unless explicitly stated in the product listing.</li>
+    <li>DartCraft is not affiliated with AutoDarts or its parent company unless specifically stated. AutoDarts software and subscription are separate third-party products.</li>
+    <li>Product images and descriptions are provided in good faith. Minor variations may occur.</li>
+  </ul>
+
+  <h2>2. Ordering and payment</h2>
+  <p>Orders are placed through this website and payment is processed securely via Stripe. Full payment is required at the time of order. Your order is confirmed once payment is completed and you receive a confirmation email.</p>
+  <ul>
+    <li>Prices are in Australian Dollars (AUD) and include GST where applicable.</li>
+    <li>DartCraft reserves the right to cancel an order if a product becomes unavailable after payment. A full refund will be issued in this case.</li>
+    <li>Promotional codes are applied at checkout and cannot be applied retrospectively.</li>
+  </ul>
+
+  <h2>3. Shipping</h2>
+  <p>DartCraft ships within Australia only. Orders are dispatched once payment is received and stock is available. A shipping notification will be sent when your order is on its way.</p>
+  <ul>
+    <li>Shipping timeframes are estimates only and are not guaranteed.</li>
+    <li>DartCraft is not liable for delays caused by couriers or circumstances outside our control.</li>
+    <li>Risk of loss passes to the customer upon dispatch.</li>
+  </ul>
+
+  <h2>4. Installation and use</h2>
+  <p>All DartCraft kits require DIY installation. By purchasing you acknowledge that:</p>
+  <ul>
+    <li>You are responsible for correctly installing and mounting the hardware.</li>
+    <li>DartCraft is not liable for damage to property or equipment arising from installation or use.</li>
+    <li>Setup guidance is provided where possible but does not constitute a warranty of outcome.</li>
+    <li>The full system is pre-configured for AutoDarts but still requires mounting, connection to a monitor (not included), and final calibration before use.</li>
+  </ul>
+
+  <h2>5. Returns and refunds</h2>
+  <p>Due to the nature of the products (custom hardware kits built to order), DartCraft does not accept change-of-mind returns. If a product arrives damaged or faulty, please contact us within 7 days of receipt and we will work to resolve the issue.</p>
+  <ul>
+    <li>Faulty products will be repaired, replaced, or refunded at DartCraft's discretion.</li>
+    <li>Customers are responsible for return shipping costs unless the item is confirmed faulty.</li>
+    <li>Nothing in these terms limits your rights under Australian Consumer Law.</li>
+  </ul>
+
+  <h2>6. Limitation of liability</h2>
+  <p>To the extent permitted by law, DartCraft's liability for any claim arising from a purchase is limited to the amount paid for the relevant product. DartCraft is not liable for indirect, consequential, or incidental losses.</p>
+
+  <h2>7. Changes to these terms</h2>
+  <p>DartCraft may update these terms from time to time. The version in effect at the time of your purchase applies to that order.</p>
+
+  <div class="divider"></div>
+
+  <p>Questions about these terms? Email <a href="mailto:hello@dartcraft.com.au">hello@dartcraft.com.au</a></p>
+</main>
+
+<footer>
+  © <script>document.write(new Date().getFullYear())</script> DartCraft · <a href="/privacy" style="color:var(--text-3)">Privacy policy</a> · <a href="mailto:hello@dartcraft.com.au" style="color:var(--text-3)">hello@dartcraft.com.au</a>
+</footer>
+
+</body>
+</html>

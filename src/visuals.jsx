@@ -458,7 +458,7 @@ const OptiplexMicro = () => (
 );
 // ── Step 1: Assemble — ring image + allen key + manual ────────────────────────
 const AllenKeySVG = () => (
-  <svg viewBox="0 0 40 110" width="26" height="70" style={{display:'block'}}>
+  <svg viewBox="0 0 40 110" width="34" height="90" style={{display:'block'}}>
     <defs>
       <linearGradient id="akMetal" x1="0" y1="0" x2="1" y2="0">
         <stop offset="0%" stopColor="#2a2d33"/>
@@ -481,7 +481,7 @@ const AllenKeySVG = () => (
 );
 
 const ManualSVG = () => (
-  <svg viewBox="0 0 72 90" width="46" height="57" style={{display:'block'}}>
+  <svg viewBox="0 0 72 90" width="60" height="75" style={{display:'block'}}>
     {/* back page */}
     <rect x="8" y="4" width="58" height="78" rx="3" fill="#16181f" stroke="rgba(255,255,255,0.05)"/>
     {/* front page */}
@@ -511,24 +511,25 @@ const ManualSVG = () => (
 
 const AssembleMock = () => (
   <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center'}}>
-    {/* Ring image — slightly inset to make room for accessories */}
+    {/* Ring image — centred */}
     <img src="assets/step1-ring.png" alt="Ring assembly" style={{
-      position:'absolute', top:'8%', left:'14%', width:'72%', height:'72%', objectFit:'contain',
+      position:'absolute', top:'50%', left:'50%', width:'74%', objectFit:'contain',
+      transform:'translate(-50%, -50%)',
       filter:'drop-shadow(0 20px 40px rgba(0,0,0,0.6)) drop-shadow(0 0 24px rgba(124,92,255,0.2))',
     }}/>
 
     {/* Allen key — bottom left */}
-    <div style={{position:'absolute', left:'4%', bottom:'6%', display:'flex', flexDirection:'column', alignItems:'center', gap:5}}>
+    <div style={{position:'absolute', left:'3%', bottom:'5%', display:'flex', flexDirection:'column', alignItems:'center', gap:6}}>
       <AllenKeySVG/>
-      <div style={{fontFamily:'var(--mono)', fontSize:8, color:'var(--text-3)', letterSpacing:'0.08em', textAlign:'center', lineHeight:1.5}}>
+      <div style={{fontFamily:'var(--mono)', fontSize:10, color:'var(--text-3)', letterSpacing:'0.08em', textAlign:'center', lineHeight:1.5}}>
         ALLEN<br/>KEY
       </div>
     </div>
 
     {/* Manual — bottom right */}
-    <div style={{position:'absolute', right:'3%', bottom:'6%', display:'flex', flexDirection:'column', alignItems:'center', gap:5}}>
+    <div style={{position:'absolute', right:'2%', bottom:'5%', display:'flex', flexDirection:'column', alignItems:'center', gap:6}}>
       <ManualSVG/>
-      <div style={{fontFamily:'var(--mono)', fontSize:8, color:'var(--text-3)', letterSpacing:'0.08em', textAlign:'center', lineHeight:1.5}}>
+      <div style={{fontFamily:'var(--mono)', fontSize:10, color:'var(--text-3)', letterSpacing:'0.08em', textAlign:'center', lineHeight:1.5}}>
         SETUP<br/>MANUAL
       </div>
     </div>
@@ -540,74 +541,79 @@ const AssembleMock = () => (
   </div>
 );
 
-// ── Step 2: Mount — board on a wall with bracket + anchors ────────────────────
+// ── Stone wall background SVG ─────────────────────────────────────────────────
+const StoneWallBg = () => (
+  <svg viewBox="0 0 520 520" width="100%" height="100%" style={{position:'absolute',inset:0,display:'block'}} preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <radialGradient id="stoneVig" cx="50%" cy="50%" r="72%">
+        <stop offset="35%" stopColor="rgba(0,0,0,0)"/>
+        <stop offset="100%" stopColor="rgba(0,0,0,0.52)"/>
+      </radialGradient>
+    </defs>
+    {/* mortar */}
+    <rect width="520" height="520" fill="#4a4440"/>
+    {/* row 0 */}
+    <rect x="1"   y="1"   width="126" height="56" rx="1" fill="#b0a898"/>
+    <rect x="129" y="1"   width="94"  height="56" rx="1" fill="#8a7e6c"/>
+    <rect x="225" y="1"   width="148" height="56" rx="1" fill="#b4ac9c"/>
+    <rect x="375" y="1"   width="82"  height="56" rx="1" fill="#786a58"/>
+    <rect x="459" y="1"   width="60"  height="56" rx="1" fill="#a4988a"/>
+    {/* row 1 */}
+    <rect x="1"   y="59"  width="78"  height="60" rx="1" fill="#988c7c"/>
+    <rect x="81"  y="59"  width="136" height="60" rx="1" fill="#beb6a6"/>
+    <rect x="219" y="59"  width="104" height="60" rx="1" fill="#867a6a"/>
+    <rect x="325" y="59"  width="118" height="60" rx="1" fill="#aca49c"/>
+    <rect x="445" y="59"  width="74"  height="60" rx="1" fill="#9c9282"/>
+    {/* row 2 */}
+    <rect x="1"   y="121" width="158" height="66" rx="1" fill="#b8b2a4"/>
+    <rect x="161" y="121" width="108" height="66" rx="1" fill="#887868"/>
+    <rect x="271" y="121" width="136" height="66" rx="1" fill="#c0b8aa"/>
+    <rect x="409" y="121" width="110" height="66" rx="1" fill="#7e7262"/>
+    {/* row 3 */}
+    <rect x="1"   y="189" width="92"  height="56" rx="1" fill="#a09488"/>
+    <rect x="95"  y="189" width="124" height="56" rx="1" fill="#b6ae9e"/>
+    <rect x="221" y="189" width="90"  height="56" rx="1" fill="#8e8272"/>
+    <rect x="313" y="189" width="128" height="56" rx="1" fill="#786860"/>
+    <rect x="443" y="189" width="76"  height="56" rx="1" fill="#b0a898"/>
+    {/* row 4 */}
+    <rect x="1"   y="247" width="144" height="62" rx="1" fill="#c4beb0"/>
+    <rect x="147" y="247" width="96"  height="62" rx="1" fill="#847868"/>
+    <rect x="245" y="247" width="154" height="62" rx="1" fill="#aea8a0"/>
+    <rect x="401" y="247" width="118" height="62" rx="1" fill="#706458"/>
+    {/* row 5 */}
+    <rect x="1"   y="311" width="108" height="58" rx="1" fill="#9e9486"/>
+    <rect x="111" y="311" width="88"  height="58" rx="1" fill="#b8b2a4"/>
+    <rect x="201" y="311" width="142" height="58" rx="1" fill="#887c6e"/>
+    <rect x="345" y="311" width="98"  height="58" rx="1" fill="#bab4a8"/>
+    <rect x="445" y="311" width="74"  height="58" rx="1" fill="#786c5e"/>
+    {/* row 6 */}
+    <rect x="1"   y="371" width="82"  height="66" rx="1" fill="#a89e90"/>
+    <rect x="85"  y="371" width="148" height="66" rx="1" fill="#c2bab0"/>
+    <rect x="235" y="371" width="116" height="66" rx="1" fill="#86786a"/>
+    <rect x="353" y="371" width="92"  height="66" rx="1" fill="#b0a8a0"/>
+    <rect x="447" y="371" width="72"  height="66" rx="1" fill="#6e6258"/>
+    {/* row 7 */}
+    <rect x="1"   y="439" width="132" height="80" rx="1" fill="#b2ac9e"/>
+    <rect x="135" y="439" width="96"  height="80" rx="1" fill="#7a6e60"/>
+    <rect x="233" y="439" width="158" height="80" rx="1" fill="#bab4a8"/>
+    <rect x="393" y="439" width="126" height="80" rx="1" fill="#928880"/>
+    {/* vignette */}
+    <rect width="520" height="520" fill="url(#stoneVig)"/>
+  </svg>
+);
+
+// ── Step 2: Mount ─────────────────────────────────────────────────────────────
 const MountMock = () => (
   <div style={{position:'absolute', inset:0, overflow:'hidden', borderRadius:18}}>
-    {/* Wall surface */}
-    <div style={{position:'absolute', inset:0, background:'linear-gradient(160deg, #18191f 0%, #0f1014 100%)'}}>
-      <svg width="100%" height="100%" style={{position:'absolute', inset:0}} preserveAspectRatio="none">
-        {/* subtle horizontal plaster-line texture */}
-        {Array.from({length:18}).map((_,i) => (
-          <line key={i} x1="0" y1={`${(i+1)*5.5}%`} x2="100%" y2={`${(i+1)*5.5}%`}
-            stroke="rgba(255,255,255,0.025)" strokeWidth="1"/>
-        ))}
-        {/* corner shadow vignette */}
-        <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
-          <stop offset="55%" stopColor="rgba(0,0,0,0)"/>
-          <stop offset="100%" stopColor="rgba(0,0,0,0.55)"/>
-        </radialGradient>
-        <rect width="100%" height="100%" fill="url(#vignette)"/>
-      </svg>
-    </div>
-
-    {/* Top mounting bracket */}
-    <div style={{position:'absolute', top:'7%', left:'50%', transform:'translateX(-50%)', width:'28%'}}>
-      <svg viewBox="0 0 80 22" width="100%" style={{display:'block'}}>
-        <rect x="2" y="4" width="76" height="14" rx="3" fill="#1a1c22" stroke="rgba(255,255,255,0.14)" strokeWidth="0.8"/>
-        {[14,40,66].map(cx => (
-          <g key={cx}>
-            <circle cx={cx} cy="11" r="4" fill="#0a0b10" stroke="rgba(255,255,255,0.18)" strokeWidth="0.7"/>
-            <circle cx={cx} cy="11" r="1.8" fill="#2a2d33" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
-            <line x1={cx-1.2} y1="11" x2={cx+1.2} y2="11" stroke="rgba(255,255,255,0.25)" strokeWidth="0.6"/>
-            <line x1={cx} y1="9.8" x2={cx} y2="12.2" stroke="rgba(255,255,255,0.25)" strokeWidth="0.6"/>
-          </g>
-        ))}
-      </svg>
-    </div>
-
-    {/* Ring mounted centre */}
+    <StoneWallBg/>
+    {/* dark tint so ring reads clearly against stone */}
+    <div style={{position:'absolute', inset:0, background:'rgba(5,6,7,0.36)'}}/>
+    {/* Ring — centred */}
     <img src="assets/hero-product.png" alt="Board mounted on wall" style={{
-      position:'absolute', top:'13%', left:'50%', transform:'translateX(-50%)',
-      width:'74%', objectFit:'contain',
-      filter:'drop-shadow(0 24px 50px rgba(0,0,0,0.85)) drop-shadow(0 0 28px rgba(124,92,255,0.12))',
+      position:'absolute', top:'50%', left:'50%', transform:'translate(-50%, -50%)',
+      width:'82%', objectFit:'contain',
+      filter:'drop-shadow(0 28px 60px rgba(0,0,0,0.9)) drop-shadow(0 0 30px rgba(124,92,255,0.15))',
     }}/>
-
-    {/* Side wall anchors */}
-    {[{left:'6%'}, {right:'6%'}].map((pos,i) => (
-      <div key={i} style={{position:'absolute', top:'46%', ...pos}}>
-        <svg viewBox="0 0 22 22" width="18" height="18" style={{display:'block'}}>
-          <circle cx="11" cy="11" r="9" fill="#16181f" stroke="rgba(255,255,255,0.14)" strokeWidth="0.8"/>
-          <circle cx="11" cy="11" r="4" fill="#0a0b10" stroke="rgba(255,255,255,0.2)" strokeWidth="0.7"/>
-          <line x1="7.5" y1="11" x2="14.5" y2="11" stroke="rgba(255,255,255,0.3)" strokeWidth="0.7"/>
-          <line x1="11" y1="7.5" x2="11" y2="14.5" stroke="rgba(255,255,255,0.3)" strokeWidth="0.7"/>
-        </svg>
-      </div>
-    ))}
-
-    {/* Spirit level indicator */}
-    <div style={{position:'absolute', top:'5%', right:'5%', display:'flex', alignItems:'center', gap:6, fontFamily:'var(--mono)', fontSize:9, color:'#22C55E', background:'rgba(0,0,0,0.65)', padding:'5px 10px', borderRadius:99, border:'1px solid rgba(34,197,94,0.35)'}}>
-      <svg viewBox="0 0 28 14" width="28" height="14" style={{display:'block'}}>
-        <rect x="0.5" y="2" width="27" height="10" rx="5" fill="none" stroke="rgba(34,197,94,0.55)" strokeWidth="0.8"/>
-        <circle cx="14" cy="7" r="3.5" fill="none" stroke="rgba(34,197,94,0.7)" strokeWidth="0.7"/>
-        <circle cx="14" cy="7" r="1.4" fill="#22C55E"/>
-      </svg>
-      LEVEL
-    </div>
-
-    {/* Status chip */}
-    <div style={{position:'absolute', bottom:'5%', left:'50%', transform:'translateX(-50%)', fontFamily:'var(--mono)', fontSize:9, color:'var(--text-2)', background:'rgba(0,0,0,0.65)', padding:'5px 12px', borderRadius:99, border:'1px solid var(--border)', whiteSpace:'nowrap'}}>
-      MOUNTED · SECURED
-    </div>
   </div>
 );
 

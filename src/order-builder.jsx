@@ -198,7 +198,7 @@ const OrderBuilder = ({selectedId, onSelect}) => {
             {/* Customer details */}
             <div style={{background:'var(--card)', border:'1px solid var(--border)', borderRadius:18, padding:28}}>
               <SectionHead num="02" title="Your details"/>
-              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:18}}>
+              <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:18}} className="dc-details-grid">
                 <Field label="Full name" error={errors.name} span={2}>
                   <input style={inputStyle(errors.name)} value={form.name} onChange={e=>update('name', e.target.value)} placeholder="Jane Smith"/>
                 </Field>
@@ -360,6 +360,8 @@ const OrderBuilder = ({selectedId, onSelect}) => {
         @media (max-width: 600px){
           .dc-ship-fields{grid-template-columns:1fr !important}
           .dc-ship-fields > label{grid-column: span 1 !important}
+          .dc-details-grid{grid-template-columns:1fr !important}
+          .dc-details-grid > label{grid-column: span 1 !important}
         }
         input::placeholder, textarea::placeholder { color: var(--text-3); }
         input:focus, select:focus, textarea:focus { border-color: var(--accent) !important; }

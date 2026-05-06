@@ -1,8 +1,8 @@
 const { useState, useEffect, useRef } = React;
 
 // ── Shared bits ───────────────────────────────────────────────
-const Container = ({children, style={}}) => (
-  <div style={{maxWidth:1280, margin:'0 auto', padding:'0 32px', ...style}}>{children}</div>
+const Container = ({children, style={}, className=''}) => (
+  <div style={{maxWidth:1280, margin:'0 auto', padding:'0 32px', ...style}} className={className}>{children}</div>
 );
 
 const Eyebrow = ({children, color='var(--accent)'}) => (
@@ -15,7 +15,7 @@ const Eyebrow = ({children, color='var(--accent)'}) => (
   </div>
 );
 
-const PillButton = ({children, primary, onClick, href, style={}, type}) => {
+const PillButton = ({children, primary, onClick, href, style={}, type, className=''}) => {
   const base = {
     display:'inline-flex', alignItems:'center', gap:10,
     padding:'14px 22px', borderRadius:99, fontFamily:'var(--sans)', fontWeight:600,
@@ -26,7 +26,7 @@ const PillButton = ({children, primary, onClick, href, style={}, type}) => {
     ? {...base, background:'#F5F5F0', color:'#0a0b10', ...style}
     : {...base, background:'transparent', color:'var(--text)', border:'1px solid var(--border)', ...style};
   const Tag = href ? 'a' : 'button';
-  return <Tag href={href} onClick={onClick} type={type}
+  return <Tag href={href} onClick={onClick} type={type} className={className}
     style={styles}
     onMouseEnter={e=>e.currentTarget.style.transform='translateY(-1px)'}
     onMouseLeave={e=>e.currentTarget.style.transform='translateY(0)'}>{children}</Tag>;
@@ -71,7 +71,7 @@ const Header = () => {
               </a>
             ))}
           </div>
-          <PillButton primary href="#order" style={{padding:'10px 20px', fontSize:14}}>Build your kit</PillButton>
+          <PillButton primary href="#order" style={{padding:'10px 20px', fontSize:14}} className="dc-build-btn">Build your kit</PillButton>
           <button onClick={()=>setOpen(o=>!o)} className="dc-burger" style={{
             display:'none', background:'transparent', border:'1px solid var(--border)', color:'var(--text)',
             width:40, height:40, borderRadius:99, alignItems:'center', justifyContent:'center', cursor:'pointer'
@@ -89,6 +89,10 @@ const Header = () => {
               fontFamily:'var(--sans)', fontSize:18, fontWeight:500
             }}>{l.label}</a>
           ))}
+          <a href="#order" onClick={()=>setOpen(false)} style={{
+            display:'block', padding:'14px 0',
+            fontFamily:'var(--sans)', fontSize:18, fontWeight:600, color:'var(--accent)'
+          }}>Build your kit →</a>
         </div>
       )}
 
@@ -96,6 +100,7 @@ const Header = () => {
         @media (max-width: 820px){
           .dc-nav-links{display:none !important}
           .dc-burger{display:inline-flex !important}
+          .dc-build-btn{display:none !important}
         }
       `}</style>
     </header>
@@ -140,7 +145,7 @@ const Hero = () => {
             </div>
 
             {/* trust badges */}
-            <div style={{display:'flex', flexWrap:'wrap', gap:'14px 26px', paddingTop:24, borderTop:'1px solid var(--border-2)'}}>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px 26px', paddingTop:24, borderTop:'1px solid var(--border-2)'}}>
               {[
                 {i:<Icons.Ship size={16}/>, t:'Ships from Australia'},
                 {i:<Icons.Box size={16}/>,  t:'DIY install'},
@@ -244,9 +249,9 @@ const ProductExplain = () => {
 const HowItWorks = () => {
   const steps = [
     {n:'01', t:'Assemble ring & install LED lighting', d:'Slot the printed ring sections together and fit the LED strip into the integrated channel for clean, even diffused lighting.'},
-    {n:'02', t:'Mount the ring', d:'Position the assembled ring around your dartboard area so the four camera mounts sit at the cardinal points around the board.'},
-    {n:'03', t:'Connect to the pre-configured PC', d:'Plug the cameras and LED power into the included mini PC — already configured to recognise the kit on first boot. You\'ll need a monitor connected at this stage to complete initial setup and calibration.'},
-    {n:'04', t:'Set up your AutoDarts account', d:'Sign in to AutoDarts on the mini PC, link your board to your account, and load your player profile.'},
+    {n:'02', t:'Mount the ring', d:'Position the assembled ring around your dartboard area so the three camera mounts sit evenly around the board, as per the included setup instructions.'},
+    {n:'03', t:'Connect to the pre-configured PC', d:'Plug the three cameras into the included mini PC — already configured to recognise the kit on first boot. Connect the LED lighting to a power point. You\'ll need a monitor connected at this stage to complete initial setup and calibration.'},
+    {n:'04', t:'Set up your AutoDarts account', d:'Sign up to AutoDarts on the mini PC and claim your board to link it to your account.'},
     {n:'05', t:'Calibrate and play', d:'Run the AutoDarts calibration routine to align the cameras with your board, then throw your first leg.'},
   ];
   const [active, setActive] = useState(0);
@@ -292,7 +297,7 @@ const HowItWorks = () => {
         display:'flex', flexDirection:'column'
       }} className="dc-how-stage">
         {/* Pinned header */}
-        <Container style={{paddingTop:'clamp(70px, 8vh, 100px)', paddingBottom:16}}>
+        <Container style={{paddingTop:'clamp(70px, 8vh, 100px)', paddingBottom:16}} className="dc-how-header">
           <div style={{maxWidth:880}}>
             <Eyebrow>How the setup works</Eyebrow>
             <h2 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:'clamp(28px, 3.4vw, 44px)', lineHeight:1.04, letterSpacing:'-0.025em', margin:'12px 0 0'}}>
@@ -356,9 +361,12 @@ const HowItWorks = () => {
 
       <style>{`
         @media (max-width: 980px){
-          .dc-how-grid{grid-template-columns:1fr !important; gap:24px !important}
-          .dc-how-text{min-height:auto !important}
-          .dc-how-visual{max-width:380px; margin:0 auto}
+          .dc-how-grid{grid-template-columns:1fr !important; gap:16px !important}
+          .dc-how-text{min-height:auto !important; height:200px !important; order:2}
+          .dc-how-visual{max-width:420px; margin:0 auto; order:1; flex-shrink:0}
+          .dc-how-visual > div{height:220px !important; padding:20px !important}
+          .dc-how-header{padding-top:72px !important; padding-bottom:8px !important}
+          .dc-how-header h2{font-size:22px !important}
         }
       `}</style>
     </section>
@@ -624,7 +632,7 @@ const Shipping = () => (
             ))}
           </ul>
         </div>
-        <div style={{
+        <div className="dc-ship-map-card" style={{
           position:'relative', borderRadius:24, overflow:'hidden', aspectRatio:'4/4',
           background:'#0a0b10', border:'1px solid var(--border)', padding:32,
           display:'flex', flexDirection:'column', justifyContent:'space-between'
@@ -730,7 +738,10 @@ const Shipping = () => (
       </div>
     </Container>
     <style>{`
-      @media (max-width: 880px){.dc-ship-grid{grid-template-columns:1fr !important; gap:32px !important}}
+      @media (max-width: 880px){
+        .dc-ship-grid{grid-template-columns:1fr !important; gap:32px !important}
+        .dc-ship-map-card{display:none !important}
+      }
     `}</style>
   </section>
 );
@@ -819,9 +830,8 @@ const Footer = () => (
           <div style={{fontFamily:'var(--mono)', fontSize:11, letterSpacing:'0.1em', color:'var(--text-3)', marginBottom:18, textTransform:'uppercase'}}>Contact</div>
           <ul style={{listStyle:'none', padding:0, margin:0, display:'flex', flexDirection:'column', gap:10}}>
             <li><a href="mailto:hello@dartcraft.com.au" style={{fontSize:14}}>hello@dartcraft.com.au</a></li>
-            <li><a href="mailto:orders@dartcraft.com.au" style={{fontSize:14}}>orders@dartcraft.com.au</a></li>
-            <li><a href="#" style={{fontSize:14}}>Terms</a></li>
-            <li><a href="#" style={{fontSize:14}}>Privacy</a></li>
+            <li><a href="/terms" style={{fontSize:14, color:'var(--text)', opacity:0.85}}>Terms of sale</a></li>
+            <li><a href="/privacy" style={{fontSize:14, color:'var(--text)', opacity:0.85}}>Privacy policy</a></li>
           </ul>
         </div>
       </div>

@@ -713,6 +713,8 @@ app.delete('/api/admin/codes/:code', requireAdmin, async (req, res) => {
 app.get('/success', (_req, res) => res.sendFile(path.join(__dirname, 'success.html')));
 app.get('/cancel',  (_req, res) => res.sendFile(path.join(__dirname, 'cancel.html')));
 app.get('/admin',   (_req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/terms',   (_req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
+app.get('/privacy', (_req, res) => res.sendFile(path.join(__dirname, 'privacy.html')));
 app.get('/',        (_req, res) => res.sendFile(path.join(__dirname, 'Dartcraft.html')));
 
 // ── Start ─────────────────────────────────────────────────────────────────────
