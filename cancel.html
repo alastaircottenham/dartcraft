@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Cancelled — DartCraft</title>
+  <link rel="icon" href="/assets/favicon.png" type="image/png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050607; --card: #0e0f14; --border: rgba(255,255,255,0.08);
+      --border-2: rgba(255,255,255,0.05); --text: #F5F5F0; --text-2: #A5ABB8; --text-3: #5A6070;
+      --accent: #7C5CFF; --sans: 'Space Grotesk', sans-serif; --body: 'Inter', sans-serif; --mono: 'JetBrains Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--body); min-height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+    a { color: var(--accent); text-decoration: none; }
+    .logo { display: flex; align-items: center; gap: 12px; padding: 28px 32px; border-bottom: 1px solid var(--border-2); }
+    .logo img { height: 32px; }
+    .logo-text { font-family: var(--sans); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+    .page { flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px 24px; }
+    .inner { max-width: 560px; width: 100%; text-align: center; }
+    .icon-circle {
+      width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 28px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(90,96,112,0.12); color: var(--text-3);
+    }
+    h1 { font-family: var(--sans); font-weight: 700; font-size: clamp(30px, 5vw, 48px); letter-spacing: -0.025em; margin-bottom: 16px; }
+    .subtitle { font-size: 17px; line-height: 1.6; color: var(--text-2); margin-bottom: 40px; }
+    .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn { padding: 14px 28px; border-radius: 99px; font-family: var(--sans); font-weight: 700; font-size: 14px; cursor: pointer; border: none; text-decoration: none; display: inline-flex; align-items: center; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #F5F5F0; color: #0a0b10; }
+    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .note { margin-top: 36px; font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: 0.06em; }
+  </style>
+</head>
+<body>
+<header class="logo">
+  <img src="/assets/dartcraft-logo.png" alt="DartCraft" onerror="this.style.display='none'"/>
+  <span class="logo-text">DartCraft</span>
+</header>
+<main class="page">
+  <div class="inner">
+    <div class="icon-circle">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </div>
+    <h1>Payment cancelled.</h1>
+    <p class="subtitle">No charge was made. Your order is still waiting — head back whenever you're ready to complete checkout.</p>
+    <div class="actions">
+      <a href="/Dartcraft.html#order" class="btn btn-primary">Return to order</a>
+      <a href="mailto:hello@dartcraft.com.au" class="btn btn-secondary">Contact us</a>
+    </div>
+    <p class="note">QUESTIONS? hello@dartcraft.com.au</p>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "ring-only": {
+    "quantity": 9,
+    "label": "Printed Ring with Camera Mounts"
+  },
+  "ring-led": {
+    "quantity": 3,
+    "label": "Printed Ring + LED Lighting"
+  },
+  "ring-led-cameras": {
+    "quantity": 0,
+    "label": "Ring + LED Lighting + Cameras"
+  },
+  "full-system": {
+    "quantity": 1,
+    "label": "Full AutoDarts System"
+  }
+}

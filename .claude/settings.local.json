@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.anthropic.com)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(curl -s --max-filesize 5000000 \"https://api.anthropic.com/v1/design/h/DR_a_q6NMhak1fl2Ld-v0Q?open_file=Dartcraft.html\")",
+      "Bash(curl -s -L --compressed \"https://api.anthropic.com/v1/design/h/DR_a_q6NMhak1fl2Ld-v0Q?open_file=Dartcraft.html\")",
+      "Bash(curl -s -L \"https://api.anthropic.com/v1/design/h/DR_a_q6NMhak1fl2Ld-v0Q?open_file=Dartcraft.html\" -o /tmp/design_file.bin)",
+      "Read(//tmp/**)",
+      "Bash(file /tmp/design_extract/*)",
+      "Bash(cat \"C:\\\\\\\\Users\\\\\\\\Alastair\\\\\\\\.claude\\\\\\\\projects\\\\\\\\C--Users-Alastair-OneDrive-Documents-Claude-dartcraft--claude-worktrees-hungry-lovelace-d486e2\\\\\\\\8e826633-3058-42f1-aa39-dbc34d010d76\\\\\\\\tool-results\\\\\\\\bofzgofp9.txt\")",
+      "Bash(powershell -Command \"Get-Content '/tmp/design_extract/dartcraft/project/src/sections.jsx' -Raw\")",
+      "Bash(node -e ' *)",
+      "Bash(cp /tmp/design_extract/dartcraft/project/assets/dartcraft-logo.png /c/Users/Alastair/OneDrive/Documents/Claude/dartcraft/.claude/worktrees/hungry-lovelace-d486e2/assets/dartcraft-logo.png)",
+      "Bash(cp /tmp/design_extract/dartcraft/project/assets/hero-product.png /c/Users/Alastair/OneDrive/Documents/Claude/dartcraft/.claude/worktrees/hungry-lovelace-d486e2/assets/hero-product.png)",
+      "Bash(cp /tmp/design_extract/dartcraft/project/assets/step1-ring.png /c/Users/Alastair/OneDrive/Documents/Claude/dartcraft/.claude/worktrees/hungry-lovelace-d486e2/assets/step1-ring.png)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(node -e \"require\\('./server.js'\\)\")",
+      "Bash(kill %1)",
+      "Bash(node --check server.js)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3000 -State Listen | Select-Object LocalAddress, LocalPort, OwningProcess | ForEach-Object { $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; [PSCustomObject]@{PID=$_.OwningProcess; Name=$proc.Name; Port=$_.LocalPort} })",
+      "Bash(netstat -ano)",
+      "Bash(npm install *)"
+    ]
+  }
+}

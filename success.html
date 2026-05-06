@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Confirmed — DartCraft</title>
+  <link rel="icon" href="/assets/favicon.png" type="image/png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050607;
+      --card: #0e0f14;
+      --border: rgba(255,255,255,0.08);
+      --border-2: rgba(255,255,255,0.05);
+      --text: #F5F5F0;
+      --text-2: #A5ABB8;
+      --text-3: #5A6070;
+      --accent: #7C5CFF;
+      --success: #22c55e;
+      --sans: 'Space Grotesk', sans-serif;
+      --body: 'Inter', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--body); min-height: 100vh;
+      display: flex; flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .page { flex: 1; padding: 80px 24px 120px; max-width: 800px; margin: 0 auto; width: 100%; }
+
+    .logo { display: flex; align-items: center; gap: 12px; padding: 28px 32px; border-bottom: 1px solid var(--border-2); }
+    .logo img { height: 32px; }
+    .logo-text { font-family: var(--sans); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+
+    .icon-circle {
+      width: 72px; height: 72px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-bottom: 28px;
+    }
+    .icon-circle.success { background: rgba(34,197,94,0.12); color: var(--success); }
+    .icon-circle.error { background: rgba(239,68,68,0.12); color: #ef4444; }
+
+    h1 { font-family: var(--sans); font-weight: 700; font-size: clamp(32px, 5vw, 52px); letter-spacing: -0.025em; margin-bottom: 16px; }
+    .subtitle { font-size: 17px; line-height: 1.6; color: var(--text-2); max-width: 520px; }
+
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+      padding: 36px; margin-top: 40px;
+    }
+
+    .card-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding-bottom: 24px; border-bottom: 1px solid var(--border-2); margin-bottom: 28px;
+      flex-wrap: wrap; gap: 16px;
+    }
+
+    .label { font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+    .value { font-family: var(--sans); font-weight: 700; font-size: 22px; letter-spacing: -0.01em; }
+    .value-sm { font-family: var(--sans); font-weight: 600; font-size: 16px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 28px; }
+
+    .address-block { font-size: 15px; line-height: 1.7; }
+    .address-block .name { font-weight: 600; margin-bottom: 2px; }
+    .address-block .muted { color: var(--text-2); }
+
+    .total-amount { font-family: var(--sans); font-weight: 700; font-size: 36px; letter-spacing: -0.025em; margin: 8px 0 12px; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; border-radius: 99px;
+    }
+    .pill.paid { color: var(--success); border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.08); }
+
+    .note {
+      padding: 18px 20px; border-radius: 12px;
+      background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2);
+      font-size: 13.5px; line-height: 1.6; color: var(--text-2);
+    }
+    .note strong { color: var(--text); }
+
+    .actions { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+
+    .btn {
+      padding: 14px 28px; border-radius: 99px; font-family: var(--sans);
+      font-weight: 700; font-size: 14px; cursor: pointer; border: none;
+      text-decoration: none; display: inline-flex; align-items: center; transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; text-decoration: none; }
+    .btn-primary { background: #F5F5F0; color: #0a0b10; }
+    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+
+    #loading { text-align: center; padding: 80px 0; color: var(--text-3); font-family: var(--mono); font-size: 13px; }
+    #error-state { display: none; }
+
+    .spinner {
+      width: 24px; height: 24px; border: 2px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.7s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 640px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .card { padding: 24px; }
+      .logo { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="logo">
+  <img src="/assets/dartcraft-logo.png" alt="DartCraft" onerror="this.style.display='none'"/>
+  <span class="logo-text">DartCraft</span>
+</header>
+
+<main class="page">
+  <div id="loading">
+    <div class="spinner"></div>
+    Loading your order…
+  </div>
+
+  <div id="success-state" style="display:none">
+    <div class="icon-circle success">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <h1>Thanks for your order.</h1>
+    <p class="subtitle">
+      Your DartCraft kit will be prepared and shipped shortly. You'll receive an email confirmation and tracking info when it's on its way.
+    </p>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="label">Order reference</div>
+          <div class="value" id="order-id">—</div>
+        </div>
+        <div style="text-align:right">
+          <div class="label">Order date</div>
+          <div class="value-sm" id="order-date">—</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="label">Ship to</div>
+          <div class="address-block" id="ship-to">—</div>
+        </div>
+        <div>
+          <div class="label">Package</div>
+          <div style="font-family:var(--sans); font-weight:600; font-size:17px; margin-bottom:4px" id="pkg-name">—</div>
+          <div class="total-amount" id="amount">—</div>
+          <div class="pill paid">
+            <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
+            Payment confirmed
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>What happens next:</strong> We'll pack your kit and ship it with tracking. Setup manual is included in the box.
+        AutoDarts software setup and calibration may be required depending on your package.
+        Questions? Email <a href="mailto:hello@dartcraft.com.au">hello@dartcraft.com.au</a>
+      </div>
+
+      <div class="actions">
+        <a href="/Dartcraft.html" class="btn btn-primary">Back to DartCraft</a>
+        <a href="mailto:hello@dartcraft.com.au" class="btn btn-secondary">Contact us</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="error-state">
+    <div class="icon-circle error">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </div>
+    <h1 id="error-title">Something went wrong.</h1>
+    <p class="subtitle" id="error-msg">We couldn't load your order details. If payment was taken, please contact us and we'll sort it out.</p>
+    <div class="actions" style="margin-top:32px">
+      <a href="/Dartcraft.html#order" class="btn btn-primary">Try again</a>
+      <a href="mailto:hello@dartcraft.com.au" class="btn btn-secondary">Contact support</a>
+    </div>
+  </div>
+</main>
+
+<script>
+(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session_id');
+
+  const loading = document.getElementById('loading');
+  const successState = document.getElementById('success-state');
+  const errorState = document.getElementById('error-state');
+
+  function showError(title, msg) {
+    loading.style.display = 'none';
+    if (title) document.getElementById('error-title').textContent = title;
+    if (msg) document.getElementById('error-msg').textContent = msg;
+    errorState.style.display = 'block';
+  }
+
+  if (!sessionId) {
+    showError('No order found.', 'Please check your email for confirmation, or contact us if you need help.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/session/${sessionId}`);
+    if (!res.ok) { showError('Order not found.', 'We couldn\'t find this order. Please contact us if payment was taken.'); return; }
+    const s = await res.json();
+
+    if (s.payment_status !== 'paid') {
+      showError('Payment not completed.', `Payment status: ${s.payment_status}. If you believe this is an error, please contact us.`);
+      return;
+    }
+
+    // Populate order ID
+    document.getElementById('order-id').textContent = s.id.slice(-12).toUpperCase();
+
+    // Date
+    document.getElementById('order-date').textContent = new Date().toLocaleDateString('en-AU', {day:'2-digit', month:'short', year:'numeric'});
+
+    // Package name
+    document.getElementById('pkg-name').textContent = s.metadata?.packageName || s.line_items?.[0]?.description || 'DartCraft Kit';
+
+    // Amount
+    const amount = s.amount_total ? (s.amount_total / 100).toFixed(2) : '—';
+    document.getElementById('amount').textContent = `$${amount} AUD`;
+
+    // Ship to — prefer metadata (pre-fill), fallback to Stripe shipping_details
+    const m = s.metadata || {};
+    const sd = s.shipping_details;
+    const name = m.customerName || sd?.name || s.customer_email || '—';
+    const email = s.customer_email || '';
+    const phone = m.phone || '';
+    const street = m.street || sd?.address?.line1 || '';
+    const suburb = m.suburb || sd?.address?.city || '';
+    const state = m.state || sd?.address?.state || '';
+    const postcode = m.postcode || sd?.address?.postal_code || '';
+
+    document.getElementById('ship-to').innerHTML = `
+      <div class="name">${name}</div>
+      ${email ? `<div class="muted">${email}</div>` : ''}
+      ${phone ? `<div class="muted">${phone}</div>` : ''}
+      ${street ? `<div class="muted" style="margin-top:10px">${street}<br>${suburb} ${state} ${postcode}<br>Australia</div>` : ''}
+    `;
+
+    loading.style.display = 'none';
+    successState.style.display = 'block';
+
+  } catch (err) {
+    showError('Could not load order.', 'There was a network error. Please check your email for confirmation.');
+  }
+})();
+</script>
+</body>
+</html>
