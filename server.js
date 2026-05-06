@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
+const { Pool } = require('pg');
 const { Resend } = require('resend');
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
@@ -10,53 +10,50 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'dartcraft-admin';
-const STOCK_FILE  = path.join(__dirname, 'stock.json');
-const ORDERS_FILE = path.join(__dirname, 'orders.json');
-const CODES_FILE  = path.join(__dirname, 'codes.json');
 const SHIPPING_CENTS = 1995; // $19.95 AUD
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  throw new Error('DATABASE_URL is required. Set DATABASE_URL in your environment before starting the server.');
+}
+
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  // Neon pooled URLs usually include sslmode=require, which pg can parse directly.
+  // Avoid double SSL config in that case; otherwise keep production-safe fallback.
+  ssl: DATABASE_URL.includes('sslmode=require')
+    ? undefined
+    : process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false }
+      : false
+});
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 const OWNER_EMAIL = process.env.OWNER_EMAIL || '';
 
-// ── Stock helpers ─────────────────────────────────────────────────────────────
+// ── DB helpers ────────────────────────────────────────────────────────────────
 
-const DEFAULT_STOCK = {
-  'ring-only':        { quantity: 10, label: 'Printed Ring with Camera Mounts' },
-  'ring-led':         { quantity: 10, label: 'Printed Ring + LED Lighting' },
-  'ring-led-cameras': { quantity: 5,  label: 'Ring + LED Lighting + Cameras' },
-  'full-system':      { quantity: 3,  label: 'Full AutoDarts System' },
-};
-
-function loadStock() {
-  try { return JSON.parse(fs.readFileSync(STOCK_FILE, 'utf8')); }
-  catch { saveStock(DEFAULT_STOCK); return { ...DEFAULT_STOCK }; }
+async function queryDb(text, params = []) {
+  return pool.query(text, params);
 }
 
-function saveStock(stock) {
-  fs.writeFileSync(STOCK_FILE, JSON.stringify(stock, null, 2));
+async function getActivePackage(packageId) {
+  const result = await queryDb(
+    'select id, name, price_aud, quantity from packages where id = $1 and active = true limit 1',
+    [packageId]
+  );
+  return result.rows[0] || null;
 }
 
-// ── Orders helpers ────────────────────────────────────────────────────────────
-
-function loadOrders() {
-  try { return JSON.parse(fs.readFileSync(ORDERS_FILE, 'utf8')); }
-  catch { return {}; }
-}
-
-function saveOrders(orders) {
-  fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
-}
-
-// ── Promo code helpers ────────────────────────────────────────────────────────
-
-function loadCodes() {
-  try { return JSON.parse(fs.readFileSync(CODES_FILE, 'utf8')); }
-  catch { return {}; }
-}
-
-function saveCodes(codes) {
-  fs.writeFileSync(CODES_FILE, JSON.stringify(codes, null, 2));
+async function getActivePromo(rawCode) {
+  const code = String(rawCode || '').toUpperCase().trim();
+  if (!code) return null;
+  const result = await queryDb(
+    'select code, type, value, active from promo_codes where code = $1 and active = true limit 1',
+    [code]
+  );
+  return result.rows[0] || null;
 }
 
 function calcDiscount(promo, priceAud) {
@@ -64,15 +61,6 @@ function calcDiscount(promo, priceAud) {
   if (promo.type === 'percent') return Math.round(priceAud * promo.value / 100) * 100;
   return Math.min(promo.value * 100, priceAud * 100);
 }
-
-// ── Package catalogue ─────────────────────────────────────────────────────────
-
-const PACKAGES = {
-  'ring-only':        { name: 'Printed Ring with Camera Mounts', priceAud: 150 },
-  'ring-led':         { name: 'Printed Ring + LED Lighting',     priceAud: 199 },
-  'ring-led-cameras': { name: 'Ring + LED Lighting + Cameras',   priceAud: 299 },
-  'full-system':      { name: 'Full AutoDarts System',           priceAud: 549 },
-};
 
 // ── Email helpers ─────────────────────────────────────────────────────────────
 
@@ -190,6 +178,29 @@ function shippingEmailHtml(session) {
 </body></html>`;
 }
 
+function orderRowToSession(order) {
+  const createdSeconds = Math.floor(new Date(order.created_at).getTime() / 1000);
+  return {
+    id: order.stripe_session_id,
+    created: createdSeconds,
+    amount_total: order.amount_total,
+    customer_email: order.customer_email,
+    metadata: {
+      packageId: order.package_id,
+      packageName: order.package_name,
+      customerName: order.customer_name,
+      phone: order.phone || '',
+      street: order.street || '',
+      suburb: order.suburb || '',
+      state: order.state || '',
+      postcode: order.postcode || '',
+      notes: order.notes || '',
+      promoCode: order.promo_code || '',
+      discountCents: String(order.discount_cents || 0),
+    },
+  };
+}
+
 // ── Middleware ────────────────────────────────────────────────────────────────
 
 // Block direct access to sensitive data files before static middleware
@@ -204,54 +215,72 @@ app.use(express.static(__dirname));
 // ── Public API ────────────────────────────────────────────────────────────────
 
 app.get('/api/stock', (_req, res) => {
-  const stock = loadStock();
-  const out = {};
-  for (const [id, s] of Object.entries(stock)) out[id] = s.quantity;
-  res.json(out);
+  (async () => {
+    try {
+      const result = await queryDb(
+        'select id, quantity from packages where active = true order by created_at asc'
+      );
+      const out = {};
+      for (const row of result.rows) out[row.id] = Number(row.quantity);
+      res.json(out);
+    } catch (err) {
+      console.error('[api/stock] DB error:', err.message);
+      res.status(500).json({ error: 'Could not load stock.' });
+    }
+  })();
 });
 
-app.post('/api/validate-promo', (req, res) => {
+app.post('/api/validate-promo', async (req, res) => {
   const { code, packageId } = req.body;
-  const pkg = PACKAGES[packageId];
-  if (!pkg || !code) return res.json({ valid: false });
+  if (!packageId || !code) return res.json({ valid: false });
 
-  const codes = loadCodes();
-  const promo = codes[String(code).toUpperCase()];
-  if (!promo || !promo.active) return res.json({ valid: false });
+  try {
+    const pkg = await getActivePackage(packageId);
+    if (!pkg) return res.json({ valid: false });
 
-  const discountCents = calcDiscount(promo, pkg.priceAud);
-  const discountDisplay = promo.type === 'percent' ? `${promo.value}% off` : `$${promo.value} off`;
-  res.json({ valid: true, discountCents, discountDisplay });
+    const promo = await getActivePromo(code);
+    if (!promo) return res.json({ valid: false });
+
+    const promoValue = Number(promo.value);
+    const discountCents = calcDiscount(
+      { type: promo.type, value: promoValue, active: true },
+      Number(pkg.price_aud)
+    );
+    const discountDisplay = promo.type === 'percent' ? `${promoValue}% off` : `$${promoValue} off`;
+    res.json({ valid: true, discountCents, discountDisplay });
+  } catch (err) {
+    console.error('[api/validate-promo] DB error:', err.message);
+    res.status(500).json({ valid: false });
+  }
 });
 
 app.post('/api/create-checkout-session', async (req, res) => {
   const { packageId, name, email, phone, street, suburb, state, postcode, notes, promoCode } = req.body;
 
-  const pkg = PACKAGES[packageId];
-  if (!pkg) return res.status(400).json({ error: 'Invalid package selected.' });
-
-  const stock = loadStock();
-  if (!stock[packageId] || stock[packageId].quantity <= 0) {
-    return res.status(400).json({ error: 'That package is currently out of stock.' });
-  }
-
-  if (!name || !email || !phone || !street || !suburb || !state || !postcode) {
-    return res.status(400).json({ error: 'Please fill in all required fields.' });
-  }
-
-  // Server-side promo validation
-  let discountCents = 0;
-  let appliedPromo = '';
-  if (promoCode) {
-    const codes = loadCodes();
-    const promo = codes[String(promoCode).toUpperCase()];
-    if (promo && promo.active) {
-      discountCents = calcDiscount(promo, pkg.priceAud);
-      appliedPromo = String(promoCode).toUpperCase();
-    }
-  }
-
   try {
+    const pkg = await getActivePackage(packageId);
+    if (!pkg) return res.status(400).json({ error: 'Invalid package selected.' });
+    if (Number(pkg.quantity) <= 0) {
+      return res.status(400).json({ error: 'That package is currently out of stock.' });
+    }
+
+    if (!name || !email || !phone || !street || !suburb || !state || !postcode) {
+      return res.status(400).json({ error: 'Please fill in all required fields.' });
+    }
+
+    let discountCents = 0;
+    let appliedPromo = '';
+    if (promoCode) {
+      const promo = await getActivePromo(promoCode);
+      if (promo) {
+        discountCents = calcDiscount(
+          { type: promo.type, value: Number(promo.value), active: true },
+          Number(pkg.price_aud)
+        );
+        appliedPromo = String(promo.code).toUpperCase();
+      }
+    }
+
     const lineItems = [
       {
         price_data: {
@@ -261,7 +290,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
             description: 'AutoDarts-compatible hardware kit. DIY install required. Ships from Australia.',
             images: [`${BASE_URL}/assets/hero-product.png`],
           },
-          unit_amount: pkg.priceAud * 100,
+          unit_amount: Number(pkg.price_aud) * 100,
         },
         quantity: 1,
       },
@@ -278,7 +307,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
     // Stripe doesn't allow negative line items — use a coupon instead
     let sessionDiscounts = [];
     if (discountCents > 0) {
-      const totalCents = pkg.priceAud * 100 + SHIPPING_CENTS;
+      const totalCents = Number(pkg.price_aud) * 100 + SHIPPING_CENTS;
       const cappedDiscount = Math.min(discountCents, totalCents - 1);
       const coupon = await stripe.coupons.create({
         amount_off: cappedDiscount,
@@ -361,23 +390,88 @@ app.post('/api/webhook', async (req, res) => {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const packageId = session.metadata?.packageId;
+    const metadata = session.metadata || {};
+    const customerEmail = session.customer_email || session.customer_details?.email || '';
 
-    // Decrement stock
-    if (packageId) {
-      const stock = loadStock();
-      if (stock[packageId] && stock[packageId].quantity > 0) {
-        stock[packageId].quantity -= 1;
-        saveStock(stock);
-        console.log(`[webhook] Stock decremented: ${packageId} → ${stock[packageId].quantity} remaining`);
+    let processed = false;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const existing = await client.query(
+        'select id from orders where stripe_session_id = $1 limit 1',
+        [session.id]
+      );
+      if (existing.rows.length) {
+        await client.query('COMMIT');
+        console.log(`[webhook] Duplicate event ignored for session ${session.id}`);
+      } else {
+        if (!packageId) {
+          await client.query('ROLLBACK');
+          console.error(`[webhook] Missing packageId in metadata for session ${session.id}`);
+          return res.json({ received: true });
+        }
+
+        await client.query(
+          `insert into orders (
+            stripe_session_id, stripe_payment_intent_id, payment_status,
+            package_id, package_name, amount_total, currency,
+            customer_name, customer_email, phone, street, suburb, state, postcode, notes,
+            promo_code, discount_cents, shipped, shipped_at
+          ) values (
+            $1, $2, $3,
+            $4, $5, $6, $7,
+            $8, $9, $10, $11, $12, $13, $14, $15,
+            $16, $17, false, null
+          )`,
+          [
+            session.id,
+            typeof session.payment_intent === 'string' ? session.payment_intent : (session.payment_intent?.id || null),
+            session.payment_status || 'paid',
+            packageId,
+            metadata.packageName || packageId,
+            Number(session.amount_total || 0),
+            String(session.currency || 'aud'),
+            metadata.customerName || '',
+            customerEmail,
+            metadata.phone || null,
+            metadata.street || null,
+            metadata.suburb || null,
+            metadata.state || null,
+            metadata.postcode || null,
+            metadata.notes || null,
+            metadata.promoCode || null,
+            Number.parseInt(metadata.discountCents || '0', 10) || 0,
+          ]
+        );
+
+        const stockResult = await client.query(
+          'update packages set quantity = quantity - 1, updated_at = now() where id = $1 and quantity > 0 returning quantity',
+          [packageId]
+        );
+        if (!stockResult.rows.length) {
+          await client.query('ROLLBACK');
+          console.error(`[webhook] Stock unavailable for package ${packageId}, session ${session.id}`);
+          return res.json({ received: true });
+        }
+
+        await client.query('COMMIT');
+        processed = true;
+        console.log(`[webhook] Order saved and stock decremented: ${packageId} -> ${stockResult.rows[0].quantity}`);
       }
+    } catch (err) {
+      try { await client.query('ROLLBACK'); } catch {}
+      console.error('[webhook] DB transaction error:', err.message);
+      return res.status(500).json({ received: false });
+    } finally {
+      client.release();
     }
 
-    // Send emails
-    const customerEmail = session.customer_email || session.customer_details?.email;
-    await Promise.all([
-      sendEmail(customerEmail, 'Your DartCraft order is confirmed 🎯', confirmationEmailHtml(session)),
-      sendEmail(OWNER_EMAIL, `New order: ${session.metadata?.packageName || packageId} — ${fmt(session.amount_total)}`, ownerNotificationHtml(session)),
-    ]);
+    if (processed) {
+      await Promise.all([
+        sendEmail(customerEmail, 'Your DartCraft order is confirmed 🎯', confirmationEmailHtml(session)),
+        sendEmail(OWNER_EMAIL, `New order: ${metadata.packageName || packageId} — ${fmt(session.amount_total)}`, ownerNotificationHtml(session)),
+      ]);
+    }
   }
 
   res.json({ received: true });
@@ -393,85 +487,149 @@ function requireAdmin(req, res, next) {
 }
 
 app.get('/api/admin/stock', requireAdmin, (_req, res) => {
-  res.json(loadStock());
+  (async () => {
+    try {
+      const result = await queryDb(
+        'select id, name, quantity from packages where active = true order by created_at asc'
+      );
+      const out = {};
+      for (const row of result.rows) {
+        out[row.id] = { quantity: Number(row.quantity), label: row.name };
+      }
+      res.json(out);
+    } catch (err) {
+      console.error('[api/admin/stock] DB error:', err.message);
+      res.status(500).json({ error: 'Could not load stock.' });
+    }
+  })();
 });
 
-app.put('/api/admin/stock/:id', requireAdmin, (req, res) => {
+app.put('/api/admin/stock/:id', requireAdmin, async (req, res) => {
   const { id } = req.params;
   const { quantity } = req.body;
   if (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 0) {
     return res.status(400).json({ error: 'quantity must be a non-negative integer' });
   }
-  const stock = loadStock();
-  if (!stock[id]) return res.status(404).json({ error: 'Package not found' });
-  stock[id].quantity = quantity;
-  saveStock(stock);
-  res.json({ id, quantity });
+  try {
+    const result = await queryDb(
+      'update packages set quantity = $2, updated_at = now() where id = $1 returning id, quantity',
+      [id, quantity]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Package not found' });
+    res.json({ id: result.rows[0].id, quantity: Number(result.rows[0].quantity) });
+  } catch (err) {
+    console.error('[api/admin/stock/:id] DB error:', err.message);
+    res.status(500).json({ error: 'Could not update stock.' });
+  }
 });
 
-// GET /api/admin/orders — list all paid sessions from Stripe with local shipped status
 app.get('/api/admin/orders', requireAdmin, async (_req, res) => {
   try {
-    const sessions = await stripe.checkout.sessions.list({ limit: 100 });
-    const paid = sessions.data.filter(s => s.payment_status === 'paid');
-    const shipped = loadOrders();
-    const orders = paid.map(s => ({
-      id: s.id,
-      created: s.created,
-      amount_total: s.amount_total,
-      currency: s.currency,
-      customer_email: s.customer_email || s.customer_details?.email,
-      metadata: s.metadata,
-      shipped: !!shipped[s.id],
-      shippedAt: shipped[s.id]?.shippedAt || null,
+    const result = await queryDb(
+      `select stripe_session_id, created_at, amount_total, currency, customer_email,
+              package_id, package_name, customer_name, phone, street, suburb, state, postcode, notes,
+              promo_code, discount_cents, shipped, shipped_at
+       from orders
+       where payment_status = 'paid'
+       order by created_at desc
+       limit 500`
+    );
+    const orders = result.rows.map((o) => ({
+      id: o.stripe_session_id,
+      created: Math.floor(new Date(o.created_at).getTime() / 1000),
+      amount_total: Number(o.amount_total),
+      currency: o.currency,
+      customer_email: o.customer_email,
+      metadata: {
+        packageId: o.package_id,
+        packageName: o.package_name,
+        customerName: o.customer_name,
+        phone: o.phone || '',
+        street: o.street || '',
+        suburb: o.suburb || '',
+        state: o.state || '',
+        postcode: o.postcode || '',
+        notes: o.notes || '',
+        promoCode: o.promo_code || '',
+        discountCents: String(o.discount_cents || 0),
+      },
+      shipped: Boolean(o.shipped),
+      shippedAt: o.shipped_at ? new Date(o.shipped_at).toISOString() : null,
     }));
     res.json(orders);
   } catch (err) {
     console.error('Orders error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Could not load orders.' });
   }
 });
 
-// POST /api/admin/orders/:id/ship — mark shipped + send email
 app.post('/api/admin/orders/:id/ship', requireAdmin, async (req, res) => {
   const { id } = req.params;
   try {
-    const session = await stripe.checkout.sessions.retrieve(id);
-    if (session.payment_status !== 'paid') {
+    const orderResult = await queryDb(
+      `select stripe_session_id, payment_status, amount_total, customer_email, package_id, package_name,
+              customer_name, phone, street, suburb, state, postcode, notes, promo_code, discount_cents,
+              shipped, shipped_at, created_at
+       from orders where stripe_session_id = $1 limit 1`,
+      [id]
+    );
+    if (!orderResult.rows.length) {
+      return res.status(404).json({ error: 'Order not found.' });
+    }
+    const order = orderResult.rows[0];
+
+    if (order.payment_status !== 'paid') {
       return res.status(400).json({ error: 'Order is not paid.' });
     }
 
-    const orders = loadOrders();
-    if (orders[id]?.shipped) {
+    if (order.shipped) {
       return res.status(400).json({ error: 'Order already marked as shipped.' });
     }
 
-    const shippedAt = new Date().toISOString();
-    orders[id] = { shipped: true, shippedAt };
-    saveOrders(orders);
+    const updated = await queryDb(
+      `update orders
+       set shipped = true, shipped_at = now()
+       where stripe_session_id = $1
+       returning stripe_session_id, payment_status, amount_total, customer_email, package_id, package_name,
+                 customer_name, phone, street, suburb, state, postcode, notes, promo_code, discount_cents,
+                 shipped, shipped_at, created_at`,
+      [id]
+    );
+    const shippedOrder = updated.rows[0];
 
-    const customerEmail = session.customer_email || session.customer_details?.email;
     await sendEmail(
-      customerEmail,
+      shippedOrder.customer_email,
       `Your DartCraft order has shipped! 📦`,
-      shippingEmailHtml(session)
+      shippingEmailHtml(orderRowToSession(shippedOrder))
     );
 
     console.log(`[admin] Order ${id} marked as shipped`);
-    res.json({ shipped: true, shippedAt });
+    res.json({ shipped: true, shippedAt: new Date(shippedOrder.shipped_at).toISOString() });
   } catch (err) {
     console.error('Ship error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Could not mark order as shipped.' });
   }
 });
 
 // ── Admin codes CRUD ──────────────────────────────────────────────────────────
 
 app.get('/api/admin/codes', requireAdmin, (_req, res) => {
-  res.json(loadCodes());
+  (async () => {
+    try {
+      const result = await queryDb('select code, type, value, active from promo_codes order by code asc');
+      const codes = {};
+      for (const row of result.rows) {
+        codes[row.code] = { type: row.type, value: Number(row.value), active: Boolean(row.active) };
+      }
+      res.json(codes);
+    } catch (err) {
+      console.error('[api/admin/codes] DB error:', err.message);
+      res.status(500).json({ error: 'Could not load promo codes.' });
+    }
+  })();
 });
 
-app.post('/api/admin/codes', requireAdmin, (req, res) => {
+app.post('/api/admin/codes', requireAdmin, async (req, res) => {
   const { code, type, value, active } = req.body;
   const key = String(code || '').toUpperCase().trim();
   if (!key || !/^[A-Z0-9]+$/.test(key)) {
@@ -484,31 +642,70 @@ app.post('/api/admin/codes', requireAdmin, (req, res) => {
   if (!num || num <= 0 || (type === 'percent' && num > 100)) {
     return res.status(400).json({ error: 'Invalid value.' });
   }
-  const codes = loadCodes();
-  codes[key] = { type, value: num, active: active !== false };
-  saveCodes(codes);
-  res.json({ code: key, ...codes[key] });
+  try {
+    const result = await queryDb(
+      `insert into promo_codes (code, type, value, active, created_at, updated_at)
+       values ($1, $2, $3, $4, now(), now())
+       on conflict (code) do update
+       set type = excluded.type, value = excluded.value, active = excluded.active, updated_at = now()
+       returning code, type, value, active`,
+      [key, type, num, active !== false]
+    );
+    const row = result.rows[0];
+    res.json({ code: row.code, type: row.type, value: Number(row.value), active: Boolean(row.active) });
+  } catch (err) {
+    console.error('[api/admin/codes POST] DB error:', err.message);
+    res.status(500).json({ error: 'Could not save code.' });
+  }
 });
 
-app.put('/api/admin/codes/:code', requireAdmin, (req, res) => {
+app.put('/api/admin/codes/:code', requireAdmin, async (req, res) => {
   const key = req.params.code.toUpperCase();
-  const codes = loadCodes();
-  if (!codes[key]) return res.status(404).json({ error: 'Code not found.' });
   const { type, value, active } = req.body;
-  if (type !== undefined) codes[key].type = type;
-  if (value !== undefined) codes[key].value = parseFloat(value);
-  if (active !== undefined) codes[key].active = Boolean(active);
-  saveCodes(codes);
-  res.json({ code: key, ...codes[key] });
+  if (type !== undefined && !['percent', 'fixed'].includes(type)) {
+    return res.status(400).json({ error: 'Type must be "percent" or "fixed".' });
+  }
+  if (value !== undefined) {
+    const num = parseFloat(value);
+    if (!num || num <= 0 || (type === 'percent' && num > 100)) {
+      return res.status(400).json({ error: 'Invalid value.' });
+    }
+  }
+  try {
+    const existing = await queryDb('select code, type, value, active from promo_codes where code = $1 limit 1', [key]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Code not found.' });
+    const current = existing.rows[0];
+    const nextType = type !== undefined ? type : current.type;
+    const nextValue = value !== undefined ? parseFloat(value) : Number(current.value);
+    if (nextType === 'percent' && nextValue > 100) {
+      return res.status(400).json({ error: 'Invalid value.' });
+    }
+    const nextActive = active !== undefined ? Boolean(active) : Boolean(current.active);
+    const updated = await queryDb(
+      `update promo_codes
+       set type = $2, value = $3, active = $4, updated_at = now()
+       where code = $1
+       returning code, type, value, active`,
+      [key, nextType, nextValue, nextActive]
+    );
+    const row = updated.rows[0];
+    res.json({ code: row.code, type: row.type, value: Number(row.value), active: Boolean(row.active) });
+  } catch (err) {
+    console.error('[api/admin/codes PUT] DB error:', err.message);
+    res.status(500).json({ error: 'Could not update code.' });
+  }
 });
 
-app.delete('/api/admin/codes/:code', requireAdmin, (req, res) => {
+app.delete('/api/admin/codes/:code', requireAdmin, async (req, res) => {
   const key = req.params.code.toUpperCase();
-  const codes = loadCodes();
-  if (!codes[key]) return res.status(404).json({ error: 'Code not found.' });
-  delete codes[key];
-  saveCodes(codes);
-  res.json({ deleted: true });
+  try {
+    const result = await queryDb('delete from promo_codes where code = $1 returning code', [key]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Code not found.' });
+    res.json({ deleted: true });
+  } catch (err) {
+    console.error('[api/admin/codes DELETE] DB error:', err.message);
+    res.status(500).json({ error: 'Could not delete code.' });
+  }
 });
 
 // ── HTML pages ────────────────────────────────────────────────────────────────
