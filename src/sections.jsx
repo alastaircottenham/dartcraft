@@ -379,33 +379,40 @@ const PACKAGES = [
     bestFor:'Tech-savvy DIY users who already have cameras, lighting, and a computer.',
     includes:['Custom 3D-printed ring','Integrated camera mounts','Designed for standard dartboard setups'],
     excludes:['LED lighting','Cameras','PC','Keyboard or mouse','Speaker','Dartboard'],
-    cta:'Select ring only', stock:'In stock' },
+    cta:'Select ring only' },
   { id:'ring-led', name:'Printed Ring + LED Lighting', price:199, badge:null,
     bestFor:'Users who want the printed ring and clean lighting handled.',
     includes:['Printed ring with camera mounts','LED strip lighting'],
     excludes:['Cameras','PC','Keyboard or mouse','Speaker','Dartboard'],
-    cta:'Select ring + lighting', stock:'In stock' },
+    cta:'Select ring + lighting' },
   { id:'ring-led-cameras', name:'Ring + LED Lighting + Cameras', price:299, badge:'Most popular',
     bestFor:'Users who already have a spare computer and can configure AutoDarts themselves.',
     includes:['Printed ring with camera mounts','LED lighting','Cameras for AutoDarts tracking'],
     excludes:['PC','Keyboard or mouse','Speaker','Dartboard'],
-    cta:'Select camera kit', stock:'Low stock' },
+    cta:'Select camera kit' },
   { id:'full-system', name:'Full AutoDarts System', price:549, badge:'Easiest setup',
     bestFor:'Customers who want the easiest setup option with the least technical work.',
     includes:['Printed ring with camera mounts','LED lighting','Cameras','Mini PC pre-configured for AutoDarts','Wireless keyboard with touchpad','Speaker','Setup manual'],
     excludes:['Dartboard','Monitor / display','In-home installation'],
-    cta:'Select full system', stock:'Built to order' },
+    cta:'Select full system' },
 ];
 window.PACKAGES = PACKAGES;
+
+function packageStockLabel(qty) {
+  if (qty <= 0) return 'Sold out';
+  if (qty <= 2) return `${qty} left`;
+  if (qty <= 5) return 'Low stock';
+  return 'In stock';
+}
 
 const StockPill = ({state}) => {
   const map = {
     'In stock': {bg:'rgba(34,197,94,0.12)', c:'#22C55E'},
     'Low stock': {bg:'rgba(245,158,11,0.12)', c:'#F59E0B'},
     'Sold out': {bg:'rgba(239,68,68,0.12)', c:'#ef4444'},
-    'Built to order': {bg:'rgba(34,211,238,0.12)', c:'#22D3EE'},
   };
-  const s = map[state] || map['In stock'];
+  const isLeftLabel = typeof state === 'string' && state.endsWith(' left');
+  const s = isLeftLabel ? map['Low stock'] : (map[state] || map['In stock']);
   return (
     <span style={{display:'inline-flex', alignItems:'center', gap:6, fontSize:11, fontFamily:'var(--mono)', letterSpacing:'0.05em', textTransform:'uppercase', color:s.c, background:s.bg, padding:'4px 10px', borderRadius:99}}>
       <span style={{width:6, height:6, background:s.c, borderRadius:99}}/>{state}
@@ -415,6 +422,15 @@ const StockPill = ({state}) => {
 window.StockPill = StockPill;
 
 const Packages = ({onSelect}) => {
+  const [stockQty, setStockQty] = useState({});
+
+  useEffect(() => {
+    fetch('/api/stock')
+      .then(r => r.json())
+      .then(setStockQty)
+      .catch(() => {});
+  }, []);
+
   return (
     <section id="kits" style={{padding:'140px 0 120px', borderTop:'1px solid var(--border-2)'}}>
       <Container>
@@ -451,7 +467,9 @@ const Packages = ({onSelect}) => {
                 <span style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:38, letterSpacing:'-0.02em'}}>${p.price}</span>
                 <span style={{color:'var(--text-3)', fontSize:13}}>AUD</span>
               </div>
-              <div style={{marginBottom:16}}><StockPill state={p.stock}/></div>
+              <div style={{marginBottom:16}}>
+                {typeof stockQty[p.id] === 'number' && <StockPill state={packageStockLabel(stockQty[p.id])}/>}
+              </div>
               <p style={{fontSize:13, lineHeight:1.5, color:'var(--text-2)', margin:'0 0 18px', minHeight:'4.5em'}}>{p.bestFor}</p>
 
               <div style={{flex:1, paddingTop:14, borderTop:'1px solid var(--border-2)'}}>
