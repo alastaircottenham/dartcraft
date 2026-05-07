@@ -1,7 +1,15 @@
-const { useState, useCallback } = React;
+const { useState, useEffect, useCallback } = React;
 
 const App = () => {
   const [selectedId, setSelectedId] = useState('ring-led-cameras');
+  const [dbPrices, setDbPrices] = useState({});
+
+  useEffect(() => {
+    fetch('/api/packages')
+      .then(r => r.json())
+      .then(setDbPrices)
+      .catch(() => {});
+  }, []);
 
   const onSelect = useCallback((id) => {
     setSelectedId(id);
@@ -19,10 +27,10 @@ const App = () => {
         <Sections.Marquee/>
         <Sections.ProductExplain/>
         <Sections.HowItWorks/>
-        <Sections.Packages onSelect={onSelect}/>
-        <Sections.FullSystemCallout onSelect={onSelect}/>
+        <Sections.Packages onSelect={onSelect} dbPrices={dbPrices}/>
+        <Sections.FullSystemCallout onSelect={onSelect} dbPrices={dbPrices}/>
         <Sections.BeforeYouOrder/>
-        <OrderBuilder selectedId={selectedId} onSelect={setSelectedId}/>
+        <OrderBuilder selectedId={selectedId} onSelect={setSelectedId} dbPrices={dbPrices}/>
         <Sections.Shipping/>
         <Sections.FAQ/>
       </main>

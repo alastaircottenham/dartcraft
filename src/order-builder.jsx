@@ -33,11 +33,11 @@ const Spinner = () => (
 
 const SHIPPING_AUD = 19.95;
 
-const OrderBuilder = ({selectedId, onSelect}) => {
+const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
   const [form, setForm] = useState({
     name:'', email:'', phone:'',
     street:'', suburb:'', state:'', postcode:'',
-    notes:'', diy:false,
+    notes:'', diy:false, terms:false,
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -62,8 +62,9 @@ const OrderBuilder = ({selectedId, onSelect}) => {
   }, [selectedId]);
 
   const pkg = PACKAGES.find(p => p.id === selectedId) || PACKAGES[0];
+  const pkgPrice = dbPrices[pkg.id] ?? pkg.price;
   const discountAud = (promoStatus?.valid && promoStatus.discountCents) ? promoStatus.discountCents / 100 : 0;
-  const total = pkg.price + SHIPPING_AUD - discountAud;
+  const total = pkgPrice + SHIPPING_AUD - discountAud;
   const currentStock = stockQty[pkg.id];
   const isSoldOut = typeof currentStock === 'number' && currentStock <= 0;
 
@@ -98,6 +99,7 @@ const OrderBuilder = ({selectedId, onSelect}) => {
     if(!form.postcode.trim()) e.postcode = 'Required';
     else if(!/^\d{4}$/.test(form.postcode.trim())) e.postcode = '4-digit postcode';
     if(!form.diy) e.diy = 'Please acknowledge';
+    if(!form.terms) e.terms = 'Please acknowledge';
     return e;
   };
 
@@ -186,7 +188,7 @@ const OrderBuilder = ({selectedId, onSelect}) => {
                         <div style={{fontSize:13, color:'var(--text-2)', lineHeight:1.45}}>{p.bestFor}</div>
                       </div>
                       <div style={{textAlign:'right'}}>
-                        <div style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:22, letterSpacing:'-0.02em'}}>${p.price}</div>
+                        <div style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:22, letterSpacing:'-0.02em'}}>${dbPrices[p.id] ?? p.price}</div>
                         <div style={{fontSize:11, color:'var(--text-3)'}}>AUD</div>
                       </div>
                     </label>
@@ -304,7 +306,7 @@ const OrderBuilder = ({selectedId, onSelect}) => {
               </div>
 
               <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18, display:'flex', flexDirection:'column', gap:8}}>
-                <Row k="Subtotal" v={`$${pkg.price}.00`}/>
+                <Row k="Subtotal" v={`$${pkgPrice}.00`}/>
                 <Row k="Shipping (AU)" v="$19.95"/>
                 {discountAud > 0 && <Row k={`Promo (${promoCode})`} v={`−$${discountAud.toFixed(2)}`} discount/>}
                 <Row k="GST" v="Included" muted/>
@@ -324,15 +326,26 @@ const OrderBuilder = ({selectedId, onSelect}) => {
                 </div>
               )}
 
-              <label style={{display:'flex', gap:12, alignItems:'flex-start', padding:'14px', background:'rgba(245,158,11,0.06)', border:'1px solid rgba(245,158,11,0.2)', borderRadius:10, cursor:'pointer'}}>
+              <label style={{display:'flex', gap:12, alignItems:'flex-start', padding:'14px', background:'rgba(245,158,11,0.06)', border:`1px solid ${errors.diy ? '#ef4444' : 'rgba(245,158,11,0.2)'}`, borderRadius:10, cursor:'pointer'}}>
                 <input type="checkbox" checked={form.diy} onChange={e=>update('diy', e.target.checked)} style={{
                   marginTop:2, width:18, height:18, accentColor:'#7C5CFF', cursor:'pointer', flexShrink:0
                 }}/>
                 <span style={{fontSize:12.5, lineHeight:1.5, color:'var(--text-2)'}}>
-                  I understand this is a <span style={{color:'var(--text)'}}>DIY install hardware kit</span>. Dartboard and in-home installation are not included unless specifically stated.
+                  I understand this is a <span style={{color:'var(--text)'}}>DIY install hardware kit</span>. Dartboard, monitor/display, and in-home installation are not included.
                 </span>
               </label>
-              {errors.diy && <span style={{fontSize:12, color:'#ef4444', marginTop:-12}}>{errors.diy}</span>}
+              {errors.diy && <span style={{fontSize:12, color:'#ef4444', marginTop:-12, display:'block'}}>{errors.diy}</span>}
+
+              <label style={{display:'flex', gap:12, alignItems:'flex-start', padding:'14px', background:'rgba(245,158,11,0.06)', border:`1px solid ${errors.terms ? '#ef4444' : 'rgba(245,158,11,0.2)'}`, borderRadius:10, cursor:'pointer'}}>
+                <input type="checkbox" checked={form.terms} onChange={e=>update('terms', e.target.checked)} style={{
+                  marginTop:2, width:18, height:18, accentColor:'#7C5CFF', cursor:'pointer', flexShrink:0
+                }}/>
+                <span style={{fontSize:12.5, lineHeight:1.5, color:'var(--text-2)'}}>
+                  I have read and agree to the{' '}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)', textDecoration:'underline'}} onClick={e=>e.stopPropagation()}>Terms of Sale</a>.
+                </span>
+              </label>
+              {errors.terms && <span style={{fontSize:12, color:'#ef4444', marginTop:-12, display:'block'}}>{errors.terms}</span>}
 
               <button type="submit" disabled={submitting || isSoldOut} style={{
                 padding:'16px', borderRadius:99, border:'none',

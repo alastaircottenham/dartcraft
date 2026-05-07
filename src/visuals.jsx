@@ -266,15 +266,20 @@ const HeroVisual = () => (
 
 // "Step" visual that highlights specific aspects per step
 // step keys: 0 assemble, 1 mount, 2 connect-pc, 3 autodarts, 4 calibrate
+const StepPhoto = ({src, alt=''}) => (
+  <img src={src} alt={alt} style={{
+    position:'absolute', inset:0, width:'100%', height:'100%',
+    objectFit:'cover', display:'block'
+  }}/>
+);
+
 const StepVisual = ({step}) => (
-  <div style={{position:'relative', width:'100%', aspectRatio:'1/1', maxWidth:520, margin:'0 auto', display:'flex', alignItems:'center', justifyContent:'center'}}>
-    <div style={{position:'absolute', inset:'10%', borderRadius:'50%', background:'radial-gradient(circle at 50% 50%, rgba(124,92,255,0.28), rgba(124,92,255,0.06) 50%, rgba(0,0,0,0) 72%)', filter:'blur(16px)', pointerEvents:'none'}}/>
-    <div style={{position:'absolute', inset:'18%', borderRadius:'50%', background:'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.14), rgba(255,255,255,0) 60%)', pointerEvents:'none'}}/>
-    {step === 0 && <AssembleMock/>}
-    {step === 1 && <MountMock/>}
-    {step === 2 && <ConnectPCMock/>}
+  <div style={{position:'relative', width:'100%', aspectRatio:'1/1', maxWidth:520, margin:'0 auto', overflow:'hidden'}}>
+    {step === 0 && <StepPhoto src="assets/step1-assemble.png" alt="Ring assembly with LED lighting"/>}
+    {step === 1 && <StepPhoto src="assets/step2-mount.png" alt="Ring mounted on dartboard"/>}
+    {step === 2 && <StepPhoto src="assets/step3-connect.png" alt="Connected to mini PC"/>}
     {step === 3 && <AutoDartsAccountMock/>}
-    {step === 4 && <PlayMock/>}
+    {step === 4 && <StepPhoto src="assets/step5-play.png" alt="AutoDarts calibrated and ready to play"/>}
   </div>
 );
 

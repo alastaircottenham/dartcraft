@@ -230,6 +230,22 @@ app.get('/api/stock', (_req, res) => {
   })();
 });
 
+app.get('/api/packages', (_req, res) => {
+  (async () => {
+    try {
+      const result = await queryDb(
+        'select id, price_aud from packages where active = true order by created_at asc'
+      );
+      const out = {};
+      for (const row of result.rows) out[row.id] = Number(row.price_aud);
+      res.json(out);
+    } catch (err) {
+      console.error('[api/packages] DB error:', err.message);
+      res.status(500).json({ error: 'Could not load packages.' });
+    }
+  })();
+});
+
 app.post('/api/validate-promo', async (req, res) => {
   const { code, packageId } = req.body;
   if (!packageId || !code) return res.json({ valid: false });

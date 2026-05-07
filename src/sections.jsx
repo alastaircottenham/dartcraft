@@ -192,27 +192,27 @@ const Marquee = () => (
 // ── Product Explanation ───────────────────────────────────────────────
 const ProductExplain = () => {
   const features = [
-    {icon:<Icons.Ring size={22}/>, title:'Printed for AutoDarts-style setups',
-     body:'Custom 3D-printed ring with integrated camera mounts designed for standard dartboard areas.'},
-    {icon:<Icons.Box size={22}/>, title:'Choose your level of kit',
-     body:'Start with the printed ring only, add lighting and cameras, or choose the full system with a pre-configured mini PC.'},
-    {icon:<Icons.Bolt size={22}/>, title:'Built for DIY installation',
-     body:'Mount the setup yourself, connect the hardware, then complete final setup and calibration with the included guidance.'},
+    {icon:<Icons.Ring size={22}/>, title:'Built around AutoDarts',
+     body:'Printed ring, camera mounts, lighting, cameras, and optional pre-configured PC options.'},
+    {icon:<Icons.Box size={22}/>, title:'Pick the setup that fits you',
+     body:'Choose a DIY hardware kit if you\'re comfortable with software, or go full system if you want less technical setup.'},
+    {icon:<Icons.Bolt size={22}/>, title:'Install, calibrate, play',
+     body:'Mount the kit, connect the hardware, complete calibration, and start your first game.'},
   ];
   return (
     <section style={{padding:'140px 0 120px'}}>
       <Container>
         <div style={{maxWidth:760, marginBottom:80}}>
-          <Eyebrow>Less sourcing, more throwing</Eyebrow>
+          <Eyebrow>Less technical guesswork. More time playing.</Eyebrow>
           <h2 style={{
             fontFamily:'var(--sans)', fontWeight:700,
             fontSize:'clamp(34px, 4.6vw, 60px)', lineHeight:1.05, letterSpacing:'-0.025em',
             margin:'18px 0 22px'
           }}>
-            Smart scoring hardware without the sourcing hassle.
+            AutoDarts-compatible kits built to make setup more approachable.
           </h2>
           <p style={{fontSize:17, lineHeight:1.6, color:'var(--text-2)', maxWidth:600}}>
-            AutoDarts setups usually require a mix of printed parts, cameras, lighting, cables, and a computer. DartCraft packages the key hardware into clear kit options so Australian players can get started faster.
+            AutoDarts setups involve cameras, lighting, mounting, software, and calibration. DartCraft helps take the guesswork out of the hardware side with clear kit options and a full system that includes a pre-configured mini PC.
           </p>
         </div>
 
@@ -232,7 +232,7 @@ const ProductExplain = () => {
                 <div style={{color:'var(--text-2)', fontSize:15, lineHeight:1.55}}>{f.body}</div>
               </div>
               <div style={{marginTop:'auto', fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em'}}>
-                0{i+1} / 03
+                0{i+1}/03
               </div>
             </div>
           ))}
@@ -306,7 +306,7 @@ const HowItWorks = () => {
           </div>
         </Container>
 
-        <Container style={{flex:1, display:'flex', alignItems:'center', paddingBottom:'clamp(40px, 6vh, 80px)'}}>
+        <Container style={{flex:1, display:'flex', alignItems:'center', paddingBottom:'clamp(40px, 6vh, 80px)'}} className="dc-how-content">
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:64, alignItems:'center', width:'100%'}} className="dc-how-grid">
             {/* Step text — vertical slide. Each step is 260px tall; stack translates up by active*260 */}
             <div className="dc-how-text" style={{position:'relative', height:260, overflow:'hidden'}}>
@@ -361,12 +361,13 @@ const HowItWorks = () => {
 
       <style>{`
         @media (max-width: 980px){
-          .dc-how-grid{grid-template-columns:1fr !important; gap:16px !important}
-          .dc-how-text{min-height:auto !important; height:200px !important; order:2}
+          .dc-how-grid{grid-template-columns:1fr !important; gap:12px !important}
+          .dc-how-text{min-height:auto !important; height:180px !important; order:2}
           .dc-how-visual{max-width:420px; margin:0 auto; order:1; flex-shrink:0}
-          .dc-how-visual > div{height:220px !important; padding:20px !important}
-          .dc-how-header{padding-top:72px !important; padding-bottom:8px !important}
-          .dc-how-header h2{font-size:22px !important}
+          .dc-how-visual > div{height:240px !important; padding:20px !important}
+          .dc-how-header{padding-top:72px !important; padding-bottom:6px !important}
+          .dc-how-header h2{font-size:22px !important; margin-top:8px !important}
+          .dc-how-content{align-items:flex-start !important; padding-top:10px !important; padding-bottom:20px !important}
         }
       `}</style>
     </section>
@@ -390,7 +391,7 @@ const PACKAGES = [
     includes:['Printed ring with camera mounts','LED lighting','Cameras for AutoDarts tracking'],
     excludes:['PC','Keyboard or mouse','Speaker','Dartboard'],
     cta:'Select camera kit' },
-  { id:'full-system', name:'Full AutoDarts System', price:549, badge:'Easiest setup',
+  { id:'full-system', name:'Full AutoDarts System', price:599, badge:'Easiest setup',
     bestFor:'Customers who want the easiest setup option with the least technical work.',
     includes:['Printed ring with camera mounts','LED lighting','Cameras','Mini PC pre-configured for AutoDarts','Wireless keyboard with touchpad','Speaker','Setup manual'],
     excludes:['Dartboard','Monitor / display','In-home installation'],
@@ -421,7 +422,7 @@ const StockPill = ({state}) => {
 };
 window.StockPill = StockPill;
 
-const Packages = ({onSelect}) => {
+const Packages = ({onSelect, dbPrices={}}) => {
   const [stockQty, setStockQty] = useState({});
 
   useEffect(() => {
@@ -464,7 +465,7 @@ const Packages = ({onSelect}) => {
               <div style={{fontFamily:'var(--mono)', fontSize:11, letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:8}}>0{i+1}</div>
               <h3 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:21, lineHeight:1.15, letterSpacing:'-0.015em', margin:'0 0 14px', minHeight:'2.4em'}}>{p.name}</h3>
               <div style={{display:'flex', alignItems:'baseline', gap:6, marginBottom:6}}>
-                <span style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:38, letterSpacing:'-0.02em'}}>${p.price}</span>
+                <span style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:38, letterSpacing:'-0.02em'}}>${dbPrices[p.id] ?? p.price}</span>
                 <span style={{color:'var(--text-3)', fontSize:13}}>AUD</span>
               </div>
               <div style={{marginBottom:16}}>
@@ -511,7 +512,9 @@ const Packages = ({onSelect}) => {
 };
 
 // ── Full system callout ───────────────────────────────────────────────
-const FullSystemCallout = ({onSelect}) => (
+const FullSystemCallout = ({onSelect, dbPrices={}}) => {
+  const fullPrice = dbPrices['full-system'] ?? 599;
+  return (
   <section style={{padding:'80px 0', position:'relative'}}>
     <Container>
       <div style={{
@@ -546,7 +549,7 @@ const FullSystemCallout = ({onSelect}) => (
           }}>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
               <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em'}}>FULL SYSTEM · IN THE BOX</div>
-              <div style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:18}}>$549</div>
+              <div style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:18}}>${fullPrice}</div>
             </div>
             {[
               {i:<Icons.Ring size={18}/>, t:'Printed ring + camera mounts'},
@@ -570,7 +573,8 @@ const FullSystemCallout = ({onSelect}) => (
       }
     `}</style>
   </section>
-);
+  );
+};
 
 // ── Before You Order ───────────────────────────────────────────────
 const BeforeYouOrder = () => {

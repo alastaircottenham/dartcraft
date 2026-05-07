@@ -20,7 +20,11 @@
       "Bash(node --check server.js)",
       "PowerShell(Get-NetTCPConnection -LocalPort 3000 -State Listen | Select-Object LocalAddress, LocalPort, OwningProcess | ForEach-Object { $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; [PSCustomObject]@{PID=$_.OwningProcess; Name=$proc.Name; Port=$_.LocalPort} })",
       "Bash(netstat -ano)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(cp \"/c/Users/Alastair/Downloads/step1.png\" \"assets/step1-assemble.png\")",
+      "Bash(cp \"/c/Users/Alastair/Downloads/step2.png\" \"assets/step2-mount.png\")",
+      "Bash(cp \"/c/Users/Alastair/Downloads/step3.png\" \"assets/step3-connect.png\")",
+      "Bash(cp \"/c/Users/Alastair/Downloads/step5.png\" \"assets/step5-play.png\")"
     ]
   }
 }
