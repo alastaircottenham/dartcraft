@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Email Preview — DartCraft</title>
+  <style>
+    body { margin: 0; background: #1a1a2e; font-family: sans-serif; padding: 40px 20px; }
+    h2 { color: #fff; font-family: monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 12px; opacity: 0.5; }
+    .email-block { margin-bottom: 60px; }
+    iframe { width: 100%; border: none; border-radius: 8px; display: block; }
+  </style>
+</head>
+<body>
+
+<div class="email-block">
+  <h2>1 — Customer: Order Confirmation</h2>
+  <iframe id="f1" scrolling="no"></iframe>
+</div>
+
+<div class="email-block">
+  <h2>2 — Owner: New Order Notification</h2>
+  <iframe id="f2" scrolling="no"></iframe>
+</div>
+
+<div class="email-block">
+  <h2>3 — Customer: Shipping Notification</h2>
+  <iframe id="f3" scrolling="no"></iframe>
+</div>
+
+<script>
+const ACCENT = '#7C5CFF';
+
+function emailShell({ badge, badgeColor, body }) {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#e8e8ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#e8e8ed;padding:48px 20px">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10)">
+  <tr><td style="background:#050607;padding:30px 40px">
+    <p style="margin:0;font-size:20px;font-weight:700;color:#F5F5F0;letter-spacing:-0.02em">DartCraft</p>
+    <p style="margin:8px 0 0;font-size:11px;color:${badgeColor};font-family:monospace;letter-spacing:0.10em;text-transform:uppercase">${badge}</p>
+  </td></tr>
+  <tr><td style="background:#ffffff;padding:40px">
+    ${body}
+  </td></tr>
+  <tr><td style="background:#f2f2f5;padding:20px 40px;border-top:1px solid #e4e4e8">
+    <p style="margin:0;font-size:11px;color:#aaa;text-align:center;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase">DartCraft &middot; Australia &middot; <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF;text-decoration:none">hello@dartcraft.com.au</a></p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+}
+
+function detailRow(label, value) {
+  return `<tr>
+    <td style="padding:11px 0;width:120px;vertical-align:top;font-size:11px;color:#999;font-family:monospace;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid #f0f0f0">${label}</td>
+    <td style="padding:11px 0;font-size:14px;color:#222;line-height:1.6;border-bottom:1px solid #f0f0f0">${value}</td>
+  </tr>`;
+}
+
+const m = {
+  customerName: 'Alastair Cottenham',
+  packageName: 'Full AutoDarts System',
+  packageId: 'full-system',
+  street: '31 Affinity Street',
+  suburb: 'Wellard',
+  state: 'WA',
+  postcode: '6170',
+  phone: '0418 793 295',
+  notes: 'Please leave at front door if not home.',
+};
+const sessionId = 'cs_live_b1suTzG4sXkuUoRuTbNGUkI3uW22VuVP8WSMb2C9jx3iVc83COim378FMk';
+const amount = '$649.95 AUD';
+const date = '8 May 2026, 7:02 pm';
+const BASE_URL = 'https://dartcraft.com.au';
+
+// 1. Order confirmation
+const confirmBody = `
+  <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Order confirmed.</p>
+  <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Hi ${m.customerName.split(' ')[0]}, your DartCraft kit is confirmed and we're getting it ready to ship.</p>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-radius:12px;padding:24px 28px;margin-bottom:28px">
+    <tr><td>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${detailRow('Package', `<strong>${m.packageName}</strong>`)}
+        ${detailRow('Amount paid', `<strong>${amount}</strong>`)}
+        ${detailRow('Ship to', `${m.customerName}<br>${m.street}<br>${m.suburb} ${m.state} ${m.postcode}<br>Australia`)}
+      </table>
+    </td></tr>
+  </table>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:20px 24px;margin-bottom:32px">
+    <tr><td>
+      <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#92400e">What happens next</p>
+      <p style="margin:0;font-size:13px;color:#78350f;line-height:1.65">We'll pack your kit and dispatch it with tracking. You'll receive a shipping confirmation when it's on its way. Your setup manual is included in the box.</p>
+    </td></tr>
+  </table>
+  <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
+`;
+
+// 2. Owner notification
+const ownerBody = `
+  <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">New order received.</p>
+  <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">${date} AEST &mdash; ${m.packageName} &mdash; <strong>${amount}</strong></p>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-radius:12px;padding:24px 28px;margin-bottom:28px">
+    <tr><td>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${detailRow('Package', `<strong>${m.packageName}</strong>`)}
+        ${detailRow('Amount', `<strong>${amount}</strong>`)}
+        ${detailRow('Name', m.customerName)}
+        ${detailRow('Email', 'alastair.cottenham@gmail.com')}
+        ${detailRow('Phone', m.phone)}
+        ${detailRow('Ship to', `${m.street}<br>${m.suburb} ${m.state} ${m.postcode}<br>Australia`)}
+        ${detailRow('Notes', m.notes)}
+        ${detailRow('Stripe ID', `<span style="font-family:monospace;font-size:11px;color:#aaa">${sessionId}</span>`)}
+      </table>
+    </td></tr>
+  </table>
+  <p style="margin:0"><a href="${BASE_URL}/admin" style="display:inline-block;padding:13px 28px;background:#7C5CFF;color:#fff;border-radius:99px;text-decoration:none;font-size:14px;font-weight:700;letter-spacing:-0.01em">Open Admin &rarr;</a></p>
+`;
+
+// 3. Shipping
+const shipBody = `
+  <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Your order has shipped.</p>
+  <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Hi ${m.customerName.split(' ')[0]}, your <strong>${m.packageName}</strong> has been packed and dispatched.</p>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-radius:12px;padding:24px 28px;margin-bottom:28px">
+    <tr><td>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${detailRow('Package', `<strong>${m.packageName}</strong>`)}
+        ${detailRow('Delivering to', `${m.customerName}<br>${m.street}<br>${m.suburb} ${m.state} ${m.postcode}<br>Australia`)}
+      </table>
+    </td></tr>
+  </table>
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 24px;margin-bottom:32px">
+    <tr><td>
+      <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#166534">Tracking info</p>
+      <p style="margin:0;font-size:13px;color:#15803d;line-height:1.65">Tracking details will be provided separately once available from the courier. Your setup manual is included in the box.</p>
+    </td></tr>
+  </table>
+  <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
+`;
+
+function setIframe(id, html) {
+  const f = document.getElementById(id);
+  const doc = f.contentDocument || f.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  setTimeout(() => { f.style.height = (doc.body.scrollHeight + 80) + 'px'; }, 100);
+}
+
+setIframe('f1', emailShell({ badge: '&#9679; Order confirmed', badgeColor: '#22c55e', body: confirmBody }));
+setIframe('f2', emailShell({ badge: '&#9679; New order', badgeColor: '#7C5CFF', body: ownerBody }));
+setIframe('f3', emailShell({ badge: '&#9679; Shipped', badgeColor: '#22c55e', body: shipBody }));
+</script>
+</body>
+</html>

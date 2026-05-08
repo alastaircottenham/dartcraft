@@ -135,10 +135,15 @@
     .detail-value.mono { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
 
     .ship-action { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border-2); flex-wrap: wrap; }
-    .ship-btn { padding: 10px 22px; border-radius: 99px; border: none; background: var(--success); color: #0a0b10; font-family: var(--sans); font-weight: 700; font-size: 13px; cursor: pointer; transition: opacity 0.15s; }
+    .ship-btn { padding: 10px 22px; border-radius: 99px; border: none; background: var(--success); color: #0a0b10; font-family: var(--sans); font-weight: 700; font-size: 13px; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
     .ship-btn:hover:not(:disabled) { opacity: 0.85; }
     .ship-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .ship-note { font-size: 12px; color: var(--text-3); }
+    .tracking-input { background: #0a0b10; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 13px; font-family: var(--mono); letter-spacing: 0.04em; width: 240px; outline: none; transition: border 0.15s; }
+    .tracking-input:focus { border-color: var(--success); }
+    .tracking-input.error { border-color: #ef4444; }
+    .tracking-link { font-family: var(--mono); font-size: 11px; color: var(--success); text-decoration: none; letter-spacing: 0.04em; }
+    .tracking-link:hover { text-decoration: underline; }
 
     @media (max-width: 640px) {
       .stock-card { grid-template-columns: 1fr; }
@@ -441,9 +446,10 @@ function renderOrders(orders) {
           <div class="ship-action">
             ${isShipped
               ? `<span class="status-badge status-shipped"><svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg> Shipped ${shipDate}</span>
+                 ${o.trackingNumber ? `<a class="tracking-link" href="https://auspost.com.au/mypost/track/#/details/${o.trackingNumber}" target="_blank" rel="noopener">&#128230; ${o.trackingNumber}</a>` : ''}
                  <span class="ship-note">Shipping notification sent to customer.</span>`
-              : `<button class="ship-btn" onclick="markShipped('${o.id}', this)">Mark as shipped</button>
-                 <span class="ship-note">Sends a shipping notification email to the customer.</span>`
+              : `<input class="tracking-input" id="track-${o.id}" placeholder="Australia Post tracking number" autocomplete="off"/>
+                 <button class="ship-btn" onclick="markShipped('${o.id}', this)">Mark as shipped</button>`
             }
           </div>
         </div>
@@ -542,17 +548,27 @@ async function deleteCode(code) {
 }
 
 async function markShipped(id, btn) {
-  if (!confirm('Mark this order as shipped and send a notification email to the customer?')) return;
+  const trackingInput = document.getElementById(`track-${id}`);
+  const trackingNumber = trackingInput ? trackingInput.value.trim() : '';
+  if (!trackingNumber) {
+    trackingInput.classList.add('error');
+    trackingInput.placeholder = 'Enter tracking number first';
+    trackingInput.focus();
+    trackingInput.addEventListener('input', () => trackingInput.classList.remove('error'), { once: true });
+    return;
+  }
+  if (!confirm(`Mark as shipped and send notification to customer?\n\nTracking: ${trackingNumber}`)) return;
   btn.disabled = true; btn.textContent = 'Sending…';
+  if (trackingInput) trackingInput.disabled = true;
   try {
-    const res = await authFetch(`/api/admin/orders/${id}/ship`, { method: 'POST' });
+    const res = await authFetch(`/api/admin/orders/${id}/ship`, { method: 'POST', body: JSON.stringify({ trackingNumber }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed');
-    // Refresh orders list to reflect new state
     await loadOrders();
   } catch (err) {
     alert('Error: ' + err.message);
     btn.disabled = false; btn.textContent = 'Mark as shipped';
+    if (trackingInput) trackingInput.disabled = false;
   }
 }
 </script>

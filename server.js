@@ -81,104 +81,121 @@ function fmt(cents) {
   return `$${(cents / 100).toFixed(2)} AUD`;
 }
 
+function emailShell({ badge, badgeColor, body }) {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#e8e8ed;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#e8e8ed;padding:48px 20px">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.10)">
+  <tr><td style="background:#050607;padding:30px 40px">
+    <p style="margin:0;font-size:20px;font-weight:700;color:#F5F5F0;letter-spacing:-0.02em">DartCraft</p>
+    <p style="margin:8px 0 0;font-size:11px;color:${badgeColor};font-family:monospace;letter-spacing:0.10em;text-transform:uppercase">${badge}</p>
+  </td></tr>
+  <tr><td style="background:#ffffff;padding:40px">
+    ${body}
+  </td></tr>
+  <tr><td style="background:#f2f2f5;padding:20px 40px;border-top:1px solid #e4e4e8">
+    <p style="margin:0;font-size:11px;color:#aaa;text-align:center;font-family:monospace;letter-spacing:0.06em;text-transform:uppercase">DartCraft &middot; Australia &middot; <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF;text-decoration:none">hello@dartcraft.com.au</a></p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+}
+
+function detailRow(label, value) {
+  return `<tr>
+    <td style="padding:11px 0;width:120px;vertical-align:top;font-size:11px;color:#999;font-family:monospace;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid #f0f0f0">${label}</td>
+    <td style="padding:11px 0;font-size:14px;color:#222;line-height:1.6;border-bottom:1px solid #f0f0f0">${value}</td>
+  </tr>`;
+}
+
 function confirmationEmailHtml(session) {
   const m = session.metadata || {};
   const amount = session.amount_total ? fmt(session.amount_total) : '';
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 20px"><tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;max-width:600px;width:100%">
-  <tr><td style="background:#050607;padding:32px 40px">
-    <p style="margin:0;font-size:22px;font-weight:700;color:#F5F5F0;letter-spacing:-0.02em">DartCraft</p>
-    <p style="margin:8px 0 0;font-size:12px;color:#5A6070;font-family:monospace;letter-spacing:0.08em;text-transform:uppercase">Order Confirmed</p>
-  </td></tr>
-  <tr><td style="padding:36px 40px">
-    <p style="margin:0 0 20px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.02em">Thanks, ${m.customerName || 'there'}! 🎯</p>
-    <p style="margin:0 0 28px;font-size:15px;color:#555;line-height:1.6">Your order has been received and we're getting it ready. Here are your full details:</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f8f8;border-radius:10px;padding:24px;margin-bottom:24px">
+  const body = `
+    <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Order confirmed.</p>
+    <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Hi ${m.customerName?.split(' ')[0] || 'there'}, your DartCraft kit is confirmed and we're getting it ready to ship.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-radius:12px;padding:24px 28px;margin-bottom:28px">
       <tr><td>
-        <p style="margin:0 0 4px;font-size:11px;color:#999;font-family:monospace;letter-spacing:0.08em;text-transform:uppercase">Package</p>
-        <p style="margin:0 0 20px;font-size:17px;font-weight:700;color:#111">${m.packageName || ''}</p>
-        <p style="margin:0 0 4px;font-size:11px;color:#999;font-family:monospace;letter-spacing:0.08em;text-transform:uppercase">Amount paid</p>
-        <p style="margin:0 0 20px;font-size:17px;font-weight:700;color:#111">${amount}</p>
-        <p style="margin:0 0 4px;font-size:11px;color:#999;font-family:monospace;letter-spacing:0.08em;text-transform:uppercase">Shipping to</p>
-        <p style="margin:0;font-size:14px;color:#333;line-height:1.7">${m.customerName || ''}<br>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia</p>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          ${detailRow('Package', `<strong>${m.packageName || ''}</strong>`)}
+          ${detailRow('Amount paid', `<strong>${amount}</strong>`)}
+          ${detailRow('Ship to', `${m.customerName || ''}<br>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia`)}
+        </table>
       </td></tr>
     </table>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:20px;margin-bottom:28px">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:20px 24px;margin-bottom:32px">
       <tr><td>
-        <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:#92400e">What happens next</p>
-        <p style="margin:0;font-size:13px;color:#78350f;line-height:1.6">We'll pack your kit and ship it with tracking. You'll get a shipping notification when it's on its way. Setup manual is included in the box.</p>
+        <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#92400e">What happens next</p>
+        <p style="margin:0;font-size:13px;color:#78350f;line-height:1.65">We'll pack your kit and dispatch it with tracking. You'll receive a shipping confirmation when it's on its way. Your setup manual is included in the box.</p>
       </td></tr>
     </table>
-    <p style="margin:0;font-size:13px;color:#aaa;line-height:1.6">Questions? Email <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
-  </td></tr>
-  <tr><td style="background:#f8f8f8;padding:20px 40px;border-top:1px solid #eee">
-    <p style="margin:0;font-size:12px;color:#bbb;text-align:center">DartCraft · Australia · <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF;text-decoration:none">hello@dartcraft.com.au</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+    <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
+  `;
+  return emailShell({ badge: '&#9679; Order confirmed', badgeColor: '#22c55e', body });
 }
 
 function ownerNotificationHtml(session) {
   const m = session.metadata || {};
   const amount = session.amount_total ? fmt(session.amount_total) : '—';
   const date = new Date(session.created * 1000).toLocaleString('en-AU', { timeZone: 'Australia/Sydney', dateStyle: 'medium', timeStyle: 'short' });
-  const notesRow = m.notes ? `<tr style="border-bottom:1px solid #f0f0f0"><td style="color:#888;padding:10px 0;width:130px;vertical-align:top">Notes</td><td style="color:#333;padding:10px 0">${m.notes}</td></tr>` : '';
-  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f4f4f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 20px"><tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;max-width:600px;width:100%">
-  <tr><td style="background:#7C5CFF;padding:28px 36px">
-    <p style="margin:0;font-size:20px;font-weight:700;color:#fff">🎯 New order received!</p>
-    <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,0.75)">${date} AEST</p>
-  </td></tr>
-  <tr><td style="padding:32px 36px">
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px">
-      <tr style="border-bottom:1px solid #f0f0f0"><td style="color:#888;padding:10px 0;width:130px">Package</td><td style="font-weight:700;color:#111;padding:10px 0">${m.packageName || m.packageId || '—'}</td></tr>
-      <tr style="border-bottom:1px solid #f0f0f0"><td style="color:#888;padding:10px 0">Amount</td><td style="font-weight:700;color:#111;padding:10px 0">${amount}</td></tr>
-      <tr style="border-bottom:1px solid #f0f0f0"><td style="color:#888;padding:10px 0">Name</td><td style="color:#333;padding:10px 0">${m.customerName || '—'}</td></tr>
-      <tr style="border-bottom:1px solid #f0f0f0"><td style="color:#888;padding:10px 0">Email</td><td style="color:#333;padding:10px 0">${session.customer_email || '—'}</td></tr>
-      <tr style="border-bottom:1px solid #f0f0f0"><td style="color:#888;padding:10px 0">Phone</td><td style="color:#333;padding:10px 0">${m.phone || '—'}</td></tr>
-      <tr style="border-bottom:1px solid #f0f0f0"><td style="color:#888;padding:10px 0;vertical-align:top">Ship to</td><td style="color:#333;padding:10px 0;line-height:1.7">${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}</td></tr>
-      ${notesRow}
-      <tr><td style="color:#bbb;padding:10px 0;font-size:12px">Stripe ID</td><td style="color:#bbb;padding:10px 0;font-family:monospace;font-size:11px">${session.id}</td></tr>
+  const body = `
+    <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">New order received.</p>
+    <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">${date} AEST &mdash; ${m.packageName || m.packageId || '—'} &mdash; <strong>${amount}</strong></p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-radius:12px;padding:24px 28px;margin-bottom:28px">
+      <tr><td>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          ${detailRow('Package', `<strong>${m.packageName || m.packageId || '—'}</strong>`)}
+          ${detailRow('Amount', `<strong>${amount}</strong>`)}
+          ${detailRow('Name', m.customerName || '—')}
+          ${detailRow('Email', session.customer_email || '—')}
+          ${detailRow('Phone', m.phone || '—')}
+          ${detailRow('Ship to', `${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia`)}
+          ${m.notes ? detailRow('Notes', m.notes) : ''}
+          ${detailRow('Stripe ID', `<span style="font-family:monospace;font-size:11px;color:#aaa">${session.id}</span>`)}
+        </table>
+      </td></tr>
     </table>
-  </td></tr>
-  <tr><td style="background:#f8f8f8;padding:20px 36px;border-top:1px solid #eee">
-    <p style="margin:0;font-size:12px;color:#bbb;text-align:center">Manage orders in your <a href="${BASE_URL}/admin" style="color:#7C5CFF">DartCraft Admin</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+    <p style="margin:0"><a href="${BASE_URL}/admin" style="display:inline-block;padding:13px 28px;background:#7C5CFF;color:#fff;border-radius:99px;text-decoration:none;font-size:14px;font-weight:700;letter-spacing:-0.01em">Open Admin &rarr;</a></p>
+  `;
+  return emailShell({ badge: '&#9679; New order', badgeColor: '#7C5CFF', body });
 }
 
-function shippingEmailHtml(session) {
+function shippingEmailHtml(session, trackingNumber = '') {
   const m = session.metadata || {};
   const firstName = (m.customerName || 'there').split(' ')[0];
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 20px"><tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;max-width:600px;width:100%">
-  <tr><td style="background:#050607;padding:32px 40px">
-    <p style="margin:0;font-size:22px;font-weight:700;color:#F5F5F0;letter-spacing:-0.02em">DartCraft</p>
-    <p style="margin:8px 0 0;font-size:12px;color:#22c55e;font-family:monospace;letter-spacing:0.08em;text-transform:uppercase">● Your order has shipped</p>
-  </td></tr>
-  <tr><td style="padding:36px 40px">
-    <p style="margin:0 0 20px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.02em">It's on its way, ${firstName}! 📦</p>
-    <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6">Your <strong>${m.packageName || 'DartCraft kit'}</strong> has been packed and dispatched to:</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f8f8;border-radius:10px;padding:20px;margin-bottom:28px">
-      <tr><td style="font-size:14px;color:#333;line-height:1.8">${m.customerName || ''}<br>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia</td></tr>
+  const trackingBlock = trackingNumber
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 24px;margin-bottom:32px">
+        <tr><td>
+          <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#166534">Australia Post tracking</p>
+          <p style="margin:0 0 12px;font-size:13px;color:#15803d;line-height:1.65">Your tracking number is <strong>${trackingNumber}</strong>.</p>
+          <a href="https://auspost.com.au/mypost/track/#/details/${trackingNumber}" style="display:inline-block;padding:10px 20px;background:#166534;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">Track my parcel &rarr;</a>
+        </td></tr>
+      </table>`
+    : `<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 24px;margin-bottom:32px">
+        <tr><td>
+          <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#166534">Tracking info</p>
+          <p style="margin:0;font-size:13px;color:#15803d;line-height:1.65">Tracking details will be sent separately via Australia Post once available.</p>
+        </td></tr>
+      </table>`;
+  const body = `
+    <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Your order has shipped.</p>
+    <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Hi ${firstName}, your <strong>${m.packageName || 'DartCraft kit'}</strong> has been packed and dispatched.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-radius:12px;padding:24px 28px;margin-bottom:28px">
+      <tr><td>
+        <table width="100%" cellpadding="0" cellspacing="0">
+          ${detailRow('Package', `<strong>${m.packageName || 'DartCraft Kit'}</strong>`)}
+          ${detailRow('Delivering to', `${m.customerName || ''}<br>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia`)}
+        </table>
+      </td></tr>
     </table>
-    <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6">Tracking information will be provided separately where available. Your setup manual is included in the box.</p>
-    <p style="margin:0;font-size:13px;color:#aaa;line-height:1.6">Any questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
-  </td></tr>
-  <tr><td style="background:#f8f8f8;padding:20px 40px;border-top:1px solid #eee">
-    <p style="margin:0;font-size:12px;color:#bbb;text-align:center">DartCraft · Australia · <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF;text-decoration:none">hello@dartcraft.com.au</a></p>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+    ${trackingBlock}
+    <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
+  `;
+  return emailShell({ badge: '&#9679; Shipped', badgeColor: '#22c55e', body });
 }
 
 function orderRowToSession(order) {
@@ -558,7 +575,7 @@ app.get('/api/admin/orders', requireAdmin, async (_req, res) => {
     const result = await queryDb(
       `select stripe_session_id, created_at, amount_total, currency, customer_email,
               package_id, package_name, customer_name, phone, street, suburb, state, postcode, notes,
-              promo_code, discount_cents, shipped, shipped_at
+              promo_code, discount_cents, shipped, shipped_at, tracking_number
        from orders
        where payment_status = 'paid'
        order by created_at desc
@@ -585,6 +602,7 @@ app.get('/api/admin/orders', requireAdmin, async (_req, res) => {
       },
       shipped: Boolean(o.shipped),
       shippedAt: o.shipped_at ? new Date(o.shipped_at).toISOString() : null,
+      trackingNumber: o.tracking_number || '',
     }));
     res.json(orders);
   } catch (err) {
@@ -595,6 +613,7 @@ app.get('/api/admin/orders', requireAdmin, async (_req, res) => {
 
 app.post('/api/admin/orders/:id/ship', requireAdmin, async (req, res) => {
   const { id } = req.params;
+  const trackingNumber = (req.body.trackingNumber || '').trim();
   try {
     const orderResult = await queryDb(
       `select stripe_session_id, payment_status, amount_total, customer_email, package_id, package_name,
@@ -618,23 +637,23 @@ app.post('/api/admin/orders/:id/ship', requireAdmin, async (req, res) => {
 
     const updated = await queryDb(
       `update orders
-       set shipped = true, shipped_at = now()
+       set shipped = true, shipped_at = now(), tracking_number = $2
        where stripe_session_id = $1
        returning stripe_session_id, payment_status, amount_total, customer_email, package_id, package_name,
                  customer_name, phone, street, suburb, state, postcode, notes, promo_code, discount_cents,
                  shipped, shipped_at, created_at`,
-      [id]
+      [id, trackingNumber || null]
     );
     const shippedOrder = updated.rows[0];
 
     await sendEmail(
       shippedOrder.customer_email,
-      `Your DartCraft order has shipped! 📦`,
-      shippingEmailHtml(orderRowToSession(shippedOrder))
+      'Your DartCraft order has shipped',
+      shippingEmailHtml(orderRowToSession(shippedOrder), trackingNumber)
     );
 
-    console.log(`[admin] Order ${id} marked as shipped`);
-    res.json({ shipped: true, shippedAt: new Date(shippedOrder.shipped_at).toISOString() });
+    console.log(`[admin] Order ${id} marked as shipped${trackingNumber ? ` (tracking: ${trackingNumber})` : ''}`);
+    res.json({ shipped: true, shippedAt: new Date(shippedOrder.shipped_at).toISOString(), trackingNumber });
   } catch (err) {
     console.error('Ship error:', err.message);
     res.status(500).json({ error: 'Could not mark order as shipped.' });
@@ -748,6 +767,9 @@ app.get('/privacy', (_req, res) => res.sendFile(path.join(__dirname, 'privacy.ht
 app.get('/',        (_req, res) => res.sendFile(path.join(__dirname, 'Dartcraft.html')));
 
 // ── Start ─────────────────────────────────────────────────────────────────────
+
+// Add tracking_number column if it doesn't exist yet (safe to run on every start)
+queryDb('ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number text').catch(() => {});
 
 app.listen(PORT, () => {
   console.log(`\n🎯 DartCraft server running at ${BASE_URL}`);
