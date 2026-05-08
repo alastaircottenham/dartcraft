@@ -56,10 +56,13 @@ async function getActivePromo(rawCode) {
   return result.rows[0] || null;
 }
 
-function calcDiscount(promo, priceAud) {
+function calcDiscount(promo, priceAud, shippingAud = 0) {
   if (!promo || !promo.active) return 0;
+  if (promo.type === 'free_shipping') return Math.round(shippingAud * 100);
   if (promo.type === 'percent') return Math.round(priceAud * promo.value / 100) * 100;
-  return Math.min(promo.value * 100, priceAud * 100);
+  // fixed: can apply against total (product + shipping), minimum $1 remaining
+  const totalCents = Math.round((priceAud + shippingAud) * 100);
+  return Math.min(Math.round(promo.value * 100), totalCents - 100);
 }
 
 // ── Email helpers ─────────────────────────────────────────────────────────────
@@ -214,6 +217,10 @@ app.use(express.static(__dirname));
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
+app.get('/api/config', (_req, res) => {
+  res.json({ googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '' });
+});
+
 app.get('/api/stock', (_req, res) => {
   (async () => {
     try {
@@ -258,12 +265,18 @@ app.post('/api/validate-promo', async (req, res) => {
     if (!promo) return res.json({ valid: false });
 
     const promoValue = Number(promo.value);
+    const freeShipping = promo.type === 'free_shipping';
     const discountCents = calcDiscount(
       { type: promo.type, value: promoValue, active: true },
-      Number(pkg.price_aud)
+      Number(pkg.price_aud),
+      SHIPPING_CENTS / 100
     );
-    const discountDisplay = promo.type === 'percent' ? `${promoValue}% off` : `$${promoValue} off`;
-    res.json({ valid: true, discountCents, discountDisplay });
+    const discountDisplay = freeShipping
+      ? 'Free shipping'
+      : promo.type === 'percent'
+        ? `${promoValue}% off`
+        : `$${(discountCents / 100).toFixed(2)} off`;
+    res.json({ valid: true, discountCents, discountDisplay, freeShipping });
   } catch (err) {
     console.error('[api/validate-promo] DB error:', err.message);
     res.status(500).json({ valid: false });
@@ -291,7 +304,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
       if (promo) {
         discountCents = calcDiscount(
           { type: promo.type, value: Number(promo.value), active: true },
-          Number(pkg.price_aud)
+          Number(pkg.price_aud),
+          SHIPPING_CENTS / 100
         );
         appliedPromo = String(promo.code).toUpperCase();
       }
@@ -651,11 +665,11 @@ app.post('/api/admin/codes', requireAdmin, async (req, res) => {
   if (!key || !/^[A-Z0-9]+$/.test(key)) {
     return res.status(400).json({ error: 'Code must contain only letters and numbers.' });
   }
-  if (!['percent', 'fixed'].includes(type)) {
+  if (!['percent', 'fixed', 'free_shipping'].includes(type)) {
     return res.status(400).json({ error: 'Type must be "percent" or "fixed".' });
   }
-  const num = parseFloat(value);
-  if (!num || num <= 0 || (type === 'percent' && num > 100)) {
+  const num = type === 'free_shipping' ? 0 : parseFloat(value);
+  if (type !== 'free_shipping' && (!num || num <= 0 || (type === 'percent' && num > 100))) {
     return res.status(400).json({ error: 'Invalid value.' });
   }
   try {
@@ -678,7 +692,7 @@ app.post('/api/admin/codes', requireAdmin, async (req, res) => {
 app.put('/api/admin/codes/:code', requireAdmin, async (req, res) => {
   const key = req.params.code.toUpperCase();
   const { type, value, active } = req.body;
-  if (type !== undefined && !['percent', 'fixed'].includes(type)) {
+  if (type !== undefined && !['percent', 'fixed', 'free_shipping'].includes(type)) {
     return res.status(400).json({ error: 'Type must be "percent" or "fixed".' });
   }
   if (value !== undefined) {

@@ -1,4 +1,4 @@
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
 const AU_STATES = ['NSW','VIC','QLD','WA','SA','TAS','ACT','NT'];
 
@@ -48,6 +48,58 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
   const [promoStatus, setPromoStatus] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
+  const streetRef = useRef(null);
+  const acRef = useRef(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const attach = () => {
+      if (!streetRef.current || !window.google?.maps?.places) return;
+      if (acRef.current) return;
+      const ac = new window.google.maps.places.Autocomplete(streetRef.current, {
+        componentRestrictions: { country: 'au' },
+        fields: ['address_components'],
+        types: ['address'],
+      });
+      acRef.current = ac;
+      ac.addListener('place_changed', () => {
+        const place = ac.getPlace();
+        if (!place.address_components) return;
+        let num = '', route = '', suburb = '', state = '', postcode = '';
+        for (const c of place.address_components) {
+          const t = c.types[0];
+          if (t === 'street_number') num = c.long_name;
+          else if (t === 'route') route = c.long_name;
+          else if (t === 'locality') suburb = c.long_name;
+          else if (t === 'administrative_area_level_1') state = c.short_name;
+          else if (t === 'postal_code') postcode = c.long_name;
+        }
+        if (num || route) setForm(f => ({...f, street: `${num} ${route}`.trim()}));
+        if (suburb)  setForm(f => ({...f, suburb}));
+        if (state && AU_STATES.includes(state)) setForm(f => ({...f, state}));
+        if (postcode) setForm(f => ({...f, postcode}));
+        setErrors(prev => ({...prev, street: undefined, suburb: undefined, state: undefined, postcode: undefined}));
+      });
+    };
+
+    const load = async () => {
+      if (window.google?.maps?.places) { attach(); return; }
+      try {
+        const { googleMapsApiKey } = await fetch('/api/config').then(r => r.json());
+        if (!googleMapsApiKey || !active) return;
+        window.__dcMapsInit = () => { if (active) attach(); };
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&callback=__dcMapsInit`;
+        s.async = true;
+        document.head.appendChild(s);
+      } catch {}
+    };
+
+    load();
+    return () => { active = false; };
+  }, []);
+
   useEffect(() => {
     fetch('/api/stock')
       .then(r => r.json())
@@ -63,8 +115,10 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
 
   const pkg = PACKAGES.find(p => p.id === selectedId) || PACKAGES[0];
   const pkgPrice = dbPrices[pkg.id] ?? pkg.price;
-  const discountAud = (promoStatus?.valid && promoStatus.discountCents) ? promoStatus.discountCents / 100 : 0;
-  const total = pkgPrice + SHIPPING_AUD - discountAud;
+  const freeShipping = promoStatus?.valid && promoStatus?.freeShipping;
+  const shippingAud = freeShipping ? 0 : SHIPPING_AUD;
+  const discountAud = (promoStatus?.valid && promoStatus.discountCents && !freeShipping) ? promoStatus.discountCents / 100 : 0;
+  const total = pkgPrice + shippingAud - discountAud;
   const currentStock = stockQty[pkg.id];
   const isSoldOut = typeof currentStock === 'number' && currentStock <= 0;
 
@@ -217,8 +271,8 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
             <div style={{background:'var(--card)', border:'1px solid var(--border)', borderRadius:18, padding:28}}>
               <SectionHead num="03" title="Shipping address" tag="Australia only"/>
               <div style={{display:'grid', gridTemplateColumns:'2fr 1fr 1fr', gap:18}} className="dc-ship-fields">
-                <Field label="Street address" error={errors.street} span={3}>
-                  <input style={inputStyle(errors.street)} value={form.street} onChange={e=>update('street', e.target.value)} placeholder="42 Wallaby Way"/>
+                <Field label="Street address" error={errors.street} span={3} hint="Start typing to search and auto-fill your address">
+                  <input ref={streetRef} style={inputStyle(errors.street)} value={form.street} onChange={e=>update('street', e.target.value)} placeholder="42 Wallaby Way" autoComplete="off"/>
                 </Field>
                 <Field label="Suburb" error={errors.suburb} span={2}>
                   <input style={inputStyle(errors.suburb)} value={form.suburb} onChange={e=>update('suburb', e.target.value)} placeholder="Sydney"/>
@@ -243,7 +297,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
             <div style={{background:'var(--card)', border:'1px solid var(--border)', borderRadius:18, padding:28}}>
               <SectionHead num="04" title="Notes (optional)"/>
               <textarea style={{...inputStyle(false), minHeight:100, resize:'vertical', fontFamily:'var(--body)'}}
-                placeholder="Anything we should know? Specific dartboard model, surround type, delivery instructions…"
+                placeholder="Anything else we should know? Delivery instructions, preferred contact details, or other order notes..."
                 value={form.notes} onChange={e=>update('notes', e.target.value)}/>
             </div>
           </div>
@@ -307,7 +361,8 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
 
               <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18, display:'flex', flexDirection:'column', gap:8}}>
                 <Row k="Subtotal" v={`$${pkgPrice}.00`}/>
-                <Row k="Shipping (AU)" v="$19.95"/>
+                <Row k="Shipping (AU)" v={freeShipping ? '$0.00' : '$19.95'} discount={freeShipping}/>
+                {freeShipping && <Row k={`Promo (${promoCode})`} v="Free shipping" discount/>}
                 {discountAud > 0 && <Row k={`Promo (${promoCode})`} v={`−$${discountAud.toFixed(2)}`} discount/>}
                 <Row k="GST" v="Included" muted/>
                 <div style={{height:1, background:'var(--border-2)', margin:'6px 0'}}/>
@@ -378,6 +433,13 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
         }
         input::placeholder, textarea::placeholder { color: var(--text-3); }
         input:focus, select:focus, textarea:focus { border-color: var(--accent) !important; }
+        .pac-container { background:#13141a; border:1px solid var(--border); border-radius:12px; box-shadow:0 8px 32px rgba(0,0,0,0.5); margin-top:4px; font-family:var(--body); }
+        .pac-item { padding:10px 14px; color:var(--text-2); border-top:1px solid var(--border-2); cursor:pointer; font-size:14px; }
+        .pac-item:first-child { border-top:none; }
+        .pac-item:hover, .pac-item-selected { background:rgba(124,92,255,0.1); color:var(--text); }
+        .pac-item-query { color:var(--text); font-size:14px; }
+        .pac-matched { color:var(--accent); font-weight:600; }
+        .pac-icon { display:none; }
       `}</style>
     </section>
   );

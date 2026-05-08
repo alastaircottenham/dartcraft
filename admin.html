@@ -232,12 +232,13 @@
         </div>
         <div>
           <div class="pkg-label" style="margin-bottom:6px">Type</div>
-          <select id="new-type" class="admin-select">
+          <select id="new-type" class="admin-select" onchange="toggleValueField()">
             <option value="percent">Percent off (%)</option>
             <option value="fixed">Fixed $ off</option>
+            <option value="free_shipping">Free shipping</option>
           </select>
         </div>
-        <div>
+        <div id="value-field">
           <div class="pkg-label" style="margin-bottom:6px">Value</div>
           <input type="number" id="new-value" placeholder="10" min="1"/>
         </div>
@@ -478,7 +479,7 @@ function renderCodes(codes) {
     return;
   }
   document.getElementById('codes-list').innerHTML = entries.map(([code, promo]) => {
-    const label = promo.type === 'percent' ? `${promo.value}% off` : `$${promo.value} off`;
+    const label = promo.type === 'percent' ? `${promo.value}% off` : promo.type === 'free_shipping' ? 'Free shipping' : `$${promo.value} off`;
     const activeBadge = promo.active
       ? 'color:#22c55e;border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.08)'
       : 'color:var(--text-3);border:1px solid var(--border);background:rgba(255,255,255,0.03)';
@@ -499,14 +500,20 @@ function renderCodes(codes) {
   }).join('');
 }
 
+function toggleValueField() {
+  const type = document.getElementById('new-type').value;
+  document.getElementById('value-field').style.display = type === 'free_shipping' ? 'none' : '';
+}
+
 async function addCode() {
   const code = document.getElementById('new-code').value.trim().toUpperCase();
   const type = document.getElementById('new-type').value;
-  const value = parseFloat(document.getElementById('new-value').value);
+  const isFreeShipping = type === 'free_shipping';
+  const value = isFreeShipping ? 0 : parseFloat(document.getElementById('new-value').value);
   const errEl = document.getElementById('add-code-error');
   errEl.style.display = 'none';
   if (!code || !/^[A-Z0-9]+$/.test(code)) { errEl.textContent = 'Code must contain only letters and numbers.'; errEl.style.display = 'block'; return; }
-  if (!value || value <= 0) { errEl.textContent = 'Enter a valid value.'; errEl.style.display = 'block'; return; }
+  if (!isFreeShipping && (!value || value <= 0)) { errEl.textContent = 'Enter a valid value.'; errEl.style.display = 'block'; return; }
   if (type === 'percent' && value > 100) { errEl.textContent = 'Percent cannot exceed 100.'; errEl.style.display = 'block'; return; }
   try {
     const res = await authFetch('/api/admin/codes', { method: 'POST', body: JSON.stringify({ code, type, value, active: true }) });

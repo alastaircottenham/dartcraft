@@ -297,12 +297,21 @@ const HowItWorks = () => {
         display:'flex', flexDirection:'column'
       }} className="dc-how-stage">
         {/* Pinned header */}
-        <Container style={{paddingTop:'clamp(70px, 8vh, 100px)', paddingBottom:16}} className="dc-how-header">
+        <Container style={{paddingTop:'clamp(110px, 14vh, 160px)', paddingBottom:16}} className="dc-how-header">
           <div style={{maxWidth:880}}>
             <Eyebrow>How the setup works</Eyebrow>
-            <h2 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:'clamp(28px, 3.4vw, 44px)', lineHeight:1.04, letterSpacing:'-0.025em', margin:'12px 0 0'}}>
+            <h2 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:'clamp(28px, 3.4vw, 44px)', lineHeight:1.04, letterSpacing:'-0.025em', margin:'12px 0 16px'}}>
               Five steps from box to first leg.
             </h2>
+          </div>
+          {/* Progress bar sits right under the heading */}
+          <div style={{height:3, background:'rgba(255,255,255,0.07)', borderRadius:99, overflow:'hidden', maxWidth:880}}>
+            <div style={{
+              height:'100%', width:`${progress*100}%`, borderRadius:99,
+              background:'linear-gradient(90deg, var(--accent), #a78bfa)',
+              boxShadow:'0 0 12px 2px rgba(124,92,255,0.7)',
+              transition:'width .1s linear',
+            }}/>
           </div>
         </Container>
 
@@ -334,7 +343,9 @@ const HowItWorks = () => {
             {/* Visual */}
             <div className="dc-how-visual">
               <div style={{background:'var(--card)', border:'1px solid var(--border)', borderRadius:24, padding:32, position:'relative', overflow:'hidden'}}>
-                <Visuals.StepVisual step={active}/>
+                <div style={{width:'100%', height:'55vw', maxHeight:460, minHeight:180, overflow:'hidden', borderRadius:10, position:'relative'}}>
+                  <Visuals.StepVisual step={active}/>
+                </div>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:18, paddingTop:18, borderTop:'1px solid var(--border-2)'}}>
                   <div style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--accent)', letterSpacing:'0.1em'}}>STEP {steps[active].n} / 0{N}</div>
                   <div style={{fontFamily:'var(--sans)', fontWeight:600, fontSize:14}}>{steps[active].t}</div>
@@ -353,19 +364,15 @@ const HowItWorks = () => {
           </div>
         </Container>
 
-        {/* scroll progress bar */}
-        <div style={{position:'absolute', left:0, right:0, bottom:0, height:2, background:'rgba(255,255,255,0.05)'}}>
-          <div style={{height:'100%', background:'var(--accent)', width:`${progress*100}%`, transition:'width .1s linear'}}/>
-        </div>
       </div>
 
       <style>{`
         @media (max-width: 980px){
           .dc-how-grid{grid-template-columns:1fr !important; gap:12px !important}
-          .dc-how-text{min-height:auto !important; height:180px !important; order:2}
+          .dc-how-text{min-height:auto !important; height:260px !important; order:2}
           .dc-how-visual{max-width:420px; margin:0 auto; order:1; flex-shrink:0}
-          .dc-how-visual > div{height:240px !important; padding:20px !important}
-          .dc-how-header{padding-top:72px !important; padding-bottom:6px !important}
+          .dc-how-visual > div{padding:20px !important}
+          .dc-how-header{padding-top:105px !important; padding-bottom:6px !important}
           .dc-how-header h2{font-size:22px !important; margin-top:8px !important}
           .dc-how-content{align-items:flex-start !important; padding-top:10px !important; padding-bottom:20px !important}
         }
@@ -448,19 +455,28 @@ const Packages = ({onSelect, dbPrices={}}) => {
         </div>
 
         <div style={{display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:16}} className="dc-pkg-grid">
-          {PACKAGES.map((p,i)=>(
+          {PACKAGES.map((p,i)=>{
+            const isEasiest = p.badge === 'Easiest setup';
+            const isMostPopular = p.badge === 'Most popular';
+            const borderColor = isEasiest ? 'rgba(0,212,200,0.5)' : isMostPopular ? 'rgba(124,92,255,0.4)' : 'var(--border)';
+            const badgeBg = isEasiest ? '#00d4c8' : 'var(--accent)';
+            return (
             <div key={p.id} style={{
               position:'relative', display:'flex', flexDirection:'column',
-              background:'var(--card)', border:`1px solid ${p.badge?'rgba(124,92,255,0.4)':'var(--border)'}`,
+              background:'var(--card)', border:`1px solid ${borderColor}`,
               borderRadius:18, padding:'26px 22px', minHeight:540
             }}>
               {p.badge && (
                 <div style={{
                   position:'absolute', top:-10, left:18,
-                  background:'var(--accent)', color:'#0a0b10', padding:'5px 11px',
+                  background: badgeBg, color:'#0a0b10', padding:'5px 11px',
                   borderRadius:99, fontFamily:'var(--sans)', fontWeight:600, fontSize:11,
-                  letterSpacing:'0.04em', textTransform:'uppercase'
-                }}>{p.badge}</div>
+                  letterSpacing:'0.04em', textTransform:'uppercase',
+                  display:'inline-flex', alignItems:'center', gap:5
+                }}>
+                  {isEasiest && <span style={{fontSize:12}}>✦</span>}
+                  {p.badge}
+                </div>
               )}
               <div style={{fontFamily:'var(--mono)', fontSize:11, letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:8}}>0{i+1}</div>
               <h3 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:21, lineHeight:1.15, letterSpacing:'-0.015em', margin:'0 0 14px', minHeight:'2.4em'}}>{p.name}</h3>
@@ -494,13 +510,13 @@ const Packages = ({onSelect, dbPrices={}}) => {
 
               <button onClick={()=>onSelect(p.id)} style={{
                 marginTop:'auto', padding:'13px 18px', borderRadius:99,
-                background: p.badge ? 'var(--accent)' : '#F5F5F0',
-                color: p.badge ? '#0a0b10' : '#0a0b10',
+                background: isEasiest ? '#00d4c8' : isMostPopular ? 'var(--accent)' : '#F5F5F0',
+                color:'#0a0b10',
                 border:'none', fontFamily:'var(--sans)', fontWeight:600, fontSize:14, cursor:'pointer',
                 display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8
               }}>{p.cta} <Icons.Arrow size={14}/></button>
             </div>
-          ))}
+          );})}
         </div>
       </Container>
       <style>{`
@@ -575,6 +591,95 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
   </section>
   );
 };
+
+// ── Kit Photos ───────────────────────────────────────────────
+const KIT_PHOTOS = [
+  {
+    label: 'What\'s in the box',
+    caption: 'Full system includes PC, keyboard, speaker, cameras, LED lighting, and printed ring. Dartboard and monitor not included.',
+  },
+  {
+    label: '3D-printed ring — front',
+    caption: 'Custom-printed camera ring designed for standard dartboard dimensions. Camera mounts are integrated into the ring.',
+  },
+  {
+    label: '3D-printed ring — side profile',
+    caption: 'Low-profile design sits flush against the board. Minimal obstruction to gameplay.',
+  },
+  {
+    label: 'Ring assembled with cameras',
+    caption: 'Cameras mounted and cabled. LED strip attaches around the outer edge. All hardware included in camera kits.',
+  },
+  {
+    label: 'Customer setup — example 1',
+    caption: 'Example setup only — dartboard, monitor, cabinet, and surroundings not included or supplied by DartCraft.',
+  },
+  {
+    label: 'Customer setup — example 2',
+    caption: 'Example setup only — dartboard, monitor, cabinet, and surroundings not included or supplied by DartCraft.',
+  },
+];
+
+const KitPhotos = () => (
+  <section style={{padding:'100px 0 80px', borderTop:'1px solid var(--border-2)'}}>
+    <Container>
+      <div style={{marginBottom:52}}>
+        <Eyebrow>Real builds</Eyebrow>
+        <h2 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:'clamp(28px, 3.8vw, 48px)', lineHeight:1.1, letterSpacing:'-0.025em', margin:'16px 0 12px'}}>
+          Kit photos &amp; example setups
+        </h2>
+        <p style={{fontSize:16, lineHeight:1.6, color:'var(--text-2)', maxWidth:560, margin:0}}>
+          Photos of hardware included in each kit. Read captions carefully — some items shown are for demonstration only and are not supplied by DartCraft.
+        </p>
+      </div>
+
+      <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:20}} className="dc-photos-grid">
+        {KIT_PHOTOS.map((photo, i) => (
+          <div key={i} style={{display:'flex', flexDirection:'column', gap:0}}>
+            <div style={{
+              position:'relative', background:'var(--card)', border:'1px solid var(--border)',
+              borderRadius:'14px 14px 0 0', overflow:'hidden', aspectRatio:'4/3',
+              display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12,
+            }}>
+              <div style={{
+                width:56, height:56, borderRadius:12,
+                background:'rgba(124,92,255,0.12)', border:'1px solid rgba(124,92,255,0.2)',
+                display:'flex', alignItems:'center', justifyContent:'center',
+              }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(124,92,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+              <span style={{fontFamily:'var(--mono)', fontSize:11, letterSpacing:'0.08em', color:'var(--text-3)', textTransform:'uppercase'}}>
+                Photo coming soon
+              </span>
+              <div style={{
+                position:'absolute', top:12, left:12,
+                background:'rgba(10,11,16,0.75)', backdropFilter:'blur(6px)',
+                padding:'4px 10px', borderRadius:99,
+                fontFamily:'var(--mono)', fontSize:10, letterSpacing:'0.06em', color:'var(--text-2)', textTransform:'uppercase',
+              }}>{photo.label}</div>
+            </div>
+            <div style={{
+              background:'rgba(255,255,255,0.03)', border:'1px solid var(--border)', borderTop:'none',
+              borderRadius:'0 0 14px 14px', padding:'12px 16px',
+            }}>
+              <p style={{margin:0, fontSize:12.5, lineHeight:1.6, color:'var(--text-3)', fontStyle:'italic'}}>
+                {photo.caption}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Container>
+    <style>{`
+      @media (max-width: 900px) { .dc-photos-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+      @media (max-width: 560px) { .dc-photos-grid { grid-template-columns: 1fr !important; } }
+    `}</style>
+  </section>
+);
 
 // ── Before You Order ───────────────────────────────────────────────
 const BeforeYouOrder = () => {
@@ -868,4 +973,4 @@ const Footer = () => (
   </footer>
 );
 
-window.Sections = { Header, Hero, Marquee, ProductExplain, HowItWorks, Packages, FullSystemCallout, BeforeYouOrder, Shipping, FAQ, Footer, PillButton, Container, Eyebrow };
+window.Sections = { Header, Hero, Marquee, ProductExplain, HowItWorks, Packages, FullSystemCallout, KitPhotos, BeforeYouOrder, Shipping, FAQ, Footer, PillButton, Container, Eyebrow };

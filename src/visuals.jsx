@@ -274,7 +274,7 @@ const StepPhoto = ({src, alt=''}) => (
 );
 
 const StepVisual = ({step}) => (
-  <div style={{position:'relative', width:'100%', aspectRatio:'1/1', maxWidth:520, margin:'0 auto', overflow:'hidden'}}>
+  <div style={{position:'relative', width:'100%', height:'100%', overflow:'hidden'}}>
     {step === 0 && <StepPhoto src="assets/step1-assemble.png" alt="Ring assembly with LED lighting"/>}
     {step === 1 && <StepPhoto src="assets/step2-mount.png" alt="Ring mounted on dartboard"/>}
     {step === 2 && <StepPhoto src="assets/step3-connect.png" alt="Connected to mini PC"/>}

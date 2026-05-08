@@ -29,6 +29,7 @@ const App = () => {
         <Sections.HowItWorks/>
         <Sections.Packages onSelect={onSelect} dbPrices={dbPrices}/>
         <Sections.FullSystemCallout onSelect={onSelect} dbPrices={dbPrices}/>
+        <Sections.KitPhotos/>
         <Sections.BeforeYouOrder/>
         <OrderBuilder selectedId={selectedId} onSelect={setSelectedId} dbPrices={dbPrices}/>
         <Sections.Shipping/>
