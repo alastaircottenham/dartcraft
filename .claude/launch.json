@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dartcraft",
+      "name": "preview",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["server.js"],
-      "port": 3000,
+      "runtimeArgs": ["preview-server.js"],
+      "port": 4567,
       "autoPort": true
     }
   ]

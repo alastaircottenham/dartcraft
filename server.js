@@ -127,10 +127,17 @@ function confirmationEmailHtml(session) {
         </table>
       </td></tr>
     </table>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:20px 24px;margin-bottom:32px">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:20px 24px;margin-bottom:20px">
       <tr><td>
         <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#92400e">What happens next</p>
-        <p style="margin:0;font-size:13px;color:#78350f;line-height:1.65">We'll pack your kit and dispatch it with tracking. You'll receive a shipping confirmation when it's on its way. Your setup manual is included in the box.</p>
+        <p style="margin:0;font-size:13px;color:#78350f;line-height:1.65">We'll pack your kit and dispatch it. You'll receive a shipping confirmation once it's on its way.</p>
+      </td></tr>
+    </table>
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;border:1px solid #c7d4f8;border-radius:12px;padding:20px 24px;margin-bottom:32px">
+      <tr><td>
+        <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#1e3a8a">Your setup guide</p>
+        <p style="margin:0 0 14px;font-size:13px;color:#1e40af;line-height:1.65">Download your digital setup guide to get familiar with the installation before your kit arrives.</p>
+        <a href="${BASE_URL}/assets/setup-guide.pdf" style="display:inline-block;padding:10px 20px;background:#1e3a8a;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">Download setup guide &rarr;</a>
       </td></tr>
     </table>
     <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
@@ -175,12 +182,7 @@ function shippingEmailHtml(session, trackingNumber = '') {
           <a href="https://auspost.com.au/mypost/track/#/details/${trackingNumber}" style="display:inline-block;padding:10px 20px;background:#166534;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">Track my parcel &rarr;</a>
         </td></tr>
       </table>`
-    : `<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 24px;margin-bottom:32px">
-        <tr><td>
-          <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#166534">Tracking info</p>
-          <p style="margin:0;font-size:13px;color:#15803d;line-height:1.65">Tracking details will be sent separately via Australia Post once available.</p>
-        </td></tr>
-      </table>`;
+    : '';
   const body = `
     <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Your order has shipped.</p>
     <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Hi ${firstName}, your <strong>${m.packageName || 'DartCraft kit'}</strong> has been packed and dispatched.</p>

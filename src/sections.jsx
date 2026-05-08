@@ -192,27 +192,27 @@ const Marquee = () => (
 // ── Product Explanation ───────────────────────────────────────────────
 const ProductExplain = () => {
   const features = [
-    {icon:<Icons.Ring size={22}/>, title:'Built around AutoDarts',
-     body:'Printed ring, camera mounts, lighting, cameras, and optional pre-configured PC options.'},
-    {icon:<Icons.Box size={22}/>, title:'Pick the setup that fits you',
-     body:'Choose a DIY hardware kit if you\'re comfortable with software, or go full system if you want less technical setup.'},
-    {icon:<Icons.Bolt size={22}/>, title:'Install, calibrate, play',
-     body:'Mount the kit, connect the hardware, complete calibration, and start your first game.'},
+    {icon:<Icons.Ring size={22}/>, title:'Clear kit options',
+     body:'Choose the level that suits your setup, from a printed ring only through to a full system with the PC included.'},
+    {icon:<Icons.Box size={22}/>, title:'Matched components',
+     body:'The ring, lighting, cameras, and full-system hardware are selected to work together for an AutoDarts-style setup.'},
+    {icon:<Icons.Bolt size={22}/>, title:'Setup guidance included',
+     body:'Each kit includes guidance to help you understand what connects where and what needs to happen next.'},
   ];
   return (
     <section style={{padding:'140px 0 120px'}}>
       <Container>
         <div style={{maxWidth:760, marginBottom:80}}>
-          <Eyebrow>Less technical guesswork. More time playing.</Eyebrow>
+          <Eyebrow>AutoDarts setup made easier.</Eyebrow>
           <h2 style={{
             fontFamily:'var(--sans)', fontWeight:700,
             fontSize:'clamp(34px, 4.6vw, 60px)', lineHeight:1.05, letterSpacing:'-0.025em',
             margin:'18px 0 22px'
           }}>
-            AutoDarts-compatible kits built to make setup more approachable.
+            Clear hardware kits for turning your dartboard into a smart scoring setup.
           </h2>
-          <p style={{fontSize:17, lineHeight:1.6, color:'var(--text-2)', maxWidth:600}}>
-            AutoDarts setups involve cameras, lighting, mounting, software, and calibration. DartCraft helps take the guesswork out of the hardware side with clear kit options and a full system that includes a pre-configured mini PC.
+          <p style={{fontSize:17, lineHeight:1.6, color:'var(--text-2)', maxWidth:640}}>
+            DartCraft gives you simple kit options depending on what you already have and how much setup you want to handle yourself. Choose the printed ring, add lighting and cameras, or go full system with the pre-configured mini PC included.
           </p>
         </div>
 
@@ -249,7 +249,7 @@ const ProductExplain = () => {
 const HowItWorks = () => {
   const steps = [
     {n:'01', t:'Assemble ring & install LED lighting', d:'Slot the printed ring sections together and fit the LED strip into the integrated channel for clean, even diffused lighting.'},
-    {n:'02', t:'Mount the ring', d:'Position the assembled ring around your dartboard area so the three camera mounts sit evenly around the board, as per the included setup instructions.'},
+    {n:'02', t:'Mount the ring', d:'Position the assembled ring around your dartboard area so the three camera mounts sit evenly around the board, following the digital setup guide.'},
     {n:'03', t:'Connect to the pre-configured PC', d:'Plug the three cameras into the included mini PC — already configured to recognise the kit on first boot. Connect the LED lighting to a power point. You\'ll need a monitor connected at this stage to complete initial setup and calibration.'},
     {n:'04', t:'Set up your AutoDarts account', d:'Sign up to AutoDarts on the mini PC and claim your board to link it to your account.'},
     {n:'05', t:'Calibrate and play', d:'Run the AutoDarts calibration routine to align the cameras with your board, then throw your first leg.'},
@@ -383,24 +383,24 @@ const HowItWorks = () => {
 
 // ── Packages ───────────────────────────────────────────────
 const PACKAGES = [
-  { id:'ring-only', name:'Printed Ring with Camera Mounts', price:150, badge:null,
+  { id:'ring-only', name:'DartCraft Ring with Camera Mounts', price:150, badge:null,
     bestFor:'Tech-savvy DIY users who already have cameras, lighting, and a computer.',
     includes:['Custom 3D-printed ring','Integrated camera mounts','Designed for standard dartboard setups'],
     excludes:['LED lighting','Cameras','PC','Keyboard or mouse','Speaker','Dartboard'],
     cta:'Select ring only' },
-  { id:'ring-led', name:'Printed Ring + LED Lighting', price:199, badge:null,
+  { id:'ring-led', name:'DartCraft Ring + LED Lighting', price:199, badge:null,
     bestFor:'Users who want the printed ring and clean lighting handled.',
     includes:['Printed ring with camera mounts','LED strip lighting'],
     excludes:['Cameras','PC','Keyboard or mouse','Speaker','Dartboard'],
     cta:'Select ring + lighting' },
-  { id:'ring-led-cameras', name:'Ring + LED Lighting + Cameras', price:299, badge:'Most popular',
+  { id:'ring-led-cameras', name:'DartCraft Ring + LED + Cameras', price:299, badge:'Most popular',
     bestFor:'Users who already have a spare computer and can configure AutoDarts themselves.',
     includes:['Printed ring with camera mounts','LED lighting','Cameras for AutoDarts tracking'],
     excludes:['PC','Keyboard or mouse','Speaker','Dartboard'],
     cta:'Select camera kit' },
   { id:'full-system', name:'Full AutoDarts System', price:599, badge:'Easiest setup',
-    bestFor:'Customers who want the easiest setup option with the least technical work.',
-    includes:['Printed ring with camera mounts','LED lighting','Cameras','Mini PC pre-configured for AutoDarts','Wireless keyboard with touchpad','Speaker','Setup manual'],
+    bestFor:'Users who want the easiest setup option with the least technical work.',
+    includes:['Printed ring with camera mounts','LED lighting','Cameras','Mini PC pre-configured for AutoDarts','Wireless keyboard with touchpad','Speaker','Digital setup guide'],
     excludes:['Dartboard','Monitor / display','In-home installation'],
     cta:'Select full system' },
 ];
@@ -450,7 +450,7 @@ const Packages = ({onSelect, dbPrices={}}) => {
             </h2>
           </div>
           <p style={{fontSize:17, lineHeight:1.6, color:'var(--text-2)', margin:0}}>
-            Already have cameras and a computer? Start with the printed ring. Want the easiest path? Choose the full system with cameras, lighting, mini PC, keyboard, speaker, and setup manual.
+            Already have cameras and a computer? Start with the printed ring. Want the easiest path? Choose the full system with cameras, lighting, mini PC, keyboard, speaker, and digital setup guide.
           </p>
         </div>
 
@@ -549,7 +549,7 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
             The full system includes the printed ring, LED lighting, cameras, and a mini PC already prepared to run AutoDarts. You still need to mount the hardware, connect everything, and complete final calibration, but the most technical sourcing and setup work is reduced.
           </p>
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px 20px', marginBottom:30}}>
-            {['Pre-configured mini PC','Wireless keyboard with touchpad','Speaker included','Setup manual included'].map(t=>(
+            {['Pre-configured mini PC','Wireless keyboard with touchpad','Speaker included','Digital setup guide'].map(t=>(
               <div key={t} style={{display:'flex', gap:8, alignItems:'flex-start', fontSize:14, color:'var(--text)'}}>
                 <span style={{color:'var(--accent)', marginTop:2}}><Icons.Check size={14}/></span>{t}
               </div>
@@ -572,7 +572,7 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
               {i:<Icons.LED size={18}/>,  t:'LED strip lighting'},
               {i:<Icons.Cam size={18}/>,  t:'Cameras for tracking'},
               {i:<Icons.Chip size={18}/>, t:'Mini PC, pre-configured'},
-              {i:<Icons.Box size={18}/>,  t:'Keyboard, speaker, manual'},
+              {i:<Icons.Box size={18}/>,  t:'Keyboard, speaker, digital guide'},
             ].map((r,i)=>(
               <div key={i} style={{display:'flex', alignItems:'center', gap:14, padding:'12px 14px', background:'#15171c', border:'1px solid var(--border-2)', borderRadius:12}}>
                 <div style={{color:'var(--accent)'}}>{r.i}</div>
@@ -595,28 +595,34 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
 // ── Kit Photos ───────────────────────────────────────────────
 const KIT_PHOTOS = [
   {
-    label: 'What\'s in the box',
-    caption: 'Full system includes PC, keyboard, speaker, cameras, LED lighting, and printed ring. Dartboard and monitor not included.',
+    src: 'assets/gallery-1-camera-mount.png',
+    label: 'Camera Mount',
+    caption: 'Precision-printed camera mount bracket integrated into the ring. Holds the camera at the correct angle for accurate dart tracking.',
   },
   {
-    label: '3D-printed ring — front',
-    caption: 'Custom-printed camera ring designed for standard dartboard dimensions. Camera mounts are integrated into the ring.',
+    src: 'assets/gallery-2-ring-segments.png',
+    label: 'Ring segments',
+    caption: 'The ring ships as printed segments that screw together. Camera come preinstalled.',
   },
   {
-    label: '3D-printed ring — side profile',
+    src: 'assets/gallery-3-mount-foot.png',
+    label: 'Mount foot',
+    caption: 'Low-profile mount foot sits flush against the surface including covers to hide visible screws.',
+  },
+  {
+    src: 'assets/gallery-4-cabinet-front.png',
+    label: 'Setup Example',
+    caption: 'Example setup mounted to backing. Dartboard, and surroundings not included or supplied by DartCraft.',
+  },
+  {
+    src: 'assets/gallery-5-wall-mount-angle.png',
+    label: 'Ring — side profile',
     caption: 'Low-profile design sits flush against the board. Minimal obstruction to gameplay.',
   },
   {
-    label: 'Ring assembled with cameras',
-    caption: 'Cameras mounted and cabled. LED strip attaches around the outer edge. All hardware included in camera kits.',
-  },
-  {
-    label: 'Customer setup — example 1',
-    caption: 'Example setup only — dartboard, monitor, cabinet, and surroundings not included or supplied by DartCraft.',
-  },
-  {
-    label: 'Customer setup — example 2',
-    caption: 'Example setup only — dartboard, monitor, cabinet, and surroundings not included or supplied by DartCraft.',
+    src: 'assets/gallery-6-wall-mount.png',
+    label: 'Setup Example',
+    caption: 'Example wall mount install. Dartboard and surroundings not included or supplied by DartCraft.',
   },
 ];
 
@@ -626,35 +632,22 @@ const KitPhotos = () => (
       <div style={{marginBottom:52}}>
         <Eyebrow>Real builds</Eyebrow>
         <h2 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:'clamp(28px, 3.8vw, 48px)', lineHeight:1.1, letterSpacing:'-0.025em', margin:'16px 0 12px'}}>
-          Kit photos &amp; example setups
+          See the kit up close
         </h2>
-        <p style={{fontSize:16, lineHeight:1.6, color:'var(--text-2)', maxWidth:560, margin:0}}>
-          Photos of hardware included in each kit. Read captions carefully — some items shown are for demonstration only and are not supplied by DartCraft.
+        <p style={{fontSize:16, lineHeight:1.6, color:'var(--text-2)', maxWidth:600, margin:0}}>
+          Real photos of DartCraft parts, assembled rings, and example installs so you can see how the system comes together before ordering.
         </p>
       </div>
 
       <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:20}} className="dc-photos-grid">
         {KIT_PHOTOS.map((photo, i) => (
           <div key={i} style={{display:'flex', flexDirection:'column', gap:0}}>
-            <div style={{
-              position:'relative', background:'var(--card)', border:'1px solid var(--border)',
-              borderRadius:'14px 14px 0 0', overflow:'hidden', aspectRatio:'4/3',
-              display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12,
-            }}>
-              <div style={{
-                width:56, height:56, borderRadius:12,
-                background:'rgba(124,92,255,0.12)', border:'1px solid rgba(124,92,255,0.2)',
-                display:'flex', alignItems:'center', justifyContent:'center',
-              }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(124,92,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-              </div>
-              <span style={{fontFamily:'var(--mono)', fontSize:11, letterSpacing:'0.08em', color:'var(--text-3)', textTransform:'uppercase'}}>
-                Photo coming soon
-              </span>
+            <div className="dc-photo-frame" style={{position:'relative', border:'1px solid var(--border)', borderRadius:'14px 14px 0 0', overflow:'hidden'}}>
+              <img
+                src={photo.src}
+                alt={photo.label}
+                style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block'}}
+              />
               <div style={{
                 position:'absolute', top:12, left:12,
                 background:'rgba(10,11,16,0.75)', backdropFilter:'blur(6px)',
@@ -673,70 +666,18 @@ const KitPhotos = () => (
           </div>
         ))}
       </div>
+      <p style={{marginTop:24, fontSize:13, lineHeight:1.6, color:'var(--text-3)', fontStyle:'italic'}}>
+        Example installs may show dartboards or surrounding setups for demonstration only. Check each kit option for exactly what is included.
+      </p>
     </Container>
     <style>{`
+      .dc-photo-frame { width: 100%; aspect-ratio: 4/3; }
       @media (max-width: 900px) { .dc-photos-grid { grid-template-columns: repeat(2, 1fr) !important; } }
       @media (max-width: 560px) { .dc-photos-grid { grid-template-columns: 1fr !important; } }
     `}</style>
   </section>
 );
 
-// ── Before You Order ───────────────────────────────────────────────
-const BeforeYouOrder = () => {
-  const items = [
-    'DIY installation is required',
-    'Dartboard is not included unless specifically stated',
-    'Full system is pre-configured but still requires mounting and final setup',
-    'A monitor / display is required to complete setup — not included',
-    'Setup guide / manual is included',
-    'Most users should expect to complete some calibration',
-    'Basic support is available where possible',
-    'The AutoDarts community is also a useful support resource',
-    'Products ship from Australia',
-    'Stock may be limited depending on availability',
-  ];
-  return (
-    <section style={{padding:'100px 0', borderTop:'1px solid var(--border-2)'}}>
-      <Container>
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1.4fr', gap:60, alignItems:'flex-start'}} className="dc-bef-grid">
-          <div style={{position:'sticky', top:120}} className="dc-bef-sticky">
-            <Eyebrow color="#F59E0B">Know what you're buying</Eyebrow>
-            <h2 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:'clamp(32px, 4vw, 48px)', lineHeight:1.05, letterSpacing:'-0.02em', margin:'18px 0 18px'}}>
-              Before you order.
-            </h2>
-            <p style={{fontSize:16, lineHeight:1.6, color:'var(--text-2)', margin:0, maxWidth:380}}>
-              DartCraft kits are designed for customers who are comfortable with a DIY hardware setup. The full system reduces the technical work, but all kits still require mounting, connection, setup, and calibration before use.
-            </p>
-          </div>
-          <div style={{
-            background:'var(--card)', border:'1px solid var(--border)', borderRadius:18,
-            padding:8
-          }}>
-            {items.map((t,i)=>(
-              <div key={i} style={{
-                display:'flex', alignItems:'center', gap:16, padding:'18px 22px',
-                borderBottom: i<items.length-1 ? '1px solid var(--border-2)' : 'none'
-              }}>
-                <div style={{
-                  width:30, height:30, borderRadius:8, background:'rgba(245,158,11,0.1)',
-                  color:'#F59E0B', display:'flex', alignItems:'center', justifyContent:'center',
-                  fontFamily:'var(--mono)', fontSize:12, fontWeight:600, flexShrink:0
-                }}>{String(i+1).padStart(2,'0')}</div>
-                <div style={{fontSize:15, lineHeight:1.45}}>{t}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Container>
-      <style>{`
-        @media (max-width: 880px){
-          .dc-bef-grid{grid-template-columns:1fr !important; gap:32px !important}
-          .dc-bef-sticky{position:relative !important; top:auto !important}
-        }
-      `}</style>
-    </section>
-  );
-};
 
 // ── Shipping ───────────────────────────────────────────────
 const Shipping = () => (
@@ -880,11 +821,10 @@ const FAQ = () => {
     {q:'Is this a complete dartboard setup?', a:'No. These kits are designed to upgrade your existing dartboard setup. The dartboard itself is not included unless specifically stated.'},
     {q:'Do I need to install it myself?', a:'Yes. DIY installation is required. The ring needs to be mounted to your dartboard area, and the system may require adjustment and calibration.'},
     {q:'Do I need a computer?', a:'Yes, AutoDarts requires a computer to run. The full system includes a pre-configured mini PC. Other options require you to supply and configure your own computer.'},
-    {q:'What is included in the full system?', a:'The full system includes the printed ring, LED lighting, cameras, pre-configured mini PC, wireless keyboard with touchpad, speaker, and setup manual.'},
-    {q:'Does the full system include a monitor or display?', a:'No — a monitor or display is not included. You\'ll need to connect one to the mini PC to complete the initial setup and calibration. Once set up, AutoDarts runs on the mini PC and you won\'t need the monitor day-to-day.'},
-    {q:'Does it work straight away?', a:'The full system is pre-configured, but customers still need to mount the hardware, connect everything, and complete final setup and calibration.'},
+    {q:'What is included in the full system?', a:'The full system includes the printed ring, LED lighting, cameras, pre-configured mini PC, wireless keyboard with touchpad, speaker, and a digital setup guide sent with your order confirmation.'},
+    {q:'Does the full system include a monitor or display?', a:<>No — a monitor or display is not included. Most setups use a monitor connected to the mini PC for the full experience, and there are lots of creative ways people mount displays near their board. For setup ideas and inspiration, the AutoDarts Discord community is a great resource: <a href="https://discord.com/invite/autodarts" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)', borderBottom:'1px solid currentColor'}}>discord.com/invite/autodarts</a>. If mounting a monitor isn't practical, you can also control the system from a laptop or iPad through the AutoDarts website instead.</>},
     {q:'Is support included?', a:'Basic setup guidance is included. If customers run into issues, they can reach out for help where possible. The AutoDarts community is also a useful support resource.'},
-    {q:'Where do the kits ship from?', a:'DartCraft kits ship from Australia. We currently ship within Australia only.'},
+    {q:'Where do the kits ship from?', a:'DartCraft kits ship from Perth, WA. We currently ship within Australia only.'},
   ];
   const [open, setOpen] = useState(0);
   return (
@@ -973,4 +913,4 @@ const Footer = () => (
   </footer>
 );
 
-window.Sections = { Header, Hero, Marquee, ProductExplain, HowItWorks, Packages, FullSystemCallout, KitPhotos, BeforeYouOrder, Shipping, FAQ, Footer, PillButton, Container, Eyebrow };
+window.Sections = { Header, Hero, Marquee, ProductExplain, HowItWorks, Packages, FullSystemCallout, KitPhotos, Shipping, FAQ, Footer, PillButton, Container, Eyebrow };
