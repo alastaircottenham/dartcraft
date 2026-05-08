@@ -211,7 +211,7 @@ function orderRowToSession(order) {
   app.get(`/${f}`, (_req, res) => res.status(404).end())
 );
 
-app.use('/api/webhook', express.raw({ type: 'application/json' }));
+app.use(['/api/webhook', '/api/webhooks/stripe'], express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(express.static(__dirname));
 
@@ -403,7 +403,7 @@ app.get('/api/session/:id', async (req, res) => {
 
 // ── Stripe webhook ────────────────────────────────────────────────────────────
 
-app.post('/api/webhook', async (req, res) => {
+app.post(['/api/webhook', '/api/webhooks/stripe'], async (req, res) => {
   const sig = req.headers['stripe-signature'];
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
 
