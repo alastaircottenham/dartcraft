@@ -1,7 +1,7 @@
 const { useState, useEffect, useCallback } = React;
 
 const App = () => {
-  const [selectedId, setSelectedId] = useState('ring-led-cameras');
+  const [selectedId, setSelectedId] = useState(null);
   const [dbPrices, setDbPrices] = useState({});
 
   useEffect(() => {

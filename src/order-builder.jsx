@@ -65,7 +65,7 @@ const NotifyForm = ({ packageId, packageName }) => {
   }
 
   return (
-    <div style={{padding:'0 22px 16px'}}>
+    <div style={{padding:'12px 22px 16px'}}>
       <p style={{margin:'0 0 8px', fontSize:12, color:'var(--text-3)', fontFamily:'var(--mono)', letterSpacing:'0.04em', textTransform:'uppercase'}}>
         Notify me when available
       </p>
@@ -181,7 +181,16 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
   useEffect(() => {
     fetch('/api/stock')
       .then(r => r.json())
-      .then(setStockQty)
+      .then(data => {
+        setStockQty(data);
+        onSelect(cur => {
+          if (cur !== null) return cur;
+          const preferred = 'ring-led-cameras';
+          if (typeof data[preferred] === 'number' && data[preferred] > 0) return preferred;
+          const first = PACKAGES.find(p => typeof data[p.id] === 'number' && data[p.id] > 0);
+          return first ? first.id : null;
+        });
+      })
       .catch(() => {});
   }, []);
 
@@ -191,13 +200,13 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
     setPromoStatus(null);
   }, [selectedId]);
 
-  const pkg = PACKAGES.find(p => p.id === selectedId) || PACKAGES[0];
-  const pkgPrice = dbPrices[pkg.id] ?? pkg.price;
+  const pkg = PACKAGES.find(p => p.id === selectedId) ?? null;
+  const pkgPrice = pkg ? (dbPrices[pkg.id] ?? pkg.price) : 0;
   const freeShipping = promoStatus?.valid && promoStatus?.freeShipping;
   const shippingAud = freeShipping ? 0 : SHIPPING_AUD;
   const discountAud = (promoStatus?.valid && promoStatus.discountCents && !freeShipping) ? promoStatus.discountCents / 100 : 0;
   const total = pkgPrice + shippingAud - discountAud;
-  const currentStock = stockQty[pkg.id];
+  const currentStock = pkg ? stockQty[pkg.id] : undefined;
   const isSoldOut = typeof currentStock === 'number' && currentStock <= 0;
 
   const applyPromo = async () => {
@@ -245,6 +254,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
     setApiError('');
     const errs = validate();
     if(Object.keys(errs).length){ setErrors(errs); return; }
+    if(!selectedId){ setApiError('Please select a package.'); return; }
     if(isSoldOut){ setApiError('This package is currently out of stock.'); return; }
     setSubmitting(true);
     try {
@@ -394,36 +404,50 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
               border:'1px solid var(--border)', borderRadius:18, padding:28,
               display:'flex', flexDirection:'column', gap:22
             }}>
-              <div>
-                <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8}}>Your order</div>
-                <div style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:22, letterSpacing:'-0.015em', lineHeight:1.2}}>{pkg.name}</div>
-                {pkg.badge && <div style={{marginTop:10}}><span style={{fontSize:10, fontFamily:'var(--mono)', letterSpacing:'0.06em', textTransform:'uppercase', background:'var(--accent)', color:'#0a0b10', padding:'3px 8px', borderRadius:99, fontWeight:600}}>{pkg.badge}</span></div>}
-              </div>
+              {pkg ? (
+                <>
+                  <div>
+                    <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:8}}>Your order</div>
+                    <div style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:22, letterSpacing:'-0.015em', lineHeight:1.2}}>{pkg.name}</div>
+                    {pkg.badge && <div style={{marginTop:10}}><span style={{fontSize:10, fontFamily:'var(--mono)', letterSpacing:'0.06em', textTransform:'uppercase', background:'var(--accent)', color:'#0a0b10', padding:'3px 8px', borderRadius:99, fontWeight:600}}>{pkg.badge}</span></div>}
+                  </div>
 
-              <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18}}>
-                <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em', marginBottom:10}}>INCLUDED</div>
-                <ul style={{listStyle:'none', padding:0, margin:0, display:'flex', flexDirection:'column', gap:7}}>
-                  {pkg.includes.map(it => (
-                    <li key={it} style={{display:'flex', gap:8, fontSize:13, color:'var(--text)'}}>
-                      <span style={{color:'var(--accent)', flexShrink:0, marginTop:2}}><Icons.Check size={13}/></span>{it}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                  <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18}}>
+                    <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em', marginBottom:10}}>INCLUDED</div>
+                    <ul style={{listStyle:'none', padding:0, margin:0, display:'flex', flexDirection:'column', gap:7}}>
+                      {pkg.includes.map(it => (
+                        <li key={it} style={{display:'flex', gap:8, fontSize:13, color:'var(--text)'}}>
+                          <span style={{color:'var(--accent)', flexShrink:0, marginTop:2}}><Icons.Check size={13}/></span>{it}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
-              <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18}}>
-                <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em', marginBottom:10}}>NOT INCLUDED</div>
-                <ul style={{listStyle:'none', padding:0, margin:0, display:'flex', flexDirection:'column', gap:5}}>
-                  {pkg.excludes.map(it => (
-                    <li key={it} style={{display:'flex', gap:8, fontSize:12, color:'var(--text-3)'}}>
-                      <span style={{flexShrink:0, marginTop:2, opacity:0.5}}><Icons.Minus size={12}/></span>{it}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                  <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18}}>
+                    <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em', marginBottom:10}}>NOT INCLUDED</div>
+                    <ul style={{listStyle:'none', padding:0, margin:0, display:'flex', flexDirection:'column', gap:5}}>
+                      {pkg.excludes.map(it => (
+                        <li key={it} style={{display:'flex', gap:8, fontSize:12, color:'var(--text-3)'}}>
+                          <span style={{flexShrink:0, marginTop:2, opacity:0.5}}><Icons.Minus size={12}/></span>{it}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              ) : (
+                <div style={{display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'32px 0 24px', gap:14, textAlign:'center'}}>
+                  <div style={{width:48, height:48, borderRadius:99, background:'rgba(124,92,255,0.1)', border:'1px solid rgba(124,92,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                    <Icons.Lock size={20} style={{color:'rgba(124,92,255,0.6)'}}/>
+                  </div>
+                  <div>
+                    <div style={{fontFamily:'var(--sans)', fontWeight:600, fontSize:15, color:'var(--text-2)', marginBottom:6}}>No package selected</div>
+                    <div style={{fontSize:13, color:'var(--text-3)', lineHeight:1.6}}>Choose a kit on the left<br/>to see pricing and checkout.</div>
+                  </div>
+                </div>
+              )}
 
               {/* Promo code input */}
-              <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18}}>
+              {pkg && <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18}}>
                 <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em', marginBottom:10}}>PROMO CODE</div>
                 <div style={{display:'flex', gap:8}}>
                   <input
@@ -442,9 +466,9 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
                 </div>
                 {promoStatus?.valid && <div style={{marginTop:7, fontSize:12, color:'#22c55e'}}>✓ {promoStatus.discountDisplay} applied</div>}
                 {promoStatus?.valid === false && <div style={{marginTop:7, fontSize:12, color:'#ef4444'}}>Invalid or expired code</div>}
-              </div>
+              </div>}
 
-              <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18, display:'flex', flexDirection:'column', gap:8}}>
+              {pkg && <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18, display:'flex', flexDirection:'column', gap:8}}>
                 <Row k="Subtotal" v={`$${pkgPrice}.00`}/>
                 <Row k="Shipping (AU)" v={freeShipping ? '$0.00' : '$19.95'} discount={freeShipping}/>
                 {freeShipping && <Row k={`Promo (${promoCode})`} v="Free shipping" discount/>}
@@ -452,53 +476,55 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
                 <Row k="GST" v="Included" muted/>
                 <div style={{height:1, background:'var(--border-2)', margin:'6px 0'}}/>
                 <Row k="Total" v={`$${total.toFixed(2)} AUD`} big/>
-              </div>
+              </div>}
 
-              {isSoldOut && (
-                <div style={{padding:'12px 16px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:10, fontSize:13, color:'#ef4444'}}>
-                  This package is currently out of stock. Please select another option.
+              {selectedId && <>
+                {isSoldOut && (
+                  <div style={{padding:'12px 16px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:10, fontSize:13, color:'#ef4444'}}>
+                    This package is currently out of stock. Please select another option.
+                  </div>
+                )}
+
+                {apiError && (
+                  <div style={{padding:'12px 16px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:10, fontSize:13, color:'#ef4444'}}>
+                    {apiError}
+                  </div>
+                )}
+
+                <label style={{display:'flex', gap:12, alignItems:'flex-start', padding:'14px', background:'rgba(245,158,11,0.06)', border:`1px solid ${errors.diy ? '#ef4444' : 'rgba(245,158,11,0.2)'}`, borderRadius:10, cursor:'pointer'}}>
+                  <input type="checkbox" checked={form.diy} onChange={e=>update('diy', e.target.checked)} style={{
+                    marginTop:2, width:18, height:18, accentColor:'#7C5CFF', cursor:'pointer', flexShrink:0
+                  }}/>
+                  <span style={{fontSize:12.5, lineHeight:1.5, color:'var(--text-2)'}}>
+                    I understand this is a <span style={{color:'var(--text)'}}>DIY install hardware kit</span>. Dartboard, monitor/display, and in-home installation are not included.
+                  </span>
+                </label>
+                {errors.diy && <span style={{fontSize:12, color:'#ef4444', marginTop:-12, display:'block'}}>{errors.diy}</span>}
+
+                <label style={{display:'flex', gap:12, alignItems:'flex-start', padding:'14px', background:'rgba(245,158,11,0.06)', border:`1px solid ${errors.terms ? '#ef4444' : 'rgba(245,158,11,0.2)'}`, borderRadius:10, cursor:'pointer'}}>
+                  <input type="checkbox" checked={form.terms} onChange={e=>update('terms', e.target.checked)} style={{
+                    marginTop:2, width:18, height:18, accentColor:'#7C5CFF', cursor:'pointer', flexShrink:0
+                  }}/>
+                  <span style={{fontSize:12.5, lineHeight:1.5, color:'var(--text-2)'}}>
+                    I have read and agree to the{' '}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)', textDecoration:'underline'}} onClick={e=>e.stopPropagation()}>Terms of Sale</a>.
+                  </span>
+                </label>
+                {errors.terms && <span style={{fontSize:12, color:'#ef4444', marginTop:-12, display:'block'}}>{errors.terms}</span>}
+
+                <button type="submit" disabled={submitting || isSoldOut} style={{
+                  padding:'16px', borderRadius:99, border:'none',
+                  cursor: (submitting || isSoldOut) ? 'not-allowed' : 'pointer',
+                  background: (submitting || isSoldOut) ? 'rgba(245,245,240,0.35)' : '#F5F5F0',
+                  color:'#0a0b10', fontFamily:'var(--sans)', fontWeight:700, fontSize:15,
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:10
+                }}>
+                  {submitting ? <><Spinner/> Redirecting to Stripe…</> : <><Icons.Lock size={15}/> Pay ${total.toFixed(2)} — Secure checkout</>}
+                </button>
+                <div style={{textAlign:'center', fontSize:11, color:'var(--text-3)', fontFamily:'var(--mono)', letterSpacing:'0.06em'}}>
+                  FULL PAYMENT REQUIRED · STRIPE SECURED
                 </div>
-              )}
-
-              {apiError && (
-                <div style={{padding:'12px 16px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:10, fontSize:13, color:'#ef4444'}}>
-                  {apiError}
-                </div>
-              )}
-
-              <label style={{display:'flex', gap:12, alignItems:'flex-start', padding:'14px', background:'rgba(245,158,11,0.06)', border:`1px solid ${errors.diy ? '#ef4444' : 'rgba(245,158,11,0.2)'}`, borderRadius:10, cursor:'pointer'}}>
-                <input type="checkbox" checked={form.diy} onChange={e=>update('diy', e.target.checked)} style={{
-                  marginTop:2, width:18, height:18, accentColor:'#7C5CFF', cursor:'pointer', flexShrink:0
-                }}/>
-                <span style={{fontSize:12.5, lineHeight:1.5, color:'var(--text-2)'}}>
-                  I understand this is a <span style={{color:'var(--text)'}}>DIY install hardware kit</span>. Dartboard, monitor/display, and in-home installation are not included.
-                </span>
-              </label>
-              {errors.diy && <span style={{fontSize:12, color:'#ef4444', marginTop:-12, display:'block'}}>{errors.diy}</span>}
-
-              <label style={{display:'flex', gap:12, alignItems:'flex-start', padding:'14px', background:'rgba(245,158,11,0.06)', border:`1px solid ${errors.terms ? '#ef4444' : 'rgba(245,158,11,0.2)'}`, borderRadius:10, cursor:'pointer'}}>
-                <input type="checkbox" checked={form.terms} onChange={e=>update('terms', e.target.checked)} style={{
-                  marginTop:2, width:18, height:18, accentColor:'#7C5CFF', cursor:'pointer', flexShrink:0
-                }}/>
-                <span style={{fontSize:12.5, lineHeight:1.5, color:'var(--text-2)'}}>
-                  I have read and agree to the{' '}
-                  <a href="/terms" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)', textDecoration:'underline'}} onClick={e=>e.stopPropagation()}>Terms of Sale</a>.
-                </span>
-              </label>
-              {errors.terms && <span style={{fontSize:12, color:'#ef4444', marginTop:-12, display:'block'}}>{errors.terms}</span>}
-
-              <button type="submit" disabled={submitting || isSoldOut} style={{
-                padding:'16px', borderRadius:99, border:'none',
-                cursor: (submitting || isSoldOut) ? 'not-allowed' : 'pointer',
-                background: (submitting || isSoldOut) ? 'rgba(245,245,240,0.35)' : '#F5F5F0',
-                color:'#0a0b10', fontFamily:'var(--sans)', fontWeight:700, fontSize:15,
-                display:'flex', alignItems:'center', justifyContent:'center', gap:10
-              }}>
-                {submitting ? <><Spinner/> Redirecting to Stripe…</> : <><Icons.Lock size={15}/> Pay ${total.toFixed(2)} — Secure checkout</>}
-              </button>
-              <div style={{textAlign:'center', fontSize:11, color:'var(--text-3)', fontFamily:'var(--mono)', letterSpacing:'0.06em'}}>
-                FULL PAYMENT REQUIRED · STRIPE SECURED
-              </div>
+              </>}
             </div>
           </aside>
         </form>

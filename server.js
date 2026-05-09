@@ -654,6 +654,14 @@ app.put('/api/admin/stock/:id', requireAdmin, async (req, res) => {
 
     res.json({ id: result.rows[0].id, quantity: Number(result.rows[0].quantity) });
 
+    // If manually set to 0, reset notification flags so subscribers get alerted on next restock
+    if (quantity === 0) {
+      queryDb(
+        'update stock_notifications set notified = false where package_id = $1',
+        [id]
+      ).catch(err => console.error('[notify] Error resetting notification flags:', err.message));
+    }
+
     // If restocked (was 0, now > 0), notify subscribers asynchronously
     if (oldQty <= 0 && quantity > 0) {
       (async () => {
