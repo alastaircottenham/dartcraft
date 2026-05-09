@@ -68,10 +68,17 @@ function calcDiscount(promo, priceAud, shippingAud = 0) {
 
 // ── Email helpers ─────────────────────────────────────────────────────────────
 
-async function sendEmail(to, subject, html) {
+async function sendEmail(to, subject, html, options = {}) {
   if (!resend || !to) return;
   try {
-    await resend.emails.send({ from: `DartCraft <${FROM_EMAIL}>`, to: [to], subject, html });
+    await resend.emails.send({
+      from: `DartCraft <${FROM_EMAIL}>`,
+      to: [to],
+      subject,
+      html,
+      ...(options.text    ? { text: options.text }       : {}),
+      ...(options.headers ? { headers: options.headers } : {}),
+    });
     console.log(`[email] Sent "${subject}" → ${to}`);
   } catch (err) {
     console.error('[email] Send error:', err.message);
@@ -680,7 +687,14 @@ app.put('/api/admin/stock/:id', requireAdmin, async (req, res) => {
             await sendEmail(
               sub.email,
               `${packageName} is back in stock`,
-              restockEmailHtml(packageName, unsubUrl)
+              restockEmailHtml(packageName, unsubUrl),
+              {
+                headers: {
+                  'List-Unsubscribe': `<${unsubUrl}>`,
+                  'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+                },
+                text: `Good news — ${packageName} is back in stock and available to order now.\n\nOrder here: ${BASE_URL}/#order\n\n---\nYou're receiving this because you requested a back-in-stock alert.\nUnsubscribe: ${unsubUrl}`,
+              }
             );
           }
           console.log(`[notify] Sent ${subs.rows.length} restock email(s) for ${id}`);
