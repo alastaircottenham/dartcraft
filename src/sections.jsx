@@ -343,21 +343,11 @@ const HowItWorks = () => {
             {/* Visual */}
             <div className="dc-how-visual">
               <div style={{background:'var(--card)', border:'1px solid var(--border)', borderRadius:24, padding:32, position:'relative', overflow:'hidden'}}>
-                <div style={{width:'100%', height:'55vw', maxHeight:460, minHeight:180, overflow:'hidden', borderRadius:10, position:'relative'}}>
+                <div className="dc-how-img" style={{width:'100%', height:'55vw', maxHeight:460, minHeight:180, overflow:'hidden', borderRadius:10, position:'relative'}}>
                   <Visuals.StepVisual step={active}/>
                 </div>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:18, paddingTop:18, borderTop:'1px solid var(--border-2)'}}>
                   <div style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--accent)', letterSpacing:'0.1em'}}>STEP {steps[active].n} / 0{N}</div>
-                  <div style={{fontFamily:'var(--sans)', fontWeight:600, fontSize:14}}>{steps[active].t}</div>
-                </div>
-                <div style={{display:'flex', gap:6, position:'absolute', top:20, right:20}}>
-                  {steps.map((_,i)=>(
-                    <div key={i} style={{
-                      width: i===active ? 22 : 8, height:8, borderRadius:99,
-                      background: i<=active ? 'var(--accent)' : 'rgba(255,255,255,0.12)',
-                      transition:'all .3s'
-                    }}/>
-                  ))}
                 </div>
               </div>
             </div>
@@ -370,8 +360,9 @@ const HowItWorks = () => {
         @media (max-width: 980px){
           .dc-how-grid{grid-template-columns:1fr !important; gap:12px !important}
           .dc-how-text{min-height:auto !important; height:260px !important; order:2}
-          .dc-how-visual{max-width:420px; margin:0 auto; order:1; flex-shrink:0}
+          .dc-how-visual{width:100%; max-width:420px; margin:0 auto; order:1; flex-shrink:0}
           .dc-how-visual > div{padding:20px !important}
+          .dc-how-img{height:220px !important; min-height:unset !important}
           .dc-how-header{padding-top:105px !important; padding-bottom:6px !important}
           .dc-how-header h2{font-size:22px !important; margin-top:8px !important}
           .dc-how-content{align-items:flex-start !important; padding-top:10px !important; padding-bottom:20px !important}
