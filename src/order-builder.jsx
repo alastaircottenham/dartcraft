@@ -24,6 +24,84 @@ function stockLabel(qty) {
   return { text: 'In stock', color: '#22c55e' };
 }
 
+const NotifyForm = ({ packageId, packageName }) => {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'success' | 'error'
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setErrorMsg('Enter a valid email address');
+      return;
+    }
+    setStatus('loading');
+    setErrorMsg('');
+    try {
+      const res = await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), packageId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setStatus('success');
+      } else {
+        setErrorMsg(data.error || 'Something went wrong.');
+        setStatus('error');
+      }
+    } catch {
+      setErrorMsg('Something went wrong.');
+      setStatus('error');
+    }
+  };
+
+  if (status === 'success') {
+    return (
+      <div style={{padding:'8px 22px 16px', fontSize:13, color:'#22c55e', display:'flex', alignItems:'center', gap:6}}>
+        <span>&#10003;</span> We'll email you when {packageName} is back in stock.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{padding:'0 22px 16px'}}>
+      <p style={{margin:'0 0 8px', fontSize:12, color:'var(--text-3)', fontFamily:'var(--mono)', letterSpacing:'0.04em', textTransform:'uppercase'}}>
+        Notify me when available
+      </p>
+      <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+        <input
+          type="email"
+          placeholder="your@email.com"
+          value={email}
+          onChange={e => { setEmail(e.target.value); setErrorMsg(''); setStatus('idle'); }}
+          onKeyDown={e => e.key === 'Enter' && submit(e)}
+          style={{
+            flex:1, minWidth:160, background:'#0a0b10',
+            border:`1px solid ${errorMsg ? '#ef4444' : 'var(--border)'}`,
+            borderRadius:10, padding:'9px 14px', color:'var(--text)',
+            fontSize:13, fontFamily:'var(--body)', outline:'none',
+          }}
+        />
+        <button
+          type="button"
+          onClick={submit}
+          disabled={status === 'loading'}
+          style={{
+            padding:'9px 18px', background:'var(--accent)', color:'#0a0b10',
+            border:'none', borderRadius:10, fontSize:13, fontWeight:700,
+            cursor: status === 'loading' ? 'not-allowed' : 'pointer',
+            fontFamily:'var(--sans)', flexShrink:0, opacity: status === 'loading' ? 0.7 : 1,
+          }}
+        >
+          {status === 'loading' ? '...' : 'Notify me'}
+        </button>
+      </div>
+      {errorMsg && <p style={{margin:'6px 0 0', fontSize:12, color:'#ef4444'}}>{errorMsg}</p>}
+    </div>
+  );
+};
+
 const Spinner = () => (
   <span style={{
     display:'inline-block', width:16, height:16, border:'2px solid rgba(10,11,16,0.3)',
@@ -216,36 +294,43 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
                   const sl = typeof qty === 'number' ? stockLabel(qty) : null;
                   const isSelected = selectedId === p.id;
                   return (
-                    <label key={p.id} style={{
-                      display:'grid', gridTemplateColumns:'auto 1fr auto', alignItems:'center', gap:18,
-                      padding:'20px 22px', border:`1px solid ${isSelected?'var(--accent)':'var(--border)'}`, borderRadius:14,
-                      cursor: soldOut ? 'not-allowed' : 'pointer',
-                      background: isSelected ? 'rgba(124,92,255,0.06)' : '#0a0b10',
-                      opacity: soldOut ? 0.5 : 1,
-                      transition:'all .15s'
-                    }}>
-                      <div style={{
-                        width:22, height:22, borderRadius:99,
-                        border:`2px solid ${isSelected?'var(--accent)':'var(--border)'}`,
-                        display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
+                    <div key={p.id} style={{border:`1px solid ${isSelected?'var(--accent)':'var(--border)'}`, borderRadius:14, overflow:'hidden', transition:'border-color .15s'}}>
+                      <label style={{
+                        display:'grid', gridTemplateColumns:'auto 1fr auto', alignItems:'center', gap:18,
+                        padding:'20px 22px',
+                        cursor: soldOut ? 'not-allowed' : 'pointer',
+                        background: isSelected ? 'rgba(124,92,255,0.06)' : '#0a0b10',
+                        opacity: soldOut ? 0.5 : 1,
+                        transition:'all .15s'
                       }}>
-                        {isSelected && <div style={{width:10, height:10, borderRadius:99, background:'var(--accent)'}}/>}
-                      </div>
-                      <input type="radio" name="pkg" value={p.id} checked={isSelected}
-                        onChange={() => !soldOut && onSelect(p.id)} style={{display:'none'}} disabled={soldOut}/>
-                      <div>
-                        <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:4, flexWrap:'wrap'}}>
-                          <span style={{fontFamily:'var(--sans)', fontWeight:600, fontSize:16, letterSpacing:'-0.01em'}}>{p.name}</span>
-                          {p.badge && <span style={{fontSize:10, fontFamily:'var(--mono)', letterSpacing:'0.06em', textTransform:'uppercase', background:'var(--accent)', color:'#0a0b10', padding:'2px 7px', borderRadius:99, fontWeight:600}}>{p.badge}</span>}
-                          {sl && <span style={{fontSize:10, fontFamily:'var(--mono)', letterSpacing:'0.06em', textTransform:'uppercase', color:sl.color, padding:'2px 7px', borderRadius:99, border:`1px solid ${sl.color}`, fontWeight:600}}>{sl.text}</span>}
+                        <div style={{
+                          width:22, height:22, borderRadius:99,
+                          border:`2px solid ${isSelected?'var(--accent)':'var(--border)'}`,
+                          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
+                        }}>
+                          {isSelected && <div style={{width:10, height:10, borderRadius:99, background:'var(--accent)'}}/>}
                         </div>
-                        <div style={{fontSize:13, color:'var(--text-2)', lineHeight:1.45}}>{p.bestFor}</div>
-                      </div>
-                      <div style={{textAlign:'right'}}>
-                        <div style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:22, letterSpacing:'-0.02em'}}>${dbPrices[p.id] ?? p.price}</div>
-                        <div style={{fontSize:11, color:'var(--text-3)'}}>AUD</div>
-                      </div>
-                    </label>
+                        <input type="radio" name="pkg" value={p.id} checked={isSelected}
+                          onChange={() => !soldOut && onSelect(p.id)} style={{display:'none'}} disabled={soldOut}/>
+                        <div>
+                          <div style={{display:'flex', alignItems:'center', gap:10, marginBottom:4, flexWrap:'wrap'}}>
+                            <span style={{fontFamily:'var(--sans)', fontWeight:600, fontSize:16, letterSpacing:'-0.01em'}}>{p.name}</span>
+                            {p.badge && <span style={{fontSize:10, fontFamily:'var(--mono)', letterSpacing:'0.06em', textTransform:'uppercase', background:'var(--accent)', color:'#0a0b10', padding:'2px 7px', borderRadius:99, fontWeight:600}}>{p.badge}</span>}
+                            {sl && <span style={{fontSize:10, fontFamily:'var(--mono)', letterSpacing:'0.06em', textTransform:'uppercase', color:sl.color, padding:'2px 7px', borderRadius:99, border:`1px solid ${sl.color}`, fontWeight:600}}>{sl.text}</span>}
+                          </div>
+                          <div style={{fontSize:13, color:'var(--text-2)', lineHeight:1.45}}>{p.bestFor}</div>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          <div style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:22, letterSpacing:'-0.02em'}}>${dbPrices[p.id] ?? p.price}</div>
+                          <div style={{fontSize:11, color:'var(--text-3)'}}>AUD</div>
+                        </div>
+                      </label>
+                      {soldOut && (
+                        <div style={{borderTop:'1px solid var(--border)', background:'#0a0b10'}}>
+                          <NotifyForm packageId={p.id} packageName={p.name} />
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>

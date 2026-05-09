@@ -4,6 +4,7 @@ const path = require('path');
 const { Pool } = require('pg');
 const { Resend } = require('resend');
 
+const crypto = require('crypto');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 const app = express();
@@ -200,6 +201,21 @@ function shippingEmailHtml(session, trackingNumber = '') {
   return emailShell({ badge: '&#9679; Shipped', badgeColor: '#22c55e', body });
 }
 
+function restockEmailHtml(packageName, unsubscribeUrl) {
+  const body = `
+    <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Back in stock.</p>
+    <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Good news — <strong>${packageName}</strong> is back in stock and available to order now.</p>
+    <p style="margin:0 0 40px">
+      <a href="${BASE_URL}/#order" style="display:inline-block;padding:13px 28px;background:#7C5CFF;color:#fff;border-radius:99px;text-decoration:none;font-size:14px;font-weight:700;letter-spacing:-0.01em">Order now &rarr;</a>
+    </p>
+    <p style="margin:0;font-size:12px;color:#bbb;line-height:1.8">
+      You're receiving this because you requested a back-in-stock alert for ${packageName}.<br>
+      <a href="${unsubscribeUrl}" style="color:#999;text-decoration:underline">Unsubscribe from these alerts</a>
+    </p>
+  `;
+  return emailShell({ badge: '&#9679; Back in stock', badgeColor: '#22c55e', body });
+}
+
 function orderRowToSession(order) {
   const createdSeconds = Math.floor(new Date(order.created_at).getTime() / 1000);
   return {
@@ -299,6 +315,59 @@ app.post('/api/validate-promo', async (req, res) => {
   } catch (err) {
     console.error('[api/validate-promo] DB error:', err.message);
     res.status(500).json({ valid: false });
+  }
+});
+
+app.post('/api/notify', async (req, res) => {
+  const { email, packageId } = req.body;
+  if (!email || !/^\S+@\S+\.\S+$/.test(String(email))) {
+    return res.status(400).json({ error: 'Valid email required.' });
+  }
+  if (!packageId) {
+    return res.status(400).json({ error: 'Package ID required.' });
+  }
+  try {
+    const pkg = await getActivePackage(packageId);
+    if (!pkg) return res.status(400).json({ error: 'Invalid package.' });
+    const token = crypto.randomBytes(24).toString('hex');
+    await queryDb(
+      `insert into stock_notifications (package_id, email, token, notified, created_at)
+       values ($1, $2, $3, false, now())
+       on conflict (package_id, email) do update set token = excluded.token, notified = false, created_at = now()`,
+      [packageId, String(email).toLowerCase().trim(), token]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[api/notify] DB error:', err.message);
+    res.status(500).json({ error: 'Could not save notification request.' });
+  }
+});
+
+app.get('/api/notify/unsubscribe', async (req, res) => {
+  const { token } = req.query;
+
+  const page = (heading, msg, isError = false) => `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DartCraft – Unsubscribe</title>
+<style>*{box-sizing:border-box}body{margin:0;padding:40px 20px;background:#0a0b10;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}.card{background:#111;border:1px solid #222;border-radius:16px;padding:48px 40px;max-width:420px;width:100%;text-align:center}h1{font-size:20px;font-weight:700;margin:0 0 12px;letter-spacing:-0.02em;color:${isError ? '#ef4444' : '#22c55e'}}p{font-size:14px;color:#999;line-height:1.65;margin:0 0 24px}a{color:#7C5CFF;text-decoration:none;font-size:14px}.logo{font-size:18px;font-weight:700;color:#F5F5F0;margin:0 0 24px}</style>
+</head>
+<body><div class="card"><p class="logo">DartCraft</p><h1>${heading}</h1><p>${msg}</p><a href="${BASE_URL}/">Back to DartCraft &rarr;</a></div></body></html>`;
+
+  if (!token) {
+    return res.status(400).send(page('Invalid link', 'This unsubscribe link is invalid.', true));
+  }
+  try {
+    const result = await queryDb(
+      'delete from stock_notifications where token = $1 returning package_id',
+      [String(token)]
+    );
+    if (!result.rows.length) {
+      return res.send(page('Already removed', 'This link has already been used or is no longer valid.', true));
+    }
+    res.send(page('Unsubscribed', "You've been removed from back-in-stock alerts. You won't receive any more emails for this product."));
+  } catch (err) {
+    console.error('[api/notify/unsubscribe] DB error:', err.message);
+    res.status(500).send(page('Error', 'Something went wrong. Please try again.', true));
   }
 });
 
@@ -505,7 +574,16 @@ app.post(['/api/webhook', '/api/webhooks/stripe'], async (req, res) => {
 
         await client.query('COMMIT');
         processed = true;
-        console.log(`[webhook] Order saved and stock decremented: ${packageId} -> ${stockResult.rows[0].quantity}`);
+        const newQty = stockResult.rows[0].quantity;
+        console.log(`[webhook] Order saved and stock decremented: ${packageId} -> ${newQty}`);
+
+        // If stock just hit 0, reset notification flags so subscribers get alerted on next restock
+        if (newQty === 0) {
+          queryDb(
+            'update stock_notifications set notified = false where package_id = $1',
+            [packageId]
+          ).catch(err => console.error('[notify] Error resetting notification flags:', err.message));
+        }
       }
     } catch (err) {
       try { await client.query('ROLLBACK'); } catch {}
@@ -560,12 +638,49 @@ app.put('/api/admin/stock/:id', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'quantity must be a non-negative integer' });
   }
   try {
+    const current = await queryDb(
+      'select quantity, name from packages where id = $1 limit 1',
+      [id]
+    );
+    if (!current.rows.length) return res.status(404).json({ error: 'Package not found' });
+    const oldQty = Number(current.rows[0].quantity);
+    const packageName = current.rows[0].name;
+
     const result = await queryDb(
       'update packages set quantity = $2, updated_at = now() where id = $1 returning id, quantity',
       [id, quantity]
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Package not found' });
+
     res.json({ id: result.rows[0].id, quantity: Number(result.rows[0].quantity) });
+
+    // If restocked (was 0, now > 0), notify subscribers asynchronously
+    if (oldQty <= 0 && quantity > 0) {
+      (async () => {
+        try {
+          const subs = await queryDb(
+            'select email, token from stock_notifications where package_id = $1 and notified = false',
+            [id]
+          );
+          if (!subs.rows.length) return;
+          await queryDb(
+            'update stock_notifications set notified = true where package_id = $1 and notified = false',
+            [id]
+          );
+          for (const sub of subs.rows) {
+            const unsubUrl = `${BASE_URL}/api/notify/unsubscribe?token=${sub.token}`;
+            await sendEmail(
+              sub.email,
+              `${packageName} is back in stock`,
+              restockEmailHtml(packageName, unsubUrl)
+            );
+          }
+          console.log(`[notify] Sent ${subs.rows.length} restock email(s) for ${id}`);
+        } catch (err) {
+          console.error('[notify] Error sending restock emails:', err.message);
+        }
+      })();
+    }
   } catch (err) {
     console.error('[api/admin/stock/:id] DB error:', err.message);
     res.status(500).json({ error: 'Could not update stock.' });
@@ -772,6 +887,19 @@ app.get('/',        (_req, res) => res.sendFile(path.join(__dirname, 'Dartcraft.
 
 // Add tracking_number column if it doesn't exist yet (safe to run on every start)
 queryDb('ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number text').catch(() => {});
+
+// Create stock_notifications table if it doesn't exist yet
+queryDb(`
+  CREATE TABLE IF NOT EXISTS stock_notifications (
+    id SERIAL PRIMARY KEY,
+    package_id TEXT NOT NULL,
+    email TEXT NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    notified BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(package_id, email)
+  )
+`).catch(() => {});
 
 app.listen(PORT, () => {
   console.log(`\n🎯 DartCraft server running at ${BASE_URL}`);
