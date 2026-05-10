@@ -400,6 +400,57 @@ app.get('/api/notify/unsubscribe', async (req, res) => {
   }
 });
 
+app.post('/api/reviews/submit', reviewUpload.single('photo'), async (req, res) => {
+  const { name, rating, product_id, review } = req.body;
+  if (!name || !review) return res.status(400).json({ error: 'Name and review are required.' });
+  const r = parseInt(rating);
+  if (!r || r < 1 || r > 5) return res.status(400).json({ error: 'Rating must be 1–5.' });
+  const photoUrl = req.file ? `/assets/reviews/${req.file.filename}` : null;
+  try {
+    await queryDb(
+      `insert into reviews (name, rating, product_id, review, photo_url, active, created_at)
+       values ($1, $2, $3, $4, $5, false, now())`,
+      [name.trim(), r, product_id || null, review.trim(), photoUrl]
+    );
+
+    // Notify owner
+    const PRODUCT_LABELS = {
+      'ring-only': 'DartCraft Ring with Camera Mounts',
+      'ring-led': 'DartCraft Ring + LED Lighting',
+      'ring-led-cameras': 'DartCraft Ring + LED + Cameras',
+      'full-system': 'Full AutoDarts System',
+    };
+    const productLabel = PRODUCT_LABELS[product_id] || '—';
+    const stars = '★'.repeat(r) + '☆'.repeat(5 - r);
+    const body = `
+      <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">New review submitted.</p>
+      <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">A customer has submitted a review and is waiting for approval.</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-radius:12px;padding:24px 28px;margin-bottom:28px">
+        <tr><td>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            ${detailRow('Name', name.trim())}
+            ${detailRow('Rating', `<span style="font-size:18px;letter-spacing:2px">${stars}</span>`)}
+            ${detailRow('Product', productLabel)}
+            ${detailRow('Review', `<em>${review.trim()}</em>`)}
+            ${photoUrl ? detailRow('Photo', `<a href="${BASE_URL}${photoUrl}" style="color:#7C5CFF">View photo</a>`) : ''}
+          </table>
+        </td></tr>
+      </table>
+      <p style="margin:0"><a href="${BASE_URL}/admin" style="display:inline-block;padding:13px 28px;background:#7C5CFF;color:#fff;border-radius:99px;text-decoration:none;font-size:14px;font-weight:700;letter-spacing:-0.01em">Review in admin &rarr;</a></p>
+    `;
+    sendEmail(
+      OWNER_EMAIL,
+      `New review from ${name.trim()} — ${stars}`,
+      emailShell({ badge: '&#9679; New review', badgeColor: '#f59e0b', body })
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[api/reviews/submit] DB error:', err.message);
+    res.status(500).json({ error: 'Could not submit review. Please try again.' });
+  }
+});
+
 app.get('/api/reviews', async (_req, res) => {
   try {
     const result = await queryDb(
@@ -983,13 +1034,25 @@ app.post('/api/admin/reviews/:id/photo', requireAdmin, reviewUpload.single('phot
 
 app.put('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
   const { id } = req.params;
-  const { active } = req.body;
+  const { name, rating, product_id, review, display_date, verified_purchase, active } = req.body;
   try {
+    const existing = await queryDb('select * from reviews where id = $1 limit 1', [id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Review not found.' });
+    const cur = existing.rows[0];
+    const nextName     = name              !== undefined ? String(name).trim()           : cur.name;
+    const nextRating   = rating            !== undefined ? parseInt(rating)              : cur.rating;
+    const nextProduct  = product_id        !== undefined ? (product_id || null)          : cur.product_id;
+    const nextReview   = review            !== undefined ? String(review).trim()         : cur.review;
+    const nextDate     = display_date      !== undefined ? (display_date || null)        : cur.display_date;
+    const nextVerified = verified_purchase !== undefined ? Boolean(verified_purchase)    : cur.verified_purchase;
+    const nextActive   = active            !== undefined ? Boolean(active)               : cur.active;
+    if (!nextName || !nextReview) return res.status(400).json({ error: 'Name and review are required.' });
+    if (!nextRating || nextRating < 1 || nextRating > 5) return res.status(400).json({ error: 'Rating must be 1–5.' });
     const result = await queryDb(
-      'update reviews set active = $2 where id = $1 returning id, active',
-      [id, Boolean(active)]
+      `update reviews set name=$2, rating=$3, product_id=$4, review=$5, display_date=$6,
+       verified_purchase=$7, active=$8 where id=$1 returning *`,
+      [id, nextName, nextRating, nextProduct, nextReview, nextDate, nextVerified, nextActive]
     );
-    if (!result.rows.length) return res.status(404).json({ error: 'Review not found.' });
     res.json(result.rows[0]);
   } catch (err) {
     console.error('[api/admin/reviews PUT] DB error:', err.message);
@@ -1015,12 +1078,13 @@ app.delete('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
 
 // ── HTML pages ────────────────────────────────────────────────────────────────
 
-app.get('/success', (_req, res) => res.sendFile(path.join(__dirname, 'success.html')));
-app.get('/cancel',  (_req, res) => res.sendFile(path.join(__dirname, 'cancel.html')));
-app.get('/admin',   (_req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
-app.get('/terms',   (_req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
-app.get('/privacy', (_req, res) => res.sendFile(path.join(__dirname, 'privacy.html')));
-app.get('/',        (_req, res) => res.sendFile(path.join(__dirname, 'Dartcraft.html')));
+app.get('/success',        (_req, res) => res.sendFile(path.join(__dirname, 'success.html')));
+app.get('/cancel',         (_req, res) => res.sendFile(path.join(__dirname, 'cancel.html')));
+app.get('/admin',          (_req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/terms',          (_req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
+app.get('/privacy',        (_req, res) => res.sendFile(path.join(__dirname, 'privacy.html')));
+app.get('/submit-review',  (_req, res) => res.sendFile(path.join(__dirname, 'submit-review.html')));
+app.get('/',               (_req, res) => res.sendFile(path.join(__dirname, 'Dartcraft.html')));
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 

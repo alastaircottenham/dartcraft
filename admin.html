@@ -671,6 +671,14 @@ function starsHtml(rating) {
   return s;
 }
 
+const PRODUCT_OPTIONS = [
+  ['', '— None / General —'],
+  ['ring-only', 'DartCraft Ring with Camera Mounts'],
+  ['ring-led', 'DartCraft Ring + LED Lighting'],
+  ['ring-led-cameras', 'DartCraft Ring + LED + Cameras'],
+  ['full-system', 'Full AutoDarts System'],
+];
+
 function renderReviews(reviews) {
   if (!reviews.length) {
     document.getElementById('reviews-list').innerHTML = '<div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">No reviews yet. Add one above.</div>';
@@ -691,28 +699,112 @@ function renderReviews(reviews) {
              <input type="file" accept="image/*" style="display:none" onchange="uploadPhoto(${r.id}, this)"/>
            </label>
          </div>`;
+
+    const productOpts = PRODUCT_OPTIONS.map(([v, l]) =>
+      `<option value="${v}" ${r.product_id === v || (!r.product_id && !v) ? 'selected' : ''}>${l}</option>`
+    ).join('');
+
+    const editStars = [1,2,3,4,5].map(i =>
+      `<button type="button" class="star-btn ${i <= r.rating ? 'lit' : ''}" data-rev="${r.id}" data-val="${i}" onclick="setEditRating(${r.id},${i})">★</button>`
+    ).join('');
+
     return `
       <div class="review-card ${r.active ? '' : 'review-inactive'}" id="review-card-${r.id}">
-        <div>
-          <div class="review-stars">${starsHtml(r.rating)}</div>
-          <div class="review-name">${r.name}</div>
-          ${productLabel ? `<div class="review-product">${productLabel}</div>` : ''}
-          <div class="review-text">${r.review}</div>
-          <div class="review-meta">
-            ${r.display_date ? `<span class="review-date">${r.display_date}</span>` : ''}
-            ${verifiedBadge}
-            <span style="font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:99px;letter-spacing:0.06em;${activeBadge}">${r.active ? 'ACTIVE' : 'HIDDEN'}</span>
+        <div style="min-width:0">
+          <!-- View mode -->
+          <div id="view-${r.id}">
+            <div class="review-stars">${starsHtml(r.rating)}</div>
+            <div class="review-name">${r.name}</div>
+            ${productLabel ? `<div class="review-product">${productLabel}</div>` : ''}
+            <div class="review-text">${r.review}</div>
+            <div class="review-meta">
+              ${r.display_date ? `<span class="review-date">${r.display_date}</span>` : ''}
+              ${verifiedBadge}
+              <span style="font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:99px;letter-spacing:0.06em;${activeBadge}">${r.active ? 'ACTIVE' : 'HIDDEN'}</span>
+            </div>
+          </div>
+          <!-- Edit mode -->
+          <div id="edit-${r.id}" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div class="pkg-label" style="margin-bottom:4px">Name</div>
+                <input type="text" id="edit-name-${r.id}" value="${r.name.replace(/"/g,'&quot;')}" style="font-size:13px;padding:9px 12px"/>
+              </div>
+              <div>
+                <div class="pkg-label" style="margin-bottom:4px">Rating</div>
+                <div class="star-picker" style="gap:4px">${editStars}</div>
+                <input type="hidden" id="edit-rating-${r.id}" value="${r.rating}"/>
+              </div>
+              <div>
+                <div class="pkg-label" style="margin-bottom:4px">Product</div>
+                <select id="edit-product-${r.id}" class="admin-select" style="font-size:13px;padding:9px 12px">${productOpts}</select>
+              </div>
+              <div>
+                <div class="pkg-label" style="margin-bottom:4px">Display date</div>
+                <input type="text" id="edit-date-${r.id}" value="${r.display_date || ''}" placeholder="e.g. May 2025" style="font-size:13px;padding:9px 12px"/>
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <div class="pkg-label" style="margin-bottom:4px">Review</div>
+              <textarea class="admin-textarea" id="edit-review-${r.id}" style="min-height:70px;font-size:13px">${r.review.replace(/</g,'&lt;')}</textarea>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-2);margin-bottom:12px">
+              <input type="checkbox" id="edit-verified-${r.id}" ${r.verified_purchase ? 'checked' : ''} style="width:15px;height:15px;accent-color:var(--accent)"/>
+              Verified purchase
+            </label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="save-btn" onclick="saveEditReview(${r.id})" style="padding:8px 18px;font-size:13px">Save</button>
+              <button class="btn-ghost" onclick="toggleEditMode(${r.id}, false)">Cancel</button>
+              <span id="edit-err-${r.id}" style="color:#ef4444;font-size:12px;align-self:center;display:none"></span>
+            </div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:12px">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:12px;flex-shrink:0">
           ${photoHtml}
           <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-            <button class="btn-ghost" onclick="toggleReview(${r.id}, ${!r.active})">${r.active ? 'Hide' : 'Show'}</button>
+            <button class="btn-ghost" onclick="toggleEditMode(${r.id}, true)" id="edit-btn-${r.id}">Edit</button>
+            <button class="btn-ghost" onclick="toggleReview(${r.id}, ${!r.active})" id="toggle-btn-${r.id}">${r.active ? 'Hide' : 'Show'}</button>
             <button class="btn-ghost" style="color:#ef4444;border-color:rgba(239,68,68,0.3)" onclick="deleteReview(${r.id})">Delete</button>
           </div>
         </div>
       </div>`;
   }).join('');
+}
+
+function toggleEditMode(id, open) {
+  document.getElementById(`view-${id}`).style.display = open ? 'none' : '';
+  document.getElementById(`edit-${id}`).style.display = open ? '' : 'none';
+  document.getElementById(`edit-btn-${id}`).style.display = open ? 'none' : '';
+}
+
+function setEditRating(reviewId, n) {
+  document.getElementById(`edit-rating-${reviewId}`).value = n;
+  document.querySelectorAll(`[data-rev="${reviewId}"]`).forEach((b, i) => {
+    b.classList.toggle('lit', i < n);
+  });
+}
+
+async function saveEditReview(id) {
+  const name     = document.getElementById(`edit-name-${id}`).value.trim();
+  const rating   = parseInt(document.getElementById(`edit-rating-${id}`).value);
+  const product_id = document.getElementById(`edit-product-${id}`).value;
+  const review   = document.getElementById(`edit-review-${id}`).value.trim();
+  const display_date = document.getElementById(`edit-date-${id}`).value.trim();
+  const verified_purchase = document.getElementById(`edit-verified-${id}`).checked;
+  const errEl = document.getElementById(`edit-err-${id}`);
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = 'Name required.'; errEl.style.display = 'inline'; return; }
+  if (!rating) { errEl.textContent = 'Select a rating.'; errEl.style.display = 'inline'; return; }
+  if (!review) { errEl.textContent = 'Review required.'; errEl.style.display = 'inline'; return; }
+  try {
+    const res = await authFetch(`/api/admin/reviews/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name, rating, product_id, review, display_date, verified_purchase }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    await loadReviews();
+  } catch (err) { errEl.textContent = err.message; errEl.style.display = 'inline'; }
 }
 
 async function addReview() {

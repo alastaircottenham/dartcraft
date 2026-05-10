@@ -890,6 +890,7 @@ const Footer = () => (
             <li><a href="mailto:hello@dartcraft.com.au" style={{fontSize:14}}>hello@dartcraft.com.au</a></li>
             <li><a href="/terms" style={{fontSize:14, color:'var(--text)', opacity:0.85}}>Terms of sale</a></li>
             <li><a href="/privacy" style={{fontSize:14, color:'var(--text)', opacity:0.85}}>Privacy policy</a></li>
+            <li><a href="/submit-review" style={{fontSize:14, color:'var(--text)', opacity:0.85}}>Leave a review</a></li>
           </ul>
         </div>
       </div>

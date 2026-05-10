@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leave a Review — DartCraft</title>
+  <link rel="icon" href="/assets/favicon.png" type="image/png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050607; --card: #0e0f14; --border: rgba(255,255,255,0.08);
+      --border-2: rgba(255,255,255,0.05); --text: #F5F5F0; --text-2: #A5ABB8; --text-3: #5A6070;
+      --accent: #7C5CFF; --success: #22c55e;
+      --sans: 'Space Grotesk', sans-serif; --body: 'Inter', sans-serif; --mono: 'JetBrains Mono', monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: var(--body); min-height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+    a { color: var(--accent); text-decoration: none; }
+
+    .logo-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      border-bottom: 1px solid var(--border-2);
+      background: rgba(5,6,7,0.72); backdrop-filter: blur(14px) saturate(140%);
+    }
+    .logo-bar-inner {
+      max-width: 1280px; margin: 0 auto; padding: 18px 32px;
+    }
+    .logo-bar a { display: inline-flex; align-items: center; }
+    .logo-bar img { height: 42px; width: auto; display: block; }
+
+    .page { flex: 1; padding: 110px 24px 100px; max-width: 620px; margin: 0 auto; width: 100%; }
+
+    h1 { font-family: var(--sans); font-weight: 700; font-size: clamp(30px, 5vw, 46px); letter-spacing: -0.025em; margin-bottom: 12px; }
+    .subtitle { font-size: 16px; line-height: 1.6; color: var(--text-2); margin-bottom: 40px; }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 36px 36px 40px; }
+
+    .field { margin-bottom: 22px; }
+    .label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; display: block; }
+    input[type="text"], select, textarea {
+      width: 100%; background: #0a0b10; border: 1px solid var(--border); border-radius: 12px;
+      padding: 13px 16px; color: var(--text); font-size: 15px; font-family: var(--body);
+      outline: none; transition: border 0.15s;
+    }
+    input[type="text"]:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    select { appearance: none; }
+    textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
+
+    /* Star picker */
+    .star-row { display: flex; gap: 8px; }
+    .star-btn {
+      background: none; border: none; font-size: 32px; cursor: pointer; padding: 0;
+      line-height: 1; color: rgba(255,255,255,0.15); transition: color 0.1s, transform 0.1s;
+    }
+    .star-btn.lit { color: #f59e0b; }
+    .star-btn:hover { transform: scale(1.15); }
+
+    /* Photo upload */
+    .upload-area {
+      border: 1.5px dashed var(--border); border-radius: 12px; padding: 28px 20px;
+      text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+      position: relative;
+    }
+    .upload-area:hover, .upload-area.drag { border-color: var(--accent); background: rgba(124,92,255,0.04); }
+    .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-icon { font-size: 28px; margin-bottom: 8px; }
+    .upload-label { font-size: 14px; color: var(--text-2); }
+    .upload-hint { font-family: var(--mono); font-size: 11px; color: var(--text-3); margin-top: 4px; letter-spacing: 0.06em; }
+    .upload-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 10px; display: none; }
+
+    .submit-btn {
+      width: 100%; padding: 15px 24px; background: #F5F5F0; color: #0a0b10;
+      border: none; border-radius: 99px; font-family: var(--sans); font-weight: 700;
+      font-size: 16px; cursor: pointer; transition: opacity 0.15s; margin-top: 8px;
+    }
+    .submit-btn:hover:not(:disabled) { opacity: 0.88; }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .error-msg { color: #ef4444; font-size: 13px; margin-top: 10px; display: none; }
+
+    /* Success state */
+    #success-state { display: none; text-align: center; padding: 60px 20px; }
+    .success-icon { font-size: 52px; margin-bottom: 20px; }
+    #success-state h2 { font-family: var(--sans); font-weight: 700; font-size: 28px; letter-spacing: -0.02em; margin-bottom: 12px; }
+    #success-state p { color: var(--text-2); font-size: 15px; line-height: 1.65; max-width: 380px; margin: 0 auto 28px; }
+    .back-link { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 99px; color: var(--text); font-family: var(--sans); font-weight: 600; font-size: 14px; text-decoration: none; transition: opacity 0.15s; }
+    .back-link:hover { opacity: 0.75; text-decoration: none; }
+
+    @media (max-width: 480px) {
+      .logo-bar { padding: 18px 20px; }
+      .page { padding: 40px 16px 80px; }
+      .card { padding: 24px 20px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="logo-bar">
+  <div class="logo-bar-inner">
+    <a href="/"><img src="/assets/dartcraft-logo.png" alt="DartCraft"/></a>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- Form state -->
+  <div id="form-state">
+    <div style="margin-bottom:4px">
+      <span style="font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px">
+        <span style="width:6px;height:6px;background:var(--accent);border-radius:99px;display:inline-block"></span>
+        Leave a review
+      </span>
+    </div>
+    <h1>How did we do?</h1>
+    <p class="subtitle">We'd love to hear about your experience. Takes less than a minute.</p>
+
+    <div class="card">
+      <!-- Name -->
+      <div class="field">
+        <label class="label" for="name">Your name</label>
+        <input type="text" id="name" placeholder="e.g. James T." autocomplete="name"/>
+      </div>
+
+      <!-- Star rating -->
+      <div class="field">
+        <span class="label">Rating</span>
+        <div class="star-row" id="star-row">
+          <button type="button" class="star-btn" data-val="1">★</button>
+          <button type="button" class="star-btn" data-val="2">★</button>
+          <button type="button" class="star-btn" data-val="3">★</button>
+          <button type="button" class="star-btn" data-val="4">★</button>
+          <button type="button" class="star-btn" data-val="5">★</button>
+        </div>
+        <input type="hidden" id="rating" value=""/>
+      </div>
+
+      <!-- Product -->
+      <div class="field">
+        <label class="label" for="product">Product purchased <span style="color:var(--text-3);font-size:10px;font-family:var(--mono)">(optional)</span></label>
+        <select id="product">
+          <option value="">— Select a product —</option>
+          <option value="ring-only">DartCraft Ring with Camera Mounts</option>
+          <option value="ring-led">DartCraft Ring + LED Lighting</option>
+          <option value="ring-led-cameras">DartCraft Ring + LED + Cameras</option>
+          <option value="full-system">Full AutoDarts System</option>
+        </select>
+      </div>
+
+      <!-- Review -->
+      <div class="field">
+        <label class="label" for="review">Your review</label>
+        <textarea id="review" placeholder="Tell us about your experience — setup, quality, how it's going…"></textarea>
+      </div>
+
+      <!-- Photo -->
+      <div class="field">
+        <span class="label">Photo <span style="color:var(--text-3);font-size:10px;font-family:var(--mono)">(optional)</span></span>
+        <div class="upload-area" id="upload-area">
+          <input type="file" id="photo" accept="image/*" onchange="handlePhotoChange(this)"/>
+          <img id="photo-preview" class="upload-preview" alt="Preview"/>
+          <div id="upload-placeholder">
+            <div class="upload-icon">📷</div>
+            <div class="upload-label">Tap to add a photo of your setup</div>
+            <div class="upload-hint">JPG, PNG or WEBP · max 5 MB</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" id="submit-btn" onclick="submitReview()">Submit review</button>
+      <div class="error-msg" id="error-msg"></div>
+    </div>
+  </div>
+
+  <!-- Success state -->
+  <div id="success-state">
+    <div class="success-icon">🎯</div>
+    <h2>Thanks for your review!</h2>
+    <p>Thanks for your review — we really appreciate you taking the time.</p>
+    <a href="/" class="back-link">← Back to DartCraft</a>
+  </div>
+
+</div>
+
+<script>
+let selectedRating = 0;
+
+// Star picker
+document.querySelectorAll('.star-btn').forEach(btn => {
+  btn.addEventListener('click', () => setRating(parseInt(btn.dataset.val)));
+  btn.addEventListener('mouseenter', () => highlightStars(parseInt(btn.dataset.val)));
+  btn.addEventListener('mouseleave', () => highlightStars(selectedRating));
+});
+
+function setRating(n) {
+  selectedRating = n;
+  document.getElementById('rating').value = n;
+  highlightStars(n);
+}
+
+function highlightStars(n) {
+  document.querySelectorAll('.star-btn').forEach((b, i) => {
+    b.classList.toggle('lit', i < n);
+  });
+}
+
+// Photo preview
+function handlePhotoChange(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const preview = document.getElementById('photo-preview');
+  const placeholder = document.getElementById('upload-placeholder');
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = 'block';
+  placeholder.style.display = 'none';
+}
+
+// Drag over styling
+const uploadArea = document.getElementById('upload-area');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    const input = document.getElementById('photo');
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    input.files = dt.files;
+    handlePhotoChange(input);
+  }
+});
+
+// Submit
+async function submitReview() {
+  const name   = document.getElementById('name').value.trim();
+  const rating = document.getElementById('rating').value;
+  const product = document.getElementById('product').value;
+  const review = document.getElementById('review').value.trim();
+  const photoFile = document.getElementById('photo').files[0];
+  const errEl  = document.getElementById('error-msg');
+  const btn    = document.getElementById('submit-btn');
+
+  errEl.style.display = 'none';
+
+  if (!name)   { showError('Please enter your name.'); return; }
+  if (!rating) { showError('Please select a star rating.'); return; }
+  if (!review) { showError('Please write a short review.'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  try {
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('rating', rating);
+    formData.append('product_id', product);
+    formData.append('review', review);
+    if (photoFile) formData.append('photo', photoFile);
+
+    const res = await fetch('/api/reviews/submit', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+
+    document.getElementById('form-state').style.display = 'none';
+    document.getElementById('success-state').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    showError(err.message);
+    btn.disabled = false;
+    btn.textContent = 'Submit review';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+</script>
+</body>
+</html>
