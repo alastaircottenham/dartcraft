@@ -209,6 +209,7 @@
     <button class="tab" onclick="switchTab('orders', this)">Orders</button>
     <button class="tab" onclick="switchTab('codes', this)">Discount codes</button>
     <button class="tab" onclick="switchTab('reviews', this)">Reviews</button>
+    <button class="tab" onclick="switchTab('email', this)">Send email</button>
   </div>
 
   <!-- Stock tab -->
@@ -307,6 +308,42 @@
     </div>
   </div>
 
+  <!-- Send email tab -->
+  <div id="tab-email" class="tab-panel">
+    <div class="section-header">
+      <div class="section-title">
+        <h1>Send email</h1>
+        <p>Send a customer their setup guide, site link and review request.</p>
+      </div>
+    </div>
+
+    <div class="stock-card" style="display:block;max-width:520px">
+      <div class="pkg-label" style="margin-bottom:16px">Recipient</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Customer name</div>
+          <input type="text" id="send-name" placeholder="e.g. James" autocomplete="off"/>
+        </div>
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Email address</div>
+          <input type="text" id="send-email" placeholder="customer@example.com" autocomplete="off"/>
+        </div>
+        <div style="padding:16px 18px;background:rgba(124,92,255,0.06);border:1px solid rgba(124,92,255,0.15);border-radius:12px">
+          <div class="pkg-label" style="margin-bottom:6px;color:var(--accent)">What gets sent</div>
+          <ul style="margin:0;padding-left:18px;color:var(--text-2);font-size:13px;line-height:1.9">
+            <li>Setup guide PDF link</li>
+            <li>DartCraft website link</li>
+            <li>Leave a review link</li>
+          </ul>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <button class="save-btn" onclick="sendWelcomeEmail()" id="send-email-btn" style="padding:11px 28px;width:auto">Send email</button>
+          <span id="send-email-feedback" style="font-size:13px;display:none"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Codes tab -->
   <div id="tab-codes" class="tab-panel">
     <div class="section-header">
@@ -397,6 +434,11 @@ function switchTab(name, btn) {
   if (name === 'orders') loadOrders();
   if (name === 'codes') loadCodes();
   if (name === 'reviews') loadReviews();
+  if (name === 'email') {
+    document.getElementById('send-email-feedback').style.display = 'none';
+    document.getElementById('send-email-btn').disabled = false;
+    document.getElementById('send-email-btn').textContent = 'Send email';
+  }
 }
 
 // ── Stock ─────────────────────────────────────────────────────────────────────
@@ -865,6 +907,39 @@ async function uploadPhoto(id, input) {
     if (!res.ok) throw new Error(data.error || 'Upload failed');
     await loadReviews();
   } catch (err) { alert('Error: ' + err.message); }
+}
+
+// ── Send email ────────────────────────────────────────────────────────────────
+
+async function sendWelcomeEmail() {
+  const name  = document.getElementById('send-name').value.trim();
+  const email = document.getElementById('send-email').value.trim();
+  const btn   = document.getElementById('send-email-btn');
+  const fb    = document.getElementById('send-email-feedback');
+
+  fb.style.display = 'none';
+
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    fb.style.color = '#ef4444'; fb.textContent = 'Enter a valid email address.'; fb.style.display = 'inline'; return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Sending…';
+
+  try {
+    const res  = await authFetch('/api/admin/send-email', { method: 'POST', body: JSON.stringify({ name, email }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to send.');
+    fb.style.color = '#22c55e';
+    fb.textContent = `✓ Sent to ${email}`;
+    fb.style.display = 'inline';
+    document.getElementById('send-name').value  = '';
+    document.getElementById('send-email').value = '';
+    btn.textContent = 'Send email';
+    btn.disabled = false;
+  } catch (err) {
+    fb.style.color = '#ef4444'; fb.textContent = err.message; fb.style.display = 'inline';
+    btn.disabled = false; btn.textContent = 'Send email';
+  }
 }
 
 async function markShipped(id, btn) {

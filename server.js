@@ -1076,6 +1076,120 @@ app.delete('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Admin send email ──────────────────────────────────────────────────────────
+
+function welcomeEmailHtml(name) {
+  const firstName = (name || 'there').split(' ')[0];
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DartCraft — Your setup guide &amp; links</title>
+<style>
+  body { margin: 0; padding: 32px 16px; background: #F4F4F8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+  .email-wrap { max-width: 600px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .email-header { background: #1A1A2E; padding: 32px 40px; text-align: center; }
+  .email-logo { color: #fff; font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+  .email-logo span { color: #7C5CFF; }
+  .email-tagline { color: #9999BB; font-size: 13px; margin-top: 4px; }
+  .email-hero { background: #7C5CFF; padding: 28px 40px; text-align: center; }
+  .email-hero h1 { color: #fff; font-size: 20px; font-weight: 600; margin: 0 0 6px; }
+  .email-hero p { color: #D5CEFF; font-size: 14px; margin: 0; }
+  .email-body { background: #ffffff; padding: 32px 40px; }
+  .email-body p { font-size: 15px; color: #1A1A2E; line-height: 1.7; margin: 0 0 16px; }
+  .email-body p.muted { font-size: 14px; color: #666; }
+  .cta-block { background: #F7F7FA; border-radius: 8px; padding: 18px 20px; margin: 16px 0; display: flex; align-items: center; gap: 16px; border: 1px solid #E8E8F0; }
+  .cta-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+  .cta-icon.purple { background: #EEEDFE; }
+  .cta-icon.green  { background: #EAF3DE; }
+  .cta-icon.amber  { background: #FAEEDA; }
+  .cta-text { flex: 1; }
+  .cta-text strong { display: block; font-size: 14px; font-weight: 600; color: #1A1A2E; margin-bottom: 2px; }
+  .cta-text span { font-size: 13px; color: #666; }
+  .cta-btn { display: inline-block; background: #7C5CFF; color: #fff; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 8px; text-decoration: none; white-space: nowrap; }
+  .cta-btn.outline { background: transparent; color: #7C5CFF; border: 1.5px solid #7C5CFF; }
+  .divider { border: none; border-top: 1px solid #EBEBF0; margin: 24px 0; }
+  .email-footer { background: #F7F7FA; padding: 20px 40px; text-align: center; border-top: 1px solid #EBEBF0; }
+  .email-footer p { font-size: 12px; color: #999; margin: 0; line-height: 1.6; }
+  .email-footer a { color: #7C5CFF; text-decoration: none; }
+  @media (max-width: 520px) {
+    .email-header, .email-hero, .email-body, .email-footer { padding-left: 20px; padding-right: 20px; }
+    .cta-block { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="email-wrap">
+  <div class="email-header">
+    <div class="email-logo">Dart<span>Craft</span></div>
+    <div class="email-tagline">AutoDarts Kits Australia</div>
+  </div>
+  <div class="email-hero">
+    <h1>You're all set — welcome to the game! 🎯</h1>
+    <p>Everything you need to get started is right here.</p>
+  </div>
+  <div class="email-body">
+    <p>Hi ${firstName},</p>
+    <p>Thanks so much for your order. Your DartCraft system is ready to go, and everything you need to get set up is below.</p>
+    <div class="cta-block">
+      <div class="cta-icon purple">📄</div>
+      <div class="cta-text">
+        <strong>Setup guide</strong>
+        <span>Step-by-step instructions for your system</span>
+      </div>
+      <a class="cta-btn" href="${BASE_URL}/assets/setup-guide.pdf">Download PDF</a>
+    </div>
+    <div class="cta-block">
+      <div class="cta-icon green">🌐</div>
+      <div class="cta-text">
+        <strong>DartCraft website</strong>
+        <span>Browse kits, accessories &amp; more</span>
+      </div>
+      <a class="cta-btn outline" href="${BASE_URL}">Visit site</a>
+    </div>
+    <hr class="divider">
+    <p>If you have any mates looking to set up their own board, feel free to point them our way — we ship across Australia and every kit is built to the same standard as yours.</p>
+    <div class="cta-block">
+      <div class="cta-icon amber">⭐</div>
+      <div class="cta-text">
+        <strong>Leave a review</strong>
+        <span>It only takes a minute and means a lot!</span>
+      </div>
+      <a class="cta-btn" href="${BASE_URL}/submit-review">Review us</a>
+    </div>
+    <hr class="divider">
+    <p class="muted">Any questions or issues getting set up? Don't hesitate to reach out — happy to help.</p>
+    <p class="muted">Cheers,<br><strong style="color:#1A1A2E;">The DartCraft Team</strong></p>
+  </div>
+  <div class="email-footer">
+    <p><a href="${BASE_URL}">dartcraft.com.au</a> &nbsp;·&nbsp; Australian-built AutoDarts kits &nbsp;·&nbsp; Ships from Australia</p>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
+  const { email, name } = req.body;
+  if (!email || !/^\S+@\S+\.\S+$/.test(String(email))) {
+    return res.status(400).json({ error: 'Valid email address required.' });
+  }
+  const recipientName = (name || '').trim() || 'there';
+  try {
+    await sendEmail(
+      email.trim().toLowerCase(),
+      `Your DartCraft setup guide & links 🎯`,
+      welcomeEmailHtml(recipientName)
+    );
+    console.log(`[admin] Welcome email sent to ${email} (${recipientName})`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[api/admin/send-email] Error:', err.message);
+    res.status(500).json({ error: 'Failed to send email.' });
+  }
+});
+
 // ── HTML pages ────────────────────────────────────────────────────────────────
 
 app.get('/success',        (_req, res) => res.sendFile(path.join(__dirname, 'success.html')));
