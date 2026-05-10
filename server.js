@@ -1099,15 +1099,10 @@ function welcomeEmailHtml(name) {
   .email-body { background: #ffffff; padding: 32px 40px; }
   .email-body p { font-size: 15px; color: #1A1A2E; line-height: 1.7; margin: 0 0 16px; }
   .email-body p.muted { font-size: 14px; color: #666; }
-  .cta-block { background: #F7F7FA; border-radius: 8px; padding: 14px 16px; margin: 16px 0; border: 1px solid #E8E8F0; width: 100%; border-collapse: collapse; }
-  .cta-icon { width: 40px; height: 40px; border-radius: 50%; display: inline-block; text-align: center; line-height: 40px; font-size: 20px; vertical-align: middle; }
-  .cta-icon.purple { background: #EEEDFE; }
-  .cta-icon.green  { background: #EAF3DE; }
-  .cta-icon.amber  { background: #FAEEDA; }
-  .cta-text strong { display: block; font-size: 14px; font-weight: 600; color: #1A1A2E; margin-bottom: 2px; }
-  .cta-text span { font-size: 13px; color: #666; }
-  .cta-btn { display: inline-block; background: #7C5CFF; color: #fff; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 8px; text-decoration: none; white-space: nowrap; }
-  .cta-btn.outline { background: transparent; color: #7C5CFF; border: 1.5px solid #7C5CFF; }
+  .cta-block { background: #F7F7FA; border-radius: 12px; padding: 20px 22px; margin: 14px 0; border: 1px solid #E8E8F0; width: 100%; border-collapse: separate; }
+  .cta-icon { font-size: 22px; vertical-align: middle; }
+  .cta-btn { display: inline-block; background: #7C5CFF; color: #ffffff !important; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 8px; text-decoration: none; white-space: nowrap; }
+  .cta-btn.outline { background: transparent; color: #7C5CFF !important; border: 1.5px solid #7C5CFF; }
   .divider { border: none; border-top: 1px solid #EBEBF0; margin: 24px 0; }
   .email-footer { background: #F7F7FA; padding: 20px 40px; text-align: center; border-top: 1px solid #EBEBF0; }
   .email-footer p { font-size: 12px; color: #999; margin: 0; line-height: 1.6; }
@@ -1133,7 +1128,7 @@ function welcomeEmailHtml(name) {
     <p>Thanks so much for your order. Your DartCraft system is ready to go, and everything you need to get set up is below.</p>
     <table class="cta-block" cellpadding="0" cellspacing="0">
       <tr>
-        <td width="52" valign="middle"><div class="cta-icon purple">📄</div></td>
+        <td width="44" valign="middle"><span class="cta-icon">📄</span></td>
         <td valign="middle" style="padding: 0 12px;">
           <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">Setup guide</strong>
           <span style="font-size:13px;color:#666;">Step-by-step instructions for your system</span>
@@ -1143,7 +1138,7 @@ function welcomeEmailHtml(name) {
     </table>
     <table class="cta-block" cellpadding="0" cellspacing="0">
       <tr>
-        <td width="52" valign="middle"><div class="cta-icon green">🌐</div></td>
+        <td width="44" valign="middle"><span class="cta-icon">🌐</span></td>
         <td valign="middle" style="padding: 0 12px;">
           <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">DartCraft website</strong>
           <span style="font-size:13px;color:#666;">View our AutoDarts kits</span>
@@ -1155,7 +1150,7 @@ function welcomeEmailHtml(name) {
     <p>If you have any mates looking to set up their own board, feel free to point them our way — we ship across Australia and every kit is built to the same standard as yours.</p>
     <table class="cta-block" cellpadding="0" cellspacing="0">
       <tr>
-        <td width="52" valign="middle"><div class="cta-icon amber">⭐</div></td>
+        <td width="44" valign="middle"><span class="cta-icon">⭐</span></td>
         <td valign="middle" style="padding: 0 12px;">
           <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">Leave a review</strong>
           <span style="font-size:13px;color:#666;">It only takes a minute and means a lot!</span>
