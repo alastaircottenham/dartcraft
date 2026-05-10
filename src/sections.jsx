@@ -979,8 +979,8 @@ const Reviews = () => {
               background:'var(--card)', border:'1px solid var(--border)',
               borderRadius:18, overflow:'hidden', display:'flex', flexDirection:'column',
             }}>
-              {/* Photo — full width at top */}
-              {r.photo_url && (
+              {/* Photo — full width at top, falls back to logo */}
+              {r.photo_url ? (
                 <div onClick={() => setLightbox(r.photo_url)} style={{
                   width:'100%', height:200, overflow:'hidden',
                   cursor:'zoom-in', flexShrink:0, position:'relative',
@@ -998,6 +998,15 @@ const Reviews = () => {
                     fontFamily:'var(--mono)', fontSize:10, color:'rgba(255,255,255,0.7)',
                     letterSpacing:'0.06em', backdropFilter:'blur(4px)',
                   }}>tap to enlarge</div>
+                </div>
+              ) : (
+                <div style={{
+                  width:'100%', height:200, flexShrink:0,
+                  background:'#0e0f14', display:'flex', alignItems:'center', justifyContent:'center',
+                }}>
+                  <img src="/assets/dartcraft-logo.png" alt="DartCraft" style={{
+                    height:52, width:'auto', opacity:0.25,
+                  }}/>
                 </div>
               )}
 
