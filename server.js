@@ -1,8 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const { Pool } = require('pg');
 const { Resend } = require('resend');
+const multer = require('multer');
 
 const crypto = require('crypto');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
@@ -257,6 +259,26 @@ app.use(['/api/webhook', '/api/webhooks/stripe'], express.raw({ type: 'applicati
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// ── Review photo uploads ──────────────────────────────────────────────────────
+
+const reviewsDir = path.join(__dirname, 'assets', 'reviews');
+if (!fs.existsSync(reviewsDir)) fs.mkdirSync(reviewsDir, { recursive: true });
+
+const reviewUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, reviewsDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+      cb(null, `review-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (/^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 app.get('/api/config', (_req, res) => {
@@ -375,6 +397,19 @@ app.get('/api/notify/unsubscribe', async (req, res) => {
   } catch (err) {
     console.error('[api/notify/unsubscribe] DB error:', err.message);
     res.status(500).send(page('Error', 'Something went wrong. Please try again.', true));
+  }
+});
+
+app.get('/api/reviews', async (_req, res) => {
+  try {
+    const result = await queryDb(
+      `select id, name, rating, product_id, review, photo_url, display_date, verified_purchase
+       from reviews where active = true order by created_at desc`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('[api/reviews] DB error:', err.message);
+    res.status(500).json({ error: 'Could not load reviews.' });
   }
 });
 
@@ -896,6 +931,88 @@ app.delete('/api/admin/codes/:code', requireAdmin, async (req, res) => {
   }
 });
 
+// ── Admin reviews CRUD ────────────────────────────────────────────────────────
+
+app.get('/api/admin/reviews', requireAdmin, async (_req, res) => {
+  try {
+    const result = await queryDb(
+      `select id, name, rating, product_id, review, photo_url, display_date, verified_purchase, active, created_at
+       from reviews order by created_at desc`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('[api/admin/reviews] DB error:', err.message);
+    res.status(500).json({ error: 'Could not load reviews.' });
+  }
+});
+
+app.post('/api/admin/reviews', requireAdmin, async (req, res) => {
+  const { name, rating, product_id, review, display_date, verified_purchase } = req.body;
+  if (!name || !review) return res.status(400).json({ error: 'Name and review are required.' });
+  const r = parseInt(rating);
+  if (!r || r < 1 || r > 5) return res.status(400).json({ error: 'Rating must be 1–5.' });
+  try {
+    const result = await queryDb(
+      `insert into reviews (name, rating, product_id, review, display_date, verified_purchase, active, created_at)
+       values ($1, $2, $3, $4, $5, $6, true, now()) returning *`,
+      [name.trim(), r, product_id || null, review.trim(), display_date || null, Boolean(verified_purchase)]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('[api/admin/reviews POST] DB error:', err.message);
+    res.status(500).json({ error: 'Could not save review.' });
+  }
+});
+
+app.post('/api/admin/reviews/:id/photo', requireAdmin, reviewUpload.single('photo'), async (req, res) => {
+  const { id } = req.params;
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded.' });
+  const photoUrl = `/assets/reviews/${req.file.filename}`;
+  try {
+    const result = await queryDb(
+      'update reviews set photo_url = $2 where id = $1 returning id, photo_url',
+      [id, photoUrl]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Review not found.' });
+    res.json({ photoUrl });
+  } catch (err) {
+    console.error('[api/admin/reviews/:id/photo] DB error:', err.message);
+    res.status(500).json({ error: 'Could not save photo.' });
+  }
+});
+
+app.put('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { active } = req.body;
+  try {
+    const result = await queryDb(
+      'update reviews set active = $2 where id = $1 returning id, active',
+      [id, Boolean(active)]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Review not found.' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('[api/admin/reviews PUT] DB error:', err.message);
+    res.status(500).json({ error: 'Could not update review.' });
+  }
+});
+
+app.delete('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await queryDb('delete from reviews where id = $1 returning id, photo_url', [id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Review not found.' });
+    const photoUrl = result.rows[0].photo_url;
+    if (photoUrl && photoUrl.startsWith('/assets/reviews/')) {
+      fs.unlink(path.join(__dirname, photoUrl), () => {});
+    }
+    res.json({ deleted: true });
+  } catch (err) {
+    console.error('[api/admin/reviews DELETE] DB error:', err.message);
+    res.status(500).json({ error: 'Could not delete review.' });
+  }
+});
+
 // ── HTML pages ────────────────────────────────────────────────────────────────
 
 app.get('/success', (_req, res) => res.sendFile(path.join(__dirname, 'success.html')));
@@ -920,6 +1037,22 @@ queryDb(`
     notified BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE(package_id, email)
+  )
+`).catch(() => {});
+
+// Create reviews table if it doesn't exist yet
+queryDb(`
+  CREATE TABLE IF NOT EXISTS reviews (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    product_id TEXT,
+    review TEXT NOT NULL,
+    photo_url TEXT,
+    display_date TEXT,
+    verified_purchase BOOLEAN NOT NULL DEFAULT false,
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
   )
 `).catch(() => {});
 

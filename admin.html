@@ -145,6 +145,33 @@
     .tracking-link { font-family: var(--mono); font-size: 11px; color: var(--success); text-decoration: none; letter-spacing: 0.04em; }
     .tracking-link:hover { text-decoration: underline; }
 
+    /* ── Reviews ── */
+    .review-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 22px 26px; margin-bottom: 14px; display: grid;
+      grid-template-columns: 1fr auto; gap: 16px; align-items: start;
+    }
+    .review-stars { display: flex; gap: 3px; margin-bottom: 8px; }
+    .star { color: #f59e0b; font-size: 14px; }
+    .star-empty { color: var(--border); font-size: 14px; }
+    .review-name { font-family: var(--sans); font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+    .review-product { font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+    .review-text { font-size: 14px; color: var(--text-2); line-height: 1.6; margin-bottom: 10px; }
+    .review-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .review-date { font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+    .verified-badge { font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 99px; color: var(--success); border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.08); letter-spacing: 0.06em; }
+    .review-photo { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); display: block; }
+    .review-inactive { opacity: 0.45; }
+    textarea.admin-textarea {
+      background: #0a0b10; border: 1px solid var(--border); border-radius: 12px;
+      padding: 13px 16px; color: var(--text); font-size: 14px; font-family: var(--body);
+      width: 100%; outline: none; transition: border 0.15s; resize: vertical; min-height: 80px;
+    }
+    textarea.admin-textarea:focus { border-color: var(--accent); }
+    .star-picker { display: flex; gap: 6px; }
+    .star-picker button { background: none; border: none; font-size: 22px; cursor: pointer; padding: 0; line-height: 1; transition: transform 0.1s; }
+    .star-picker button:hover { transform: scale(1.2); }
+
     @media (max-width: 640px) {
       .stock-card { grid-template-columns: 1fr; }
       .order-details-grid { grid-template-columns: 1fr; }
@@ -181,6 +208,7 @@
     <button class="tab active" onclick="switchTab('stock', this)">Stock</button>
     <button class="tab" onclick="switchTab('orders', this)">Orders</button>
     <button class="tab" onclick="switchTab('codes', this)">Discount codes</button>
+    <button class="tab" onclick="switchTab('reviews', this)">Reviews</button>
   </div>
 
   <!-- Stock tab -->
@@ -216,6 +244,69 @@
       <div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">Loading…</div>
     </div>
   </div>
+  <!-- Reviews tab -->
+  <div id="tab-reviews" class="tab-panel">
+    <div class="section-header">
+      <div class="section-title">
+        <h1>Reviews</h1>
+        <p>Add and manage customer reviews displayed on the site.</p>
+      </div>
+      <button class="refresh-btn" onclick="loadReviews()">↻ Refresh</button>
+    </div>
+
+    <!-- Add new review form -->
+    <div class="stock-card" style="margin-bottom:24px;display:block">
+      <div class="pkg-label" style="margin-bottom:16px">Add review</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px" class="review-form-grid">
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Customer name</div>
+          <input type="text" id="rev-name" placeholder="e.g. James T."/>
+        </div>
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Rating</div>
+          <div class="star-picker" id="rev-star-picker">
+            <button type="button" onclick="setRating(1)" title="1 star">☆</button>
+            <button type="button" onclick="setRating(2)" title="2 stars">☆</button>
+            <button type="button" onclick="setRating(3)" title="3 stars">☆</button>
+            <button type="button" onclick="setRating(4)" title="4 stars">☆</button>
+            <button type="button" onclick="setRating(5)" title="5 stars">☆</button>
+          </div>
+          <input type="hidden" id="rev-rating" value=""/>
+        </div>
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Product purchased</div>
+          <select id="rev-product" class="admin-select">
+            <option value="">— None / General —</option>
+            <option value="ring-only">DartCraft Ring with Camera Mounts</option>
+            <option value="ring-led">DartCraft Ring + LED Lighting</option>
+            <option value="ring-led-cameras">DartCraft Ring + LED + Cameras</option>
+            <option value="full-system">Full AutoDarts System</option>
+          </select>
+        </div>
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Display date <span style="color:var(--text-3)">(optional)</span></div>
+          <input type="text" id="rev-date" placeholder="e.g. May 2025"/>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div class="pkg-label" style="margin-bottom:6px">Review</div>
+        <textarea class="admin-textarea" id="rev-text" placeholder="Write the customer's review here…"></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--text-2)">
+          <input type="checkbox" id="rev-verified" style="width:16px;height:16px;accent-color:var(--accent)"/>
+          Verified purchase
+        </label>
+        <button class="save-btn" onclick="addReview()" style="padding:11px 24px">Add review</button>
+        <span id="add-review-error" style="color:#ef4444;font-size:12px;display:none"></span>
+      </div>
+    </div>
+
+    <div id="reviews-list">
+      <div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">Loading…</div>
+    </div>
+  </div>
+
   <!-- Codes tab -->
   <div id="tab-codes" class="tab-panel">
     <div class="section-header">
@@ -260,6 +351,8 @@
 <style>
   @media (max-width: 640px) {
     .codes-form-grid { grid-template-columns: 1fr 1fr !important; }
+    .review-form-grid { grid-template-columns: 1fr !important; }
+    .review-card { grid-template-columns: 1fr !important; }
   }
 </style>
 
@@ -303,6 +396,7 @@ function switchTab(name, btn) {
   document.getElementById('tab-' + name).classList.add('active');
   if (name === 'orders') loadOrders();
   if (name === 'codes') loadCodes();
+  if (name === 'reviews') loadReviews();
 }
 
 // ── Stock ─────────────────────────────────────────────────────────────────────
@@ -544,6 +638,140 @@ async function deleteCode(code) {
     const res = await authFetch(`/api/admin/codes/${code}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed');
     await loadCodes();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
+
+let pendingRating = 0;
+
+function setRating(n) {
+  pendingRating = n;
+  document.getElementById('rev-rating').value = n;
+  const btns = document.querySelectorAll('#rev-star-picker button');
+  btns.forEach((b, i) => { b.textContent = i < n ? '★' : '☆'; });
+}
+
+async function loadReviews() {
+  document.getElementById('reviews-list').innerHTML = '<div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">Loading…</div>';
+  try {
+    const res = await authFetch('/api/admin/reviews');
+    if (!res.ok) throw new Error('Failed to load');
+    renderReviews(await res.json());
+  } catch (err) {
+    document.getElementById('reviews-list').innerHTML = `<div style="color:#ef4444;font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">${err.message}</div>`;
+  }
+}
+
+function starsHtml(rating) {
+  let s = '';
+  for (let i = 1; i <= 5; i++) {
+    s += `<span class="${i <= rating ? 'star' : 'star-empty'}">${i <= rating ? '★' : '☆'}</span>`;
+  }
+  return s;
+}
+
+function renderReviews(reviews) {
+  if (!reviews.length) {
+    document.getElementById('reviews-list').innerHTML = '<div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">No reviews yet. Add one above.</div>';
+    return;
+  }
+  document.getElementById('reviews-list').innerHTML = reviews.map(r => {
+    const productLabel = PACKAGE_LABELS[r.product_id] || '';
+    const verifiedBadge = r.verified_purchase ? '<span class="verified-badge">Verified purchase</span>' : '';
+    const activeBadge = r.active
+      ? 'color:#22c55e;border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.08)'
+      : 'color:var(--text-3);border:1px solid var(--border);background:rgba(255,255,255,0.03)';
+    const photoHtml = r.photo_url
+      ? `<img src="${r.photo_url}" class="review-photo" alt="Review photo"/>`
+      : `<div style="width:72px;height:72px;border-radius:10px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+           <label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px" title="Upload photo">
+             <span style="font-size:18px">📷</span>
+             <span style="font-size:9px;color:var(--text-3);font-family:var(--mono);letter-spacing:0.06em">PHOTO</span>
+             <input type="file" accept="image/*" style="display:none" onchange="uploadPhoto(${r.id}, this)"/>
+           </label>
+         </div>`;
+    return `
+      <div class="review-card ${r.active ? '' : 'review-inactive'}" id="review-card-${r.id}">
+        <div>
+          <div class="review-stars">${starsHtml(r.rating)}</div>
+          <div class="review-name">${r.name}</div>
+          ${productLabel ? `<div class="review-product">${productLabel}</div>` : ''}
+          <div class="review-text">${r.review}</div>
+          <div class="review-meta">
+            ${r.display_date ? `<span class="review-date">${r.display_date}</span>` : ''}
+            ${verifiedBadge}
+            <span style="font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:99px;letter-spacing:0.06em;${activeBadge}">${r.active ? 'ACTIVE' : 'HIDDEN'}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:12px">
+          ${photoHtml}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn-ghost" onclick="toggleReview(${r.id}, ${!r.active})">${r.active ? 'Hide' : 'Show'}</button>
+            <button class="btn-ghost" style="color:#ef4444;border-color:rgba(239,68,68,0.3)" onclick="deleteReview(${r.id})">Delete</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function addReview() {
+  const name = document.getElementById('rev-name').value.trim();
+  const rating = parseInt(document.getElementById('rev-rating').value);
+  const product_id = document.getElementById('rev-product').value;
+  const review = document.getElementById('rev-text').value.trim();
+  const display_date = document.getElementById('rev-date').value.trim();
+  const verified_purchase = document.getElementById('rev-verified').checked;
+  const errEl = document.getElementById('add-review-error');
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = 'inline'; return; }
+  if (!rating || rating < 1 || rating > 5) { errEl.textContent = 'Please select a star rating.'; errEl.style.display = 'inline'; return; }
+  if (!review) { errEl.textContent = 'Review text is required.'; errEl.style.display = 'inline'; return; }
+  try {
+    const res = await authFetch('/api/admin/reviews', { method: 'POST', body: JSON.stringify({ name, rating, product_id, review, display_date, verified_purchase }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    // Reset form
+    document.getElementById('rev-name').value = '';
+    document.getElementById('rev-text').value = '';
+    document.getElementById('rev-date').value = '';
+    document.getElementById('rev-verified').checked = false;
+    document.getElementById('rev-product').value = '';
+    setRating(0);
+    await loadReviews();
+  } catch (err) { errEl.textContent = err.message; errEl.style.display = 'inline'; }
+}
+
+async function toggleReview(id, active) {
+  try {
+    const res = await authFetch(`/api/admin/reviews/${id}`, { method: 'PUT', body: JSON.stringify({ active }) });
+    if (!res.ok) throw new Error('Failed');
+    await loadReviews();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function deleteReview(id) {
+  if (!confirm('Delete this review? This cannot be undone.')) return;
+  try {
+    const res = await authFetch(`/api/admin/reviews/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed');
+    await loadReviews();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function uploadPhoto(id, input) {
+  if (!input.files || !input.files[0]) return;
+  const formData = new FormData();
+  formData.append('photo', input.files[0]);
+  try {
+    const res = await fetch(`/api/admin/reviews/${id}/photo`, {
+      method: 'POST',
+      headers: { 'x-admin-password': adminPassword },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    await loadReviews();
   } catch (err) { alert('Error: ' + err.message); }
 }
 

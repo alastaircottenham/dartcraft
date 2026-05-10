@@ -904,4 +904,135 @@ const Footer = () => (
   </footer>
 );
 
-window.Sections = { Header, Hero, Marquee, ProductExplain, HowItWorks, Packages, FullSystemCallout, KitPhotos, Shipping, FAQ, Footer, PillButton, Container, Eyebrow };
+// ── Reviews ───────────────────────────────────────────────
+const PRODUCT_LABELS = {
+  'ring-only':        'DartCraft Ring with Camera Mounts',
+  'ring-led':         'DartCraft Ring + LED Lighting',
+  'ring-led-cameras': 'DartCraft Ring + LED + Cameras',
+  'full-system':      'Full AutoDarts System',
+};
+
+const StarRating = ({ rating }) => (
+  <div style={{display:'flex', gap:3}}>
+    {[1,2,3,4,5].map(i => (
+      <span key={i} style={{fontSize:15, color: i <= rating ? '#f59e0b' : 'rgba(255,255,255,0.12)'}}>
+        {i <= rating ? '★' : '☆'}
+      </span>
+    ))}
+  </div>
+);
+
+const Reviews = () => {
+  const [reviews, setReviews] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+  const [lightbox, setLightbox] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/reviews')
+      .then(r => r.json())
+      .then(data => { setReviews(Array.isArray(data) ? data : []); setLoaded(true); })
+      .catch(() => setLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = e => { if (e.key === 'Escape') setLightbox(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightbox]);
+
+  if (!loaded || !reviews.length) return null;
+
+  return (
+    <section style={{padding:'100px 0', borderTop:'1px solid var(--border-2)'}}>
+      {/* Lightbox */}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{
+          position:'fixed', inset:0, zIndex:1000,
+          background:'rgba(0,0,0,0.88)', backdropFilter:'blur(8px)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          padding:24, cursor:'zoom-out',
+        }}>
+          <img src={lightbox} alt="" style={{
+            maxWidth:'90vw', maxHeight:'88vh', borderRadius:14,
+            boxShadow:'0 24px 80px rgba(0,0,0,0.6)', objectFit:'contain',
+          }}/>
+          <button onClick={() => setLightbox(null)} style={{
+            position:'fixed', top:20, right:24,
+            background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.15)',
+            color:'#fff', borderRadius:99, width:38, height:38,
+            fontSize:18, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
+          }}>✕</button>
+        </div>
+      )}
+
+      <Container>
+        <div style={{marginBottom:52}}>
+          <Eyebrow>Customer reviews</Eyebrow>
+          <h2 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:'clamp(32px, 4vw, 52px)', lineHeight:1.07, letterSpacing:'-0.025em', margin:'18px 0 0', maxWidth:540}}>
+            What our customers say.
+          </h2>
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:20}} className="dc-reviews-grid">
+          {reviews.map(r => (
+            <div key={r.id} style={{
+              background:'var(--card)', border:'1px solid var(--border)',
+              borderRadius:18, overflow:'hidden', display:'flex', flexDirection:'column',
+            }}>
+              {/* Photo — full width at top */}
+              {r.photo_url && (
+                <div onClick={() => setLightbox(r.photo_url)} style={{
+                  width:'100%', height:200, overflow:'hidden',
+                  cursor:'zoom-in', flexShrink:0, position:'relative',
+                }}>
+                  <img src={r.photo_url} alt="" style={{
+                    width:'100%', height:'100%', objectFit:'cover', display:'block',
+                    transition:'transform 0.3s ease',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform='scale(1.04)'}
+                  onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}
+                  />
+                  <div style={{
+                    position:'absolute', bottom:8, right:8,
+                    background:'rgba(0,0,0,0.55)', borderRadius:6, padding:'3px 7px',
+                    fontFamily:'var(--mono)', fontSize:10, color:'rgba(255,255,255,0.7)',
+                    letterSpacing:'0.06em', backdropFilter:'blur(4px)',
+                  }}>tap to enlarge</div>
+                </div>
+              )}
+
+              <div style={{padding:'24px 26px', display:'flex', flexDirection:'column', gap:14, flex:1}}>
+                <StarRating rating={r.rating}/>
+                <p style={{fontSize:15, color:'var(--text-2)', lineHeight:1.65, margin:0, flex:1}}>
+                  "{r.review}"
+                </p>
+                <div style={{borderTop:'1px solid var(--border-2)', paddingTop:14, display:'flex', flexDirection:'column', gap:5}}>
+                  <div style={{fontFamily:'var(--sans)', fontWeight:600, fontSize:14}}>{r.name}</div>
+                  {r.product_id && PRODUCT_LABELS[r.product_id] && (
+                    <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em', textTransform:'uppercase'}}>
+                      {PRODUCT_LABELS[r.product_id]}
+                    </div>
+                  )}
+                  <div style={{display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginTop:2}}>
+                    {r.display_date && (
+                      <span style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)'}}>{r.display_date}</span>
+                    )}
+                    {r.verified_purchase && (
+                      <span style={{
+                        fontFamily:'var(--mono)', fontSize:10, padding:'2px 8px', borderRadius:99,
+                        color:'#22c55e', border:'1px solid rgba(34,197,94,0.3)', background:'rgba(34,197,94,0.08)',
+                        letterSpacing:'0.06em'
+                      }}>Verified purchase</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Container>
+    </section>
+  );
+};
+
+window.Sections = { Header, Hero, Marquee, ProductExplain, HowItWorks, Packages, FullSystemCallout, KitPhotos, Reviews, Shipping, FAQ, Footer, PillButton, Container, Eyebrow };
