@@ -1144,7 +1144,7 @@ function welcomeEmailHtml(name) {
       <div class="cta-icon green">🌐</div>
       <div class="cta-text">
         <strong>DartCraft website</strong>
-        <span>Browse kits, accessories &amp; more</span>
+        <span>View our AutoDarts kits</span>
       </div>
       <a class="cta-btn outline" href="${BASE_URL}">Visit site</a>
     </div>
