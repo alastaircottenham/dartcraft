@@ -1099,12 +1099,11 @@ function welcomeEmailHtml(name) {
   .email-body { background: #ffffff; padding: 32px 40px; }
   .email-body p { font-size: 15px; color: #1A1A2E; line-height: 1.7; margin: 0 0 16px; }
   .email-body p.muted { font-size: 14px; color: #666; }
-  .cta-block { background: #F7F7FA; border-radius: 8px; padding: 18px 20px; margin: 16px 0; display: flex; align-items: center; gap: 16px; border: 1px solid #E8E8F0; }
-  .cta-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+  .cta-block { background: #F7F7FA; border-radius: 8px; padding: 14px 16px; margin: 16px 0; border: 1px solid #E8E8F0; width: 100%; border-collapse: collapse; }
+  .cta-icon { width: 40px; height: 40px; border-radius: 50%; display: inline-block; text-align: center; line-height: 40px; font-size: 20px; vertical-align: middle; }
   .cta-icon.purple { background: #EEEDFE; }
   .cta-icon.green  { background: #EAF3DE; }
   .cta-icon.amber  { background: #FAEEDA; }
-  .cta-text { flex: 1; }
   .cta-text strong { display: block; font-size: 14px; font-weight: 600; color: #1A1A2E; margin-bottom: 2px; }
   .cta-text span { font-size: 13px; color: #666; }
   .cta-btn { display: inline-block; background: #7C5CFF; color: #fff; font-size: 13px; font-weight: 600; padding: 9px 18px; border-radius: 8px; text-decoration: none; white-space: nowrap; }
@@ -1132,32 +1131,38 @@ function welcomeEmailHtml(name) {
   <div class="email-body">
     <p>Hi ${firstName},</p>
     <p>Thanks so much for your order. Your DartCraft system is ready to go, and everything you need to get set up is below.</p>
-    <div class="cta-block">
-      <div class="cta-icon purple">📄</div>
-      <div class="cta-text">
-        <strong>Setup guide</strong>
-        <span>Step-by-step instructions for your system</span>
-      </div>
-      <a class="cta-btn" href="${BASE_URL}/assets/setup-guide.pdf">Download PDF</a>
-    </div>
-    <div class="cta-block">
-      <div class="cta-icon green">🌐</div>
-      <div class="cta-text">
-        <strong>DartCraft website</strong>
-        <span>View our AutoDarts kits</span>
-      </div>
-      <a class="cta-btn outline" href="${BASE_URL}">Visit site</a>
-    </div>
+    <table class="cta-block" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="52" valign="middle"><div class="cta-icon purple">📄</div></td>
+        <td valign="middle" style="padding: 0 12px;">
+          <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">Setup guide</strong>
+          <span style="font-size:13px;color:#666;">Step-by-step instructions for your system</span>
+        </td>
+        <td width="130" valign="middle" align="right"><a class="cta-btn" href="${BASE_URL}/assets/setup-guide.pdf">Download PDF</a></td>
+      </tr>
+    </table>
+    <table class="cta-block" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="52" valign="middle"><div class="cta-icon green">🌐</div></td>
+        <td valign="middle" style="padding: 0 12px;">
+          <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">DartCraft website</strong>
+          <span style="font-size:13px;color:#666;">View our AutoDarts kits</span>
+        </td>
+        <td width="130" valign="middle" align="right"><a class="cta-btn outline" href="${BASE_URL}">Visit site</a></td>
+      </tr>
+    </table>
     <hr class="divider">
     <p>If you have any mates looking to set up their own board, feel free to point them our way — we ship across Australia and every kit is built to the same standard as yours.</p>
-    <div class="cta-block">
-      <div class="cta-icon amber">⭐</div>
-      <div class="cta-text">
-        <strong>Leave a review</strong>
-        <span>It only takes a minute and means a lot!</span>
-      </div>
-      <a class="cta-btn" href="${BASE_URL}/submit-review">Review us</a>
-    </div>
+    <table class="cta-block" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="52" valign="middle"><div class="cta-icon amber">⭐</div></td>
+        <td valign="middle" style="padding: 0 12px;">
+          <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">Leave a review</strong>
+          <span style="font-size:13px;color:#666;">It only takes a minute and means a lot!</span>
+        </td>
+        <td width="130" valign="middle" align="right"><a class="cta-btn" href="${BASE_URL}/submit-review">Review us</a></td>
+      </tr>
+    </table>
     <hr class="divider">
     <p class="muted">Any questions or issues getting set up? Don't hesitate to reach out at <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF;text-decoration:none;">hello@dartcraft.com.au</a> — happy to help.</p>
     <p class="muted">Cheers,<br><strong style="color:#1A1A2E;">The DartCraft Team</strong></p>
