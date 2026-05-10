@@ -1159,7 +1159,7 @@ function welcomeEmailHtml(name) {
       <a class="cta-btn" href="${BASE_URL}/submit-review">Review us</a>
     </div>
     <hr class="divider">
-    <p class="muted">Any questions or issues getting set up? Don't hesitate to reach out — happy to help.</p>
+    <p class="muted">Any questions or issues getting set up? Don't hesitate to reach out at <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF;text-decoration:none;">hello@dartcraft.com.au</a> — happy to help.</p>
     <p class="muted">Cheers,<br><strong style="color:#1A1A2E;">The DartCraft Team</strong></p>
   </div>
   <div class="email-footer">
