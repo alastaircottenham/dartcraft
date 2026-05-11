@@ -244,6 +244,30 @@
         <div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:20px 0;text-align:center">Loading…</div>
       </div>
     </div>
+
+    <!-- Postage -->
+    <div style="margin-top:40px">
+      <div style="margin-bottom:16px">
+        <div style="font-family:var(--sans);font-weight:700;font-size:20px;letter-spacing:-0.02em;margin-bottom:3px">Postage cost</div>
+        <div style="color:var(--text-2);font-size:13px">Charged to customers at checkout. Changes take effect immediately.</div>
+      </div>
+      <div class="stock-card" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;max-width:420px">
+        <div style="flex:1;min-width:120px">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Amount (AUD)</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--mono);font-size:14px;color:var(--text-2)">$</span>
+            <input id="shipping-input" type="number" min="0" step="0.01"
+              style="width:100px;background:#0a0b10;border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:15px;font-family:var(--mono);outline:none"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+              onkeydown="if(event.key==='Enter')saveShipping()"/>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding-top:18px">
+          <button class="action-btn" onclick="saveShipping()">Save</button>
+          <span id="shipping-feedback" style="font-family:var(--mono);font-size:12px;color:var(--success);display:none"></span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Orders tab -->
@@ -481,6 +505,41 @@ async function loadStock(fromLogin = false) {
   renderStock();
   document.getElementById('stock-refresh').textContent = 'Refreshed ' + new Date().toLocaleTimeString('en-AU');
   loadNotifications();
+  loadShipping();
+}
+
+async function loadShipping() {
+  try {
+    const res = await authFetch('/api/admin/settings');
+    if (!res.ok) return;
+    const { shipping_aud } = await res.json();
+    document.getElementById('shipping-input').value = Number(shipping_aud).toFixed(2);
+  } catch {}
+}
+
+async function saveShipping() {
+  const input = document.getElementById('shipping-input');
+  const fb = document.getElementById('shipping-feedback');
+  const value = parseFloat(input.value);
+  if (!value || value <= 0) { fb.textContent = 'Enter a valid amount'; fb.style.color = '#ef4444'; fb.style.display = 'inline'; return; }
+  try {
+    const res = await authFetch('/api/admin/settings/shipping', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shipping_aud: value }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    input.value = Number(data.shipping_aud).toFixed(2);
+    fb.textContent = '✓ Saved';
+    fb.style.color = 'var(--success)';
+    fb.style.display = 'inline';
+    setTimeout(() => fb.style.display = 'none', 2500);
+  } catch (err) {
+    fb.textContent = err.message;
+    fb.style.color = '#ef4444';
+    fb.style.display = 'inline';
+  }
 }
 
 async function loadNotifications() {

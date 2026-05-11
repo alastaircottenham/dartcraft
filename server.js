@@ -14,7 +14,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'dartcraft-admin';
-const SHIPPING_CENTS = 1995; // $19.95 AUD
+const SHIPPING_CENTS_DEFAULT = 1995; // $19.95 AUD — fallback if DB unavailable
+let shippingCents = SHIPPING_CENTS_DEFAULT; // live value, updated from DB at startup
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
@@ -352,7 +353,7 @@ app.post('/api/validate-promo', async (req, res) => {
     const discountCents = calcDiscount(
       { type: promo.type, value: promoValue, active: true },
       Number(pkg.price_aud),
-      SHIPPING_CENTS / 100
+      shippingCents / 100
     );
     const discountDisplay = freeShipping
       ? 'Free shipping'
@@ -505,7 +506,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         discountCents = calcDiscount(
           { type: promo.type, value: Number(promo.value), active: true },
           Number(pkg.price_aud),
-          SHIPPING_CENTS / 100
+          shippingCents / 100
         );
         appliedPromo = String(promo.code).toUpperCase();
       }
@@ -528,7 +529,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         price_data: {
           currency: 'aud',
           product_data: { name: 'Shipping (Australia)' },
-          unit_amount: SHIPPING_CENTS,
+          unit_amount: shippingCents,
         },
         quantity: 1,
       },
@@ -537,7 +538,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
     // Stripe doesn't allow negative line items — use a coupon instead
     let sessionDiscounts = [];
     if (discountCents > 0) {
-      const totalCents = Number(pkg.price_aud) * 100 + SHIPPING_CENTS;
+      const totalCents = Number(pkg.price_aud) * 100 + shippingCents;
       const cappedDiscount = Math.min(discountCents, totalCents - 1);
       const coupon = await stripe.coupons.create({
         amount_off: cappedDiscount,
@@ -759,6 +760,30 @@ app.put('/api/admin/packages/:id/price', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('[api/admin/packages/:id/price] DB error:', err.message);
     res.status(500).json({ error: 'Could not update price.' });
+  }
+});
+
+app.get('/api/admin/settings', requireAdmin, (_req, res) => {
+  res.json({ shipping_aud: shippingCents / 100 });
+});
+
+app.put('/api/admin/settings/shipping', requireAdmin, async (req, res) => {
+  const value = Number(req.body.shipping_aud);
+  if (!value || value <= 0 || !Number.isFinite(value)) {
+    return res.status(400).json({ error: 'shipping_aud must be a positive number' });
+  }
+  const cents = Math.round(value * 100);
+  try {
+    await queryDb(
+      `INSERT INTO settings (key, value) VALUES ('shipping_cents', $1)
+       ON CONFLICT (key) DO UPDATE SET value = $1`,
+      [String(cents)]
+    );
+    shippingCents = cents;
+    res.json({ shipping_aud: shippingCents / 100 });
+  } catch (err) {
+    console.error('[api/admin/settings/shipping] DB error:', err.message);
+    res.status(500).json({ error: 'Could not update shipping cost.' });
   }
 });
 
@@ -1370,6 +1395,22 @@ queryDb(`
     UNIQUE(package_id, email)
   )
 `).catch(() => {});
+
+// Create settings table and load shipping cost
+(async () => {
+  try {
+    await queryDb(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
+    await queryDb(
+      `INSERT INTO settings (key, value) VALUES ('shipping_cents', $1) ON CONFLICT (key) DO NOTHING`,
+      [String(SHIPPING_CENTS_DEFAULT)]
+    );
+    const result = await queryDb(`SELECT value FROM settings WHERE key = 'shipping_cents' LIMIT 1`);
+    if (result.rows.length) shippingCents = Number(result.rows[0].value);
+    console.log(`   Shipping    : $${(shippingCents / 100).toFixed(2)} AUD`);
+  } catch (err) {
+    console.error('[settings init] Error loading shipping cost:', err.message);
+  }
+})();
 
 // Create reviews table if it doesn't exist yet
 queryDb(`
