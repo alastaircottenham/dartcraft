@@ -710,11 +710,11 @@ app.get('/api/admin/stock', requireAdmin, (_req, res) => {
   (async () => {
     try {
       const result = await queryDb(
-        'select id, name, quantity from packages where active = true order by created_at asc'
+        'select id, name, quantity, price_aud from packages where active = true order by created_at asc'
       );
       const out = {};
       for (const row of result.rows) {
-        out[row.id] = { quantity: Number(row.quantity), label: row.name };
+        out[row.id] = { quantity: Number(row.quantity), label: row.name, price: Number(row.price_aud) };
       }
       res.json(out);
     } catch (err) {
@@ -722,6 +722,25 @@ app.get('/api/admin/stock', requireAdmin, (_req, res) => {
       res.status(500).json({ error: 'Could not load stock.' });
     }
   })();
+});
+
+app.put('/api/admin/packages/:id/price', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const price = Number(req.body.price_aud);
+  if (!price || price <= 0 || !Number.isFinite(price)) {
+    return res.status(400).json({ error: 'price_aud must be a positive number' });
+  }
+  try {
+    const result = await queryDb(
+      'update packages set price_aud = $2, updated_at = now() where id = $1 returning id, price_aud',
+      [id, price]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Package not found' });
+    res.json({ id: result.rows[0].id, price_aud: Number(result.rows[0].price_aud) });
+  } catch (err) {
+    console.error('[api/admin/packages/:id/price] DB error:', err.message);
+    res.status(500).json({ error: 'Could not update price.' });
+  }
 });
 
 app.put('/api/admin/stock/:id', requireAdmin, async (req, res) => {
@@ -792,6 +811,46 @@ app.put('/api/admin/stock/:id', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('[api/admin/stock/:id] DB error:', err.message);
     res.status(500).json({ error: 'Could not update stock.' });
+  }
+});
+
+app.get('/api/admin/notifications', requireAdmin, async (_req, res) => {
+  try {
+    const result = await queryDb(
+      `select sn.id, sn.package_id, sn.email, sn.notified, sn.created_at, p.name as package_name
+       from stock_notifications sn
+       left join packages p on p.id = sn.package_id
+       order by sn.package_id asc, sn.created_at asc`
+    );
+    // Group by package_id
+    const out = {};
+    for (const row of result.rows) {
+      if (!out[row.package_id]) {
+        out[row.package_id] = { packageName: row.package_name || row.package_id, subscribers: [] };
+      }
+      out[row.package_id].subscribers.push({
+        id: row.id,
+        email: row.email,
+        notified: Boolean(row.notified),
+        created_at: row.created_at,
+      });
+    }
+    res.json(out);
+  } catch (err) {
+    console.error('[api/admin/notifications] DB error:', err.message);
+    res.status(500).json({ error: 'Could not load notifications.' });
+  }
+});
+
+app.delete('/api/admin/notifications/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await queryDb('delete from stock_notifications where id = $1 returning id', [id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Subscriber not found.' });
+    res.json({ deleted: true });
+  } catch (err) {
+    console.error('[api/admin/notifications/:id] DB error:', err.message);
+    res.status(500).json({ error: 'Could not remove subscriber.' });
   }
 });
 
@@ -916,6 +975,35 @@ app.post('/api/admin/orders/:id/pickup', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Pickup error:', err.message);
     res.status(500).json({ error: 'Could not mark order as pickup.' });
+  }
+});
+
+app.post('/api/admin/orders/:id/resend-confirmation', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const orderResult = await queryDb(
+      `select stripe_session_id, payment_status, amount_total, customer_email,
+              package_id, package_name, customer_name, phone, street, suburb, state, postcode, notes,
+              promo_code, discount_cents, shipped, shipped_at, created_at
+       from orders where stripe_session_id = $1 limit 1`,
+      [id]
+    );
+    if (!orderResult.rows.length) return res.status(404).json({ error: 'Order not found.' });
+    const order = orderResult.rows[0];
+    if (order.payment_status !== 'paid') return res.status(400).json({ error: 'Order is not paid.' });
+
+    const session = orderRowToSession(order);
+    await sendEmail(
+      order.customer_email,
+      'Your DartCraft order is confirmed 🎯',
+      confirmationEmailHtml(session)
+    );
+
+    console.log(`[admin] Confirmation email resent for order ${id} → ${order.customer_email}`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[admin/resend-confirmation] Error:', err.message);
+    res.status(500).json({ error: 'Could not resend confirmation email.' });
   }
 });
 
@@ -1054,11 +1142,22 @@ app.post('/api/admin/reviews/:id/photo', requireAdmin, reviewUpload.single('phot
   if (!req.file) return res.status(400).json({ error: 'No file uploaded.' });
   const photoUrl = `/assets/reviews/${req.file.filename}`;
   try {
+    // Fetch existing photo so we can delete it after the update
+    const existing = await queryDb('select photo_url from reviews where id = $1 limit 1', [id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Review not found.' });
+    const oldPhotoUrl = existing.rows[0].photo_url;
+
     const result = await queryDb(
       'update reviews set photo_url = $2 where id = $1 returning id, photo_url',
       [id, photoUrl]
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Review not found.' });
+
+    // Delete old photo file if it was stored locally
+    if (oldPhotoUrl && oldPhotoUrl.startsWith('/assets/reviews/')) {
+      fs.unlink(path.join(__dirname, oldPhotoUrl), () => {});
+    }
+
     res.json({ photoUrl });
   } catch (err) {
     console.error('[api/admin/reviews/:id/photo] DB error:', err.message);

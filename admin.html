@@ -231,6 +231,19 @@
     <div class="stock-grid" id="stock-grid">
       <div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">Loading…</div>
     </div>
+
+    <!-- Waitlists -->
+    <div style="margin-top:40px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-family:var(--sans);font-weight:700;font-size:20px;letter-spacing:-0.02em;margin-bottom:3px">Back-in-stock waitlists</div>
+          <div style="color:var(--text-2);font-size:13px">Customers waiting to be notified when a kit is back in stock.</div>
+        </div>
+      </div>
+      <div id="notifications-list">
+        <div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:20px 0;text-align:center">Loading…</div>
+      </div>
+    </div>
   </div>
 
   <!-- Orders tab -->
@@ -394,6 +407,7 @@
     .codes-form-grid { grid-template-columns: 1fr 1fr !important; }
     .review-form-grid { grid-template-columns: 1fr !important; }
     .review-card { grid-template-columns: 1fr !important; }
+    .dc-price-divider { display: none !important; }
   }
 </style>
 
@@ -466,28 +480,109 @@ async function loadStock(fromLogin = false) {
   document.getElementById('admin-screen').style.display = 'block';
   renderStock();
   document.getElementById('stock-refresh').textContent = 'Refreshed ' + new Date().toLocaleTimeString('en-AU');
+  loadNotifications();
+}
+
+async function loadNotifications() {
+  try {
+    const res = await authFetch('/api/admin/notifications');
+    if (!res.ok) throw new Error('Failed');
+    renderNotifications(await res.json());
+  } catch (err) {
+    document.getElementById('notifications-list').innerHTML =
+      `<div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:20px 0;text-align:center">${err.message}</div>`;
+  }
+}
+
+function renderNotifications(data) {
+  const entries = Object.entries(data);
+  if (!entries.length) {
+    document.getElementById('notifications-list').innerHTML =
+      '<div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:20px 0;text-align:center">No one on any waitlist yet.</div>';
+    return;
+  }
+  document.getElementById('notifications-list').innerHTML = entries.map(([pkgId, group]) => {
+    const total = group.subscribers.length;
+    const pending = group.subscribers.filter(s => !s.notified).length;
+    const rows = group.subscribers.map(s => {
+      const date = new Date(s.created_at).toLocaleDateString('en-AU', { day:'2-digit', month:'short', year:'numeric' });
+      const notifiedBadge = s.notified
+        ? '<span style="font-family:var(--mono);font-size:10px;color:var(--text-3);letter-spacing:0.06em">notified</span>'
+        : '<span style="font-family:var(--mono);font-size:10px;color:#f59e0b;letter-spacing:0.06em">waiting</span>';
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-2);gap:12px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0">
+            ${notifiedBadge}
+            <span style="font-size:13px;color:var(--text);word-break:break-all">${s.email}</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--text-3)">${date}</span>
+          </div>
+          <button class="btn-ghost" style="color:#ef4444;border-color:rgba(239,68,68,0.3);font-size:12px;padding:5px 12px;flex-shrink:0" onclick="removeNotification(${s.id}, this)">Remove</button>
+        </div>`;
+    }).join('');
+    return `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
+          <div style="font-family:var(--sans);font-weight:600;font-size:15px">${PACKAGE_LABELS[pkgId] || group.packageName || pkgId}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--mono);font-size:11px;color:#f59e0b;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);padding:3px 9px;border-radius:99px;letter-spacing:0.06em">${pending} waiting</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--text-3)">${total} total</span>
+          </div>
+        </div>
+        <div>${rows}</div>
+      </div>`;
+  }).join('');
+}
+
+async function removeNotification(id, btn) {
+  if (!confirm('Remove this subscriber from the waitlist?')) return;
+  btn.disabled = true;
+  try {
+    const res = await authFetch(`/api/admin/notifications/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed');
+    await loadNotifications();
+  } catch (err) {
+    alert('Error: ' + err.message);
+    btn.disabled = false;
+  }
 }
 
 function renderStock() {
   document.getElementById('stock-grid').innerHTML = Object.entries(stockData).map(([id, s]) => {
     const qty = s.quantity;
+    const price = s.price ?? '';
     return `
-      <div class="stock-card" id="card-${id}">
-        <div>
-          <div class="pkg-label">${id}</div>
-          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
-            <span class="pkg-name">${PACKAGE_LABELS[id] || s.label || id}</span>
-            <span id="badge-${id}">${badgeHtml(qty)}</span>
-          </div>
+      <div class="stock-card" id="card-${id}" style="display:block">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:18px">
+          <div class="pkg-label" style="width:100%;margin-bottom:4px">${id}</div>
+          <span class="pkg-name">${PACKAGE_LABELS[id] || s.label || id}</span>
+          <span id="badge-${id}">${badgeHtml(qty)}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <div class="qty-control">
-            <button class="qty-btn" onclick="adjustQty('${id}', -1)">−</button>
-            <input class="qty-input" type="number" min="0" max="9999" value="${qty}" id="qty-${id}" onchange="onQtyChange('${id}')"/>
-            <button class="qty-btn" onclick="adjustQty('${id}', 1)">+</button>
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--border-2)">
+          <!-- Quantity -->
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="pkg-label">QTY</span>
+            <div class="qty-control">
+              <button class="qty-btn" onclick="adjustQty('${id}', -1)">−</button>
+              <input class="qty-input" type="number" min="0" max="9999" value="${qty}" id="qty-${id}" onchange="onQtyChange('${id}')"/>
+              <button class="qty-btn" onclick="adjustQty('${id}', 1)">+</button>
+            </div>
+            <button class="save-btn" onclick="saveQty('${id}')" id="save-${id}">Save</button>
+            <span class="feedback" id="fb-${id}"></span>
           </div>
-          <button class="save-btn" onclick="saveQty('${id}')" id="save-${id}">Save</button>
-          <span class="feedback" id="fb-${id}"></span>
+          <!-- Divider -->
+          <div style="width:1px;height:38px;background:var(--border-2);flex-shrink:0" class="dc-price-divider"></div>
+          <!-- Price -->
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="pkg-label">PRICE</span>
+            <span style="font-family:var(--mono);font-size:13px;color:var(--text-3)">$</span>
+            <input type="number" id="price-${id}" value="${price}" min="1" step="1"
+              style="width:90px;text-align:center;font-family:var(--sans);font-size:20px;font-weight:700;letter-spacing:-0.02em;padding:7px 10px;background:#0a0b10;border:1px solid var(--border);border-radius:10px;color:var(--text);outline:none;-moz-appearance:textfield;transition:border 0.15s"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+              oninput="onPriceChange('${id}')"/>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--text-3)">AUD</span>
+            <button class="save-btn" onclick="savePrice('${id}')" id="save-price-${id}">Save</button>
+            <span class="feedback" id="fb-price-${id}"></span>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -515,6 +610,31 @@ async function saveQty(id) {
     card.classList.replace('saving', 'saved');
     fb.style.color = '#22c55e'; fb.textContent = '✓ Saved';
     document.getElementById(`badge-${id}`).innerHTML = badgeHtml(qty);
+    setTimeout(() => { card.classList.remove('saved'); fb.textContent = ''; }, 2500);
+  } catch (err) {
+    fb.style.color = '#ef4444'; fb.textContent = err.message;
+    card.classList.remove('saving');
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Save';
+  }
+}
+
+function onPriceChange(id) { document.getElementById(`fb-price-${id}`).textContent = ''; }
+
+async function savePrice(id) {
+  const input = document.getElementById(`price-${id}`);
+  const price = parseFloat(input.value);
+  if (isNaN(price) || price <= 0) { alert('Enter a valid price.'); return; }
+  const saveBtn = document.getElementById(`save-price-${id}`);
+  const fb = document.getElementById(`fb-price-${id}`);
+  const card = document.getElementById(`card-${id}`);
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; card.classList.add('saving');
+  try {
+    const res = await authFetch(`/api/admin/packages/${id}/price`, { method: 'PUT', body: JSON.stringify({ price_aud: price }) });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Save failed'); }
+    stockData[id].price = price;
+    card.classList.replace('saving', 'saved');
+    fb.style.color = '#22c55e'; fb.textContent = '✓ Saved';
     setTimeout(() => { card.classList.remove('saved'); fb.textContent = ''; }, 2500);
   } catch (err) {
     fb.style.color = '#ef4444'; fb.textContent = err.message;
@@ -600,6 +720,10 @@ function renderOrders(orders) {
             ${notesRow}
           </div>
           <div class="ship-action">${actionHtml}</div>
+          <div style="padding-top:12px;border-top:1px solid var(--border-2);margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <button class="btn-ghost" onclick="resendConfirmation('${o.id}', this)" style="font-size:12px;padding:7px 14px">↩ Resend order confirmation email</button>
+            <span id="resend-fb-${o.id}" style="font-size:12px;font-family:var(--mono);display:none"></span>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -610,6 +734,23 @@ function toggleOrder(id) {
   const chev = document.getElementById(`chev-${id}`);
   const open = body.classList.toggle('open');
   chev.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+async function resendConfirmation(id, btn) {
+  const fb = document.getElementById(`resend-fb-${id}`);
+  btn.disabled = true;
+  fb.style.display = 'none';
+  try {
+    const res = await authFetch(`/api/admin/orders/${id}/resend-confirmation`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    fb.style.color = '#22c55e'; fb.textContent = '✓ Confirmation email sent'; fb.style.display = 'inline';
+    setTimeout(() => { fb.style.display = 'none'; }, 4000);
+  } catch (err) {
+    fb.style.color = '#ef4444'; fb.textContent = err.message; fb.style.display = 'inline';
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ── Codes ─────────────────────────────────────────────────────────────────────
