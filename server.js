@@ -7,6 +7,7 @@ const { Resend } = require('resend');
 const multer = require('multer');
 
 const crypto = require('crypto');
+const sharp = require('sharp');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 const app = express();
@@ -264,6 +265,24 @@ app.use(express.static(__dirname));
 const reviewsDir = path.join(__dirname, 'assets', 'reviews');
 if (!fs.existsSync(reviewsDir)) fs.mkdirSync(reviewsDir, { recursive: true });
 
+// Convert an uploaded review photo to WebP in-place; returns the public URL.
+// If conversion fails for any reason, falls back to keeping the original file.
+async function convertReviewPhoto(file) {
+  if (!file) return null;
+  const originalPath = file.path;
+  const baseName = path.basename(originalPath, path.extname(originalPath));
+  const webpFilename = baseName + '.webp';
+  const webpPath = path.join(reviewsDir, webpFilename);
+  try {
+    await sharp(originalPath).webp({ quality: 82 }).toFile(webpPath);
+    fs.unlink(originalPath, () => {}); // delete original async, ignore errors
+    return `/assets/reviews/${webpFilename}`;
+  } catch (err) {
+    console.error('[convertReviewPhoto] Conversion failed, keeping original:', err.message);
+    return `/assets/reviews/${file.filename}`;
+  }
+}
+
 const reviewUpload = multer({
   storage: multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, reviewsDir),
@@ -405,7 +424,7 @@ app.post('/api/reviews/submit', reviewUpload.single('photo'), async (req, res) =
   if (!name || !review) return res.status(400).json({ error: 'Name and review are required.' });
   const r = parseInt(rating);
   if (!r || r < 1 || r > 5) return res.status(400).json({ error: 'Rating must be 1–5.' });
-  const photoUrl = req.file ? `/assets/reviews/${req.file.filename}` : null;
+  const photoUrl = await convertReviewPhoto(req.file);
   try {
     await queryDb(
       `insert into reviews (name, rating, product_id, review, photo_url, active, created_at)
@@ -1140,7 +1159,7 @@ app.post('/api/admin/reviews', requireAdmin, async (req, res) => {
 app.post('/api/admin/reviews/:id/photo', requireAdmin, reviewUpload.single('photo'), async (req, res) => {
   const { id } = req.params;
   if (!req.file) return res.status(400).json({ error: 'No file uploaded.' });
-  const photoUrl = `/assets/reviews/${req.file.filename}`;
+  const photoUrl = await convertReviewPhoto(req.file);
   try {
     // Fetch existing photo so we can delete it after the update
     const existing = await queryDb('select photo_url from reviews where id = $1 limit 1', [id]);

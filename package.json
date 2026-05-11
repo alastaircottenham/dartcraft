@@ -6,14 +6,13 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "build": "esbuild src/icons.jsx src/visuals.jsx src/sections.jsx src/order-builder.jsx src/app.jsx --jsx=transform --jsx-factory=React.createElement --jsx-fragment=React.Fragment --format=iife --outdir=dist"
+    "build": "esbuild src/icons.jsx src/visuals.jsx src/sections.jsx src/order-builder.jsx src/app.jsx --jsx=transform --jsx-factory=React.createElement --jsx-fragment=React.Fragment --format=iife --minify --outdir=dist"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
-    "esbuild": "^0.25.12",
-    "sharp": "^0.34.5"
+    "esbuild": "^0.25.12"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
@@ -21,6 +20,7 @@
     "multer": "^2.0.0",
     "pg": "^8.20.0",
     "resend": "^6.12.2",
+    "sharp": "^0.34.5",
     "stripe": "^16.2.0"
   }
 }
