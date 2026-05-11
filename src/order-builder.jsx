@@ -109,9 +109,8 @@ const Spinner = () => (
   }}/>
 );
 
-const SHIPPING_AUD = 19.95;
-
 const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
+  const [shippingAud, setShippingAud] = useState(19.95);
   const [form, setForm] = useState({
     name:'', email:'', phone:'',
     street:'', suburb:'', state:'', postcode:'',
@@ -162,10 +161,13 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
     };
 
     const load = async () => {
-      if (window.google?.maps?.places) { attach(); return; }
       try {
-        const { googleMapsApiKey } = await fetch('/api/config').then(r => r.json());
-        if (!googleMapsApiKey || !active) return;
+        const config = await fetch('/api/config').then(r => r.json());
+        if (!active) return;
+        if (config.shipping_aud) setShippingAud(config.shipping_aud);
+        if (!config.googleMapsApiKey || window.google?.maps?.places) { attach(); return; }
+        const { googleMapsApiKey } = config;
+        if (!googleMapsApiKey) return;
         window.__dcMapsInit = () => { if (active) attach(); };
         const s = document.createElement('script');
         s.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsApiKey}&libraries=places&callback=__dcMapsInit`;
@@ -203,9 +205,9 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
   const pkg = PACKAGES.find(p => p.id === selectedId) ?? null;
   const pkgPrice = pkg ? (dbPrices[pkg.id] ?? pkg.price) : 0;
   const freeShipping = promoStatus?.valid && promoStatus?.freeShipping;
-  const shippingAud = freeShipping ? 0 : SHIPPING_AUD;
+  const effectiveShippingAud = freeShipping ? 0 : shippingAud;
   const discountAud = (promoStatus?.valid && promoStatus.discountCents && !freeShipping) ? promoStatus.discountCents / 100 : 0;
-  const total = pkgPrice + shippingAud - discountAud;
+  const total = pkgPrice + effectiveShippingAud - discountAud;
   const currentStock = pkg ? stockQty[pkg.id] : undefined;
   const isSoldOut = typeof currentStock === 'number' && currentStock <= 0;
 
@@ -470,7 +472,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
 
               {pkg && <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18, display:'flex', flexDirection:'column', gap:8}}>
                 <Row k="Subtotal" v={`$${pkgPrice}.00`}/>
-                <Row k="Shipping (AU)" v={freeShipping ? '$0.00' : '$19.95'} discount={freeShipping}/>
+                <Row k="Shipping (AU)" v={freeShipping ? '$0.00' : `$${shippingAud.toFixed(2)}`} discount={freeShipping}/>
                 {freeShipping && <Row k={`Promo (${promoCode})`} v="Free shipping" discount/>}
                 {discountAud > 0 && <Row k={`Promo (${promoCode})`} v={`−$${discountAud.toFixed(2)}`} discount/>}
                 <Row k="GST" v="Included" muted/>

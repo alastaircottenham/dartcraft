@@ -302,7 +302,7 @@ const reviewUpload = multer({
 // ── Public API ────────────────────────────────────────────────────────────────
 
 app.get('/api/config', (_req, res) => {
-  res.json({ googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '' });
+  res.json({ googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '', shipping_aud: shippingCents / 100 });
 });
 
 app.get('/api/stock', (_req, res) => {
