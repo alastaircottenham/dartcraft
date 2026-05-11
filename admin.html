@@ -125,6 +125,10 @@
     .status-badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; border-radius: 99px; }
     .status-pending { color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); background: rgba(245,158,11,0.08); }
     .status-shipped { color: var(--success); border: 1px solid rgba(34,197,94,0.3); background: rgba(34,197,94,0.08); }
+    .status-pickup { color: #7C5CFF; border: 1px solid rgba(124,92,255,0.3); background: rgba(124,92,255,0.08); }
+    .pickup-btn { padding: 10px 22px; border-radius: 99px; border: none; background: #7C5CFF; color: #fff; font-family: var(--sans); font-weight: 700; font-size: 13px; cursor: pointer; transition: opacity 0.15s; white-space: nowrap; }
+    .pickup-btn:hover:not(:disabled) { opacity: 0.85; }
+    .pickup-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .order-body { padding: 0 24px 22px; border-top: 1px solid var(--border-2); display: none; }
     .order-body.open { display: block; padding-top: 20px; }
@@ -550,10 +554,29 @@ function renderOrders(orders) {
   document.getElementById('orders-list').innerHTML = orders.map(o => {
     const m = o.metadata || {};
     const isShipped = o.shipped;
+    const isPickup = o.localPickup;
     const shipDate = o.shippedAt ? new Date(o.shippedAt).toLocaleString('en-AU', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
     const notesRow = m.notes ? `<div><div class="detail-label">Notes</div><div class="detail-value">${m.notes}</div></div>` : '';
+
+    let statusBadge, actionHtml;
+    if (isPickup) {
+      statusBadge = `<span class="status-badge status-pickup"><svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg> Local pickup</span>`;
+      actionHtml  = `<span class="status-badge status-pickup"><svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg> Collected ${shipDate}</span>
+                     <span class="ship-note">Setup guide email sent to customer.</span>`;
+    } else if (isShipped) {
+      statusBadge = `<span class="status-badge status-shipped"><svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg> Shipped</span>`;
+      actionHtml  = `<span class="status-badge status-shipped"><svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg> Shipped ${shipDate}</span>
+                     ${o.trackingNumber ? `<a class="tracking-link" href="https://auspost.com.au/mypost/track/#/details/${o.trackingNumber}" target="_blank" rel="noopener">&#128230; ${o.trackingNumber}</a>` : ''}
+                     <span class="ship-note">Shipping notification sent to customer.</span>`;
+    } else {
+      statusBadge = `<span class="status-badge status-pending"><svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg> To ship</span>`;
+      actionHtml  = `<input class="tracking-input" id="track-${o.id}" placeholder="Australia Post tracking number" autocomplete="off"/>
+                     <button class="ship-btn" onclick="markShipped('${o.id}', this)">Mark as shipped</button>
+                     <button class="pickup-btn" onclick="markPickup('${o.id}', this)">Mark as local pickup</button>`;
+    }
+
     return `
-      <div class="order-card ${isShipped ? 'shipped-card' : ''}" id="order-${o.id}">
+      <div class="order-card ${isShipped ? (isPickup ? '' : 'shipped-card') : ''}" id="order-${o.id}">
         <div class="order-header" onclick="toggleOrder('${o.id}')">
           <div class="order-meta">
             <div>
@@ -564,10 +587,7 @@ function renderOrders(orders) {
           </div>
           <div style="display:flex;align-items:center;gap:16px">
             <span class="order-amount">${fmtAmount(o.amount_total)}</span>
-            <span class="status-badge ${isShipped ? 'status-shipped' : 'status-pending'}">
-              <svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg>
-              ${isShipped ? 'Shipped' : 'To ship'}
-            </span>
+            ${statusBadge}
             <svg id="chev-${o.id}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-3);flex-shrink:0;transition:transform 0.2s"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
@@ -579,15 +599,7 @@ function renderOrders(orders) {
             <div><div class="detail-label">Stripe session</div><div class="detail-value mono">${o.id}</div></div>
             ${notesRow}
           </div>
-          <div class="ship-action">
-            ${isShipped
-              ? `<span class="status-badge status-shipped"><svg width="6" height="6" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3" fill="currentColor"/></svg> Shipped ${shipDate}</span>
-                 ${o.trackingNumber ? `<a class="tracking-link" href="https://auspost.com.au/mypost/track/#/details/${o.trackingNumber}" target="_blank" rel="noopener">&#128230; ${o.trackingNumber}</a>` : ''}
-                 <span class="ship-note">Shipping notification sent to customer.</span>`
-              : `<input class="tracking-input" id="track-${o.id}" placeholder="Australia Post tracking number" autocomplete="off"/>
-                 <button class="ship-btn" onclick="markShipped('${o.id}', this)">Mark as shipped</button>`
-            }
-          </div>
+          <div class="ship-action">${actionHtml}</div>
         </div>
       </div>`;
   }).join('');
@@ -939,6 +951,23 @@ async function sendWelcomeEmail() {
   } catch (err) {
     fb.style.color = '#ef4444'; fb.textContent = err.message; fb.style.display = 'inline';
     btn.disabled = false; btn.textContent = 'Send email';
+  }
+}
+
+async function markPickup(id, btn) {
+  if (!confirm(`Mark as local pickup and send setup guide email to customer?`)) return;
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const shipBtn = document.querySelector(`#order-${id} .ship-btn`);
+  if (shipBtn) shipBtn.disabled = true;
+  try {
+    const res = await authFetch(`/api/admin/orders/${id}/pickup`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    await loadOrders();
+  } catch (err) {
+    alert('Error: ' + err.message);
+    btn.disabled = false; btn.textContent = 'Mark as local pickup';
+    if (shipBtn) shipBtn.disabled = false;
   }
 }
 

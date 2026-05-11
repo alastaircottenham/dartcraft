@@ -800,7 +800,7 @@ app.get('/api/admin/orders', requireAdmin, async (_req, res) => {
     const result = await queryDb(
       `select stripe_session_id, created_at, amount_total, currency, customer_email,
               package_id, package_name, customer_name, phone, street, suburb, state, postcode, notes,
-              promo_code, discount_cents, shipped, shipped_at, tracking_number
+              promo_code, discount_cents, shipped, shipped_at, tracking_number, local_pickup
        from orders
        where payment_status = 'paid'
        order by created_at desc
@@ -826,6 +826,7 @@ app.get('/api/admin/orders', requireAdmin, async (_req, res) => {
         discountCents: String(o.discount_cents || 0),
       },
       shipped: Boolean(o.shipped),
+      localPickup: Boolean(o.local_pickup),
       shippedAt: o.shipped_at ? new Date(o.shipped_at).toISOString() : null,
       trackingNumber: o.tracking_number || '',
     }));
@@ -882,6 +883,39 @@ app.post('/api/admin/orders/:id/ship', requireAdmin, async (req, res) => {
   } catch (err) {
     console.error('Ship error:', err.message);
     res.status(500).json({ error: 'Could not mark order as shipped.' });
+  }
+});
+
+app.post('/api/admin/orders/:id/pickup', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const orderResult = await queryDb(
+      `select stripe_session_id, payment_status, customer_email, customer_name
+       from orders where stripe_session_id = $1 limit 1`,
+      [id]
+    );
+    if (!orderResult.rows.length) return res.status(404).json({ error: 'Order not found.' });
+    const order = orderResult.rows[0];
+    if (order.payment_status !== 'paid') return res.status(400).json({ error: 'Order is not paid.' });
+    if (order.shipped) return res.status(400).json({ error: 'Order already fulfilled.' });
+
+    await queryDb(
+      `update orders set shipped = true, local_pickup = true, shipped_at = now()
+       where stripe_session_id = $1`,
+      [id]
+    );
+
+    await sendEmail(
+      order.customer_email,
+      `Your DartCraft setup guide & links 🎯`,
+      welcomeEmailHtml(order.customer_name || '')
+    );
+
+    console.log(`[admin] Order ${id} marked as local pickup`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Pickup error:', err.message);
+    res.status(500).json({ error: 'Could not mark order as pickup.' });
   }
 });
 
@@ -1202,8 +1236,9 @@ app.get('/',               (_req, res) => res.sendFile(path.join(__dirname, 'Dar
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
-// Add tracking_number column if it doesn't exist yet (safe to run on every start)
+// Add tracking_number and local_pickup columns if they don't exist yet
 queryDb('ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number text').catch(() => {});
+queryDb('ALTER TABLE orders ADD COLUMN IF NOT EXISTS local_pickup boolean DEFAULT false').catch(() => {});
 
 // Create stock_notifications table if it doesn't exist yet
 queryDb(`
