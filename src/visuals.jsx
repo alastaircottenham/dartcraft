@@ -256,7 +256,7 @@ const HeroVisual = () => (
       background:'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18), rgba(255,255,255,0) 60%)',
       pointerEvents:'none',
     }}/>
-    <img src="assets/hero-product.png" alt="Dartcraft AutoDarts ring around a Winmau dartboard"
+    <img src="assets/hero-product.webp" alt="Dartcraft AutoDarts ring around a Winmau dartboard"
       style={{
         position:'relative', width:'100%', height:'auto', maxWidth:780, objectFit:'contain',
         filter:'drop-shadow(0 40px 80px rgba(0,0,0,0.6)) drop-shadow(0 0 60px rgba(124,92,255,0.25))',
@@ -267,7 +267,7 @@ const HeroVisual = () => (
 // "Step" visual that highlights specific aspects per step
 // step keys: 0 assemble, 1 mount, 2 connect-pc, 3 autodarts, 4 calibrate
 const StepPhoto = ({src, alt=''}) => (
-  <img src={src} alt={alt} style={{
+  <img src={src} alt={alt} loading="lazy" style={{
     position:'absolute', inset:0, width:'100%', height:'100%',
     objectFit:'cover', display:'block'
   }}/>
@@ -275,11 +275,11 @@ const StepPhoto = ({src, alt=''}) => (
 
 const StepVisual = ({step}) => (
   <div style={{position:'relative', width:'100%', height:'100%', overflow:'hidden'}}>
-    {step === 0 && <StepPhoto src="assets/step1-assemble.png" alt="Ring assembly with LED lighting"/>}
-    {step === 1 && <StepPhoto src="assets/step2-mount.png" alt="Ring mounted on dartboard"/>}
-    {step === 2 && <StepPhoto src="assets/step3-connect.png" alt="Connected to mini PC"/>}
+    {step === 0 && <StepPhoto src="assets/step1-assemble.webp" alt="Ring assembly with LED lighting"/>}
+    {step === 1 && <StepPhoto src="assets/step2-mount.webp" alt="Ring mounted on dartboard"/>}
+    {step === 2 && <StepPhoto src="assets/step3-connect.webp" alt="Connected to mini PC"/>}
     {step === 3 && <AutoDartsAccountMock/>}
-    {step === 4 && <StepPhoto src="assets/step5-play.png" alt="AutoDarts calibrated and ready to play"/>}
+    {step === 4 && <StepPhoto src="assets/step5-play.webp" alt="AutoDarts calibrated and ready to play"/>}
   </div>
 );
 
@@ -341,7 +341,7 @@ const ConnectPCMock = () => (
   <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center'}}>
     {/* Ring product on the left, smaller */}
     <div style={{position:'absolute', left:'2%', top:'50%', transform:'translateY(-50%)', width:'52%', aspectRatio:'1/1'}}>
-      <img src="assets/hero-product.png" alt="Dartcraft ring" style={{
+      <img src="assets/hero-product.webp" alt="Dartcraft ring" loading="lazy" style={{
         width:'100%', height:'100%', objectFit:'contain',
         filter: 'drop-shadow(0 16px 30px rgba(0,0,0,0.55)) drop-shadow(0 0 20px rgba(124,92,255,0.2))',
       }}/>
@@ -517,7 +517,7 @@ const ManualSVG = () => (
 const AssembleMock = () => (
   <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center'}}>
     {/* Ring image — centred */}
-    <img src="assets/step1-ring.png" alt="Ring assembly" style={{
+    <img src="assets/step1-ring.webp" alt="Ring assembly" loading="lazy" style={{
       position:'absolute', top:'50%', left:'50%', width:'74%', objectFit:'contain',
       transform:'translate(-50%, -50%)',
       filter:'drop-shadow(0 20px 40px rgba(0,0,0,0.6)) drop-shadow(0 0 24px rgba(124,92,255,0.2))',
@@ -614,7 +614,7 @@ const MountMock = () => (
     {/* dark tint so ring reads clearly against stone */}
     <div style={{position:'absolute', inset:0, background:'rgba(5,6,7,0.36)'}}/>
     {/* Ring — centred */}
-    <img src="assets/hero-product.png" alt="Board mounted on wall" style={{
+    <img src="assets/hero-product.webp" alt="Board mounted on wall" loading="lazy" style={{
       position:'absolute', top:'50%', left:'50%', transform:'translate(-50%, -50%)',
       width:'82%', objectFit:'contain',
       filter:'drop-shadow(0 28px 60px rgba(0,0,0,0.9)) drop-shadow(0 0 30px rgba(124,92,255,0.15))',
@@ -692,7 +692,7 @@ const PlayMock = () => (
   }}>
     {/* Left: live calibrated board feed */}
     <div style={{position:'relative', borderRight:'1px solid var(--border-2)', background:'#08090d', overflow:'hidden'}}>
-      <img src="assets/hero-product.png" alt="Live board" style={{
+      <img src="assets/hero-product.webp" alt="Live board" loading="lazy" style={{
         position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover',
         filter:'brightness(0.85)',
       }}/>

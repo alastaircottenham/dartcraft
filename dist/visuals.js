@@ -160,7 +160,7 @@
   } }), /* @__PURE__ */ React.createElement(
     "img",
     {
-      src: "assets/hero-product.png",
+      src: "assets/hero-product.webp",
       alt: "Dartcraft AutoDarts ring around a Winmau dartboard",
       style: {
         position: "relative",
@@ -172,7 +172,7 @@
       }
     }
   ));
-  const StepPhoto = ({ src, alt = "" }) => /* @__PURE__ */ React.createElement("img", { src, alt, style: {
+  const StepPhoto = ({ src, alt = "" }) => /* @__PURE__ */ React.createElement("img", { src, alt, loading: "lazy", style: {
     position: "absolute",
     inset: 0,
     width: "100%",
@@ -180,7 +180,7 @@
     objectFit: "cover",
     display: "block"
   } });
-  const StepVisual = ({ step }) => /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: "100%", height: "100%", overflow: "hidden" } }, step === 0 && /* @__PURE__ */ React.createElement(StepPhoto, { src: "assets/step1-assemble.png", alt: "Ring assembly with LED lighting" }), step === 1 && /* @__PURE__ */ React.createElement(StepPhoto, { src: "assets/step2-mount.png", alt: "Ring mounted on dartboard" }), step === 2 && /* @__PURE__ */ React.createElement(StepPhoto, { src: "assets/step3-connect.png", alt: "Connected to mini PC" }), step === 3 && /* @__PURE__ */ React.createElement(AutoDartsAccountMock, null), step === 4 && /* @__PURE__ */ React.createElement(StepPhoto, { src: "assets/step5-play.png", alt: "AutoDarts calibrated and ready to play" }));
+  const StepVisual = ({ step }) => /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: "100%", height: "100%", overflow: "hidden" } }, step === 0 && /* @__PURE__ */ React.createElement(StepPhoto, { src: "assets/step1-assemble.webp", alt: "Ring assembly with LED lighting" }), step === 1 && /* @__PURE__ */ React.createElement(StepPhoto, { src: "assets/step2-mount.webp", alt: "Ring mounted on dartboard" }), step === 2 && /* @__PURE__ */ React.createElement(StepPhoto, { src: "assets/step3-connect.webp", alt: "Connected to mini PC" }), step === 3 && /* @__PURE__ */ React.createElement(AutoDartsAccountMock, null), step === 4 && /* @__PURE__ */ React.createElement(StepPhoto, { src: "assets/step5-play.webp", alt: "AutoDarts calibrated and ready to play" }));
   const AutoDartsAccountMock = () => /* @__PURE__ */ React.createElement("div", { style: {
     position: "absolute",
     inset: "6%",

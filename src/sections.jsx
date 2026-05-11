@@ -586,37 +586,37 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
 // ── Kit Photos ───────────────────────────────────────────────
 const KIT_PHOTOS = [
   {
-    src: 'assets/gallery-1-camera-mount.png',
+    src: 'assets/gallery-1-camera-mount.webp',
     label: 'Camera Mount',
     alt: 'DartCraft 3D-printed camera mount bracket integrated into AutoDarts camera ring',
     caption: 'Precision-printed camera mount bracket integrated into the ring. Holds the camera at the correct angle for accurate dart tracking.',
   },
   {
-    src: 'assets/gallery-2-ring-segments.png',
+    src: 'assets/gallery-2-ring-segments.webp',
     label: 'Ring segments',
     alt: 'DartCraft AutoDarts camera ring printed segments assembled around a dartboard',
     caption: 'The ring ships as printed segments that screw together. Camera come preinstalled.',
   },
   {
-    src: 'assets/gallery-3-mount-foot.png',
+    src: 'assets/gallery-3-mount-foot.webp',
     label: 'Mount foot',
     alt: 'Low-profile mount foot for DartCraft AutoDarts ring with screw covers',
     caption: 'Low-profile mount foot sits flush against the surface including covers to hide visible screws.',
   },
   {
-    src: 'assets/gallery-4-cabinet-front.png',
+    src: 'assets/gallery-4-cabinet-front.webp',
     label: 'Setup Example',
     alt: 'DartCraft AutoDarts hardware kit mounted to a dartboard cabinet — example setup',
     caption: 'Example setup mounted to backing. Dartboard, and surroundings not included or supplied by DartCraft.',
   },
   {
-    src: 'assets/gallery-5-wall-mount-angle.png',
+    src: 'assets/gallery-5-wall-mount-angle.webp',
     label: 'Ring — side profile',
     alt: 'Side profile of DartCraft AutoDarts camera ring mounted to dartboard — low-profile design',
     caption: 'Low-profile design sits flush against the board. Minimal obstruction to gameplay.',
   },
   {
-    src: 'assets/gallery-6-wall-mount.png',
+    src: 'assets/gallery-6-wall-mount.webp',
     label: 'Setup Example',
     alt: 'DartCraft AutoDarts system wall mount installation example — camera ring and LED lighting',
     caption: 'Example wall mount install. Dartboard and surroundings not included or supplied by DartCraft.',
@@ -643,6 +643,7 @@ const KitPhotos = () => (
               <img
                 src={photo.src}
                 alt={photo.alt || photo.label}
+                loading="lazy"
                 style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block'}}
               />
               <div style={{
