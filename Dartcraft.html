@@ -130,7 +130,7 @@
             "brand": {"@type": "Brand", "name": "DartCraft"},
             "offers": {
               "@type": "Offer",
-              "price": "549",
+              "price": "599",
               "priceCurrency": "AUD",
               "availability": "https://schema.org/InStock",
               "url": "https://dartcraft.com.au/#order",
@@ -139,6 +139,80 @@
           }
         }
       ]
+    }
+  ]
+}
+</script>
+
+<!-- FAQ Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is AutoDarts?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "AutoDarts is a smart dart scoring system that uses cameras and software to detect where darts land and keep score automatically."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is this a complete dartboard setup?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. These kits are designed to upgrade your existing dartboard setup. The dartboard itself is not included unless specifically stated."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need to install it myself?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. DIY installation is required. The ring needs to be mounted to your dartboard area, and the system may require adjustment and calibration."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need a computer?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, AutoDarts requires a computer to run. The full system includes a pre-configured mini PC. Other options require you to supply and configure your own computer."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is included in the full system?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The full system includes the printed ring, LED lighting, cameras, pre-configured mini PC, wireless keyboard with touchpad, speaker, and a digital setup guide sent with your order confirmation."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does the full system include a monitor or display?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No — a monitor or display is not included. Most setups use a monitor connected to the mini PC. You can also control the system from a laptop or iPad through the AutoDarts website."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is support included?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Basic setup guidance is included. If customers run into issues, they can reach out for help where possible. The AutoDarts community is also a useful support resource."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Where do the kits ship from?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "DartCraft kits ship from Perth, WA. We currently ship within Australia only."
+      }
     }
   ]
 }
@@ -181,15 +255,14 @@
 <body>
 <div id="root"></div>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 
-<script type="text/babel" src="src/icons.jsx"></script>
-<script type="text/babel" src="src/visuals.jsx"></script>
-<script type="text/babel" src="src/sections.jsx"></script>
-<script type="text/babel" src="src/order-builder.jsx"></script>
-<script type="text/babel" src="src/app.jsx"></script>
+<script src="dist/icons.js"></script>
+<script src="dist/visuals.js"></script>
+<script src="dist/sections.js"></script>
+<script src="dist/order-builder.js"></script>
+<script src="dist/app.js"></script>
 
 </body>
 </html>

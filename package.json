@@ -5,10 +5,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build": "esbuild src/icons.jsx src/visuals.jsx src/sections.jsx src/order-builder.jsx src/app.jsx --jsx=transform --jsx-factory=React.createElement --jsx-fragment=React.Fragment --format=iife --outdir=dist"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
