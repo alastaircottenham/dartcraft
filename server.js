@@ -344,7 +344,7 @@ app.get('/api/packages', (_req, res) => {
 });
 
 app.post('/api/validate-promo', async (req, res) => {
-  const { code, packageId } = req.body;
+  const { code, packageId, cameraUpgrade } = req.body;
   if (!packageId || !code) return res.json({ valid: false });
 
   try {
@@ -356,10 +356,12 @@ app.post('/api/validate-promo', async (req, res) => {
 
     const promoValue = Number(promo.value);
     const freeShipping = promo.type === 'free_shipping';
+    const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId);
     const discountCents = calcDiscount(
       { type: promo.type, value: promoValue, active: true },
       Number(pkg.price_aud),
-      shippingCents / 100
+      shippingCents / 100,
+      withCameraUpgrade ? cameraUpgradeCents / 100 : 0
     );
     const discountDisplay = freeShipping
       ? 'Free shipping'

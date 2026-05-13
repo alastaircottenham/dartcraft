@@ -227,7 +227,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
       const res = await fetch('/api/validate-promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, packageId: pkg.id }),
+        body: JSON.stringify({ code, packageId: pkg.id, cameraUpgrade: cameraUpgrade && CAMERA_UPGRADE_PACKAGES.includes(pkg.id) }),
       });
       const data = await res.json();
       if (data.valid) { setPromoCode(code); setPromoStatus(data); }
