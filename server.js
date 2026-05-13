@@ -16,6 +16,9 @@ const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'dartcraft-admin';
 const SHIPPING_CENTS_DEFAULT = 1995; // $19.95 AUD — fallback if DB unavailable
 let shippingCents = SHIPPING_CENTS_DEFAULT; // live value, updated from DB at startup
+const CAMERA_UPGRADE_CENTS_DEFAULT = 4500; // $45.00 AUD
+let cameraUpgradeCents = CAMERA_UPGRADE_CENTS_DEFAULT;
+const CAMERA_UPGRADE_PACKAGES = ['ring-led-cameras', 'full-system'];
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
@@ -134,6 +137,7 @@ function confirmationEmailHtml(session) {
       <tr><td>
         <table width="100%" cellpadding="0" cellspacing="0">
           ${detailRow('Package', `<strong>${m.packageName || ''}</strong>`)}
+          ${m.cameraUpgrade === 'true' ? detailRow('Camera upgrade', '<strong style="color:#7C5CFF">OV2710 cameras ✓</strong>') : ''}
           ${detailRow('Amount paid', `<strong>${amount}</strong>`)}
           ${detailRow('Ship to', `${m.customerName || ''}<br>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia`)}
         </table>
@@ -168,6 +172,7 @@ function ownerNotificationHtml(session) {
       <tr><td>
         <table width="100%" cellpadding="0" cellspacing="0">
           ${detailRow('Package', `<strong>${m.packageName || m.packageId || '—'}</strong>`)}
+          ${m.cameraUpgrade === 'true' ? detailRow('Camera upgrade', '<strong style="color:#7C5CFF">⚡ OV2710 upgrade — include with order</strong>') : ''}
           ${detailRow('Amount', `<strong>${amount}</strong>`)}
           ${detailRow('Name', m.customerName || '—')}
           ${detailRow('Email', session.customer_email || '—')}
@@ -246,6 +251,7 @@ function orderRowToSession(order) {
       notes: order.notes || '',
       promoCode: order.promo_code || '',
       discountCents: String(order.discount_cents || 0),
+      cameraUpgrade: String(Boolean(order.camera_upgrade)),
     },
   };
 }
@@ -302,7 +308,7 @@ const reviewUpload = multer({
 // ── Public API ────────────────────────────────────────────────────────────────
 
 app.get('/api/config', (_req, res) => {
-  res.json({ googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '', shipping_aud: shippingCents / 100 });
+  res.json({ googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '', shipping_aud: shippingCents / 100, camera_upgrade_aud: cameraUpgradeCents / 100 });
 });
 
 app.get('/api/stock', (_req, res) => {
@@ -485,7 +491,7 @@ app.get('/api/reviews', async (_req, res) => {
 });
 
 app.post('/api/create-checkout-session', async (req, res) => {
-  const { packageId, name, email, phone, street, suburb, state, postcode, notes, promoCode } = req.body;
+  const { packageId, name, email, phone, street, suburb, state, postcode, notes, promoCode, cameraUpgrade } = req.body;
 
   try {
     const pkg = await getActivePackage(packageId);
@@ -512,6 +518,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
       }
     }
 
+    const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId);
+
     const lineItems = [
       {
         price_data: {
@@ -533,12 +541,20 @@ app.post('/api/create-checkout-session', async (req, res) => {
         },
         quantity: 1,
       },
+      ...(withCameraUpgrade ? [{
+        price_data: {
+          currency: 'aud',
+          product_data: { name: 'Camera Upgrade — OV2710' },
+          unit_amount: cameraUpgradeCents,
+        },
+        quantity: 1,
+      }] : []),
     ];
 
     // Stripe doesn't allow negative line items — use a coupon instead
     let sessionDiscounts = [];
     if (discountCents > 0) {
-      const totalCents = Number(pkg.price_aud) * 100 + shippingCents;
+      const totalCents = Number(pkg.price_aud) * 100 + shippingCents + (withCameraUpgrade ? cameraUpgradeCents : 0);
       const cappedDiscount = Math.min(discountCents, totalCents - 1);
       const coupon = await stripe.coupons.create({
         amount_off: cappedDiscount,
@@ -569,6 +585,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         notes: notes ? notes.substring(0, 500) : '',
         promoCode: appliedPromo,
         discountCents: String(discountCents),
+        cameraUpgrade: String(withCameraUpgrade),
       },
     });
 
@@ -647,12 +664,12 @@ app.post(['/api/webhook', '/api/webhooks/stripe'], async (req, res) => {
             stripe_session_id, stripe_payment_intent_id, payment_status,
             package_id, package_name, amount_total, currency,
             customer_name, customer_email, phone, street, suburb, state, postcode, notes,
-            promo_code, discount_cents, shipped, shipped_at
+            promo_code, discount_cents, camera_upgrade, shipped, shipped_at
           ) values (
             $1, $2, $3,
             $4, $5, $6, $7,
             $8, $9, $10, $11, $12, $13, $14, $15,
-            $16, $17, false, null
+            $16, $17, $18, false, null
           )`,
           [
             session.id,
@@ -672,6 +689,7 @@ app.post(['/api/webhook', '/api/webhooks/stripe'], async (req, res) => {
             metadata.notes || null,
             metadata.promoCode || null,
             Number.parseInt(metadata.discountCents || '0', 10) || 0,
+            metadata.cameraUpgrade === 'true',
           ]
         );
 
@@ -764,7 +782,27 @@ app.put('/api/admin/packages/:id/price', requireAdmin, async (req, res) => {
 });
 
 app.get('/api/admin/settings', requireAdmin, (_req, res) => {
-  res.json({ shipping_aud: shippingCents / 100 });
+  res.json({ shipping_aud: shippingCents / 100, camera_upgrade_aud: cameraUpgradeCents / 100 });
+});
+
+app.put('/api/admin/settings/camera-upgrade', requireAdmin, async (req, res) => {
+  const value = Number(req.body.camera_upgrade_aud);
+  if (!value || value <= 0 || !Number.isFinite(value)) {
+    return res.status(400).json({ error: 'camera_upgrade_aud must be a positive number' });
+  }
+  const cents = Math.round(value * 100);
+  try {
+    await queryDb(
+      `INSERT INTO settings (key, value) VALUES ('camera_upgrade_cents', $1)
+       ON CONFLICT (key) DO UPDATE SET value = $1`,
+      [String(cents)]
+    );
+    cameraUpgradeCents = cents;
+    res.json({ camera_upgrade_aud: cameraUpgradeCents / 100 });
+  } catch (err) {
+    console.error('[api/admin/settings/camera-upgrade] DB error:', err.message);
+    res.status(500).json({ error: 'Could not update camera upgrade price.' });
+  }
 });
 
 app.put('/api/admin/settings/shipping', requireAdmin, async (req, res) => {
@@ -903,7 +941,7 @@ app.get('/api/admin/orders', requireAdmin, async (_req, res) => {
     const result = await queryDb(
       `select stripe_session_id, created_at, amount_total, currency, customer_email,
               package_id, package_name, customer_name, phone, street, suburb, state, postcode, notes,
-              promo_code, discount_cents, shipped, shipped_at, tracking_number, local_pickup
+              promo_code, discount_cents, shipped, shipped_at, tracking_number, local_pickup, camera_upgrade
        from orders
        where payment_status = 'paid'
        order by created_at desc
@@ -927,11 +965,13 @@ app.get('/api/admin/orders', requireAdmin, async (_req, res) => {
         notes: o.notes || '',
         promoCode: o.promo_code || '',
         discountCents: String(o.discount_cents || 0),
+        cameraUpgrade: String(Boolean(o.camera_upgrade)),
       },
       shipped: Boolean(o.shipped),
       localPickup: Boolean(o.local_pickup),
       shippedAt: o.shipped_at ? new Date(o.shipped_at).toISOString() : null,
       trackingNumber: o.tracking_number || '',
+      cameraUpgrade: Boolean(o.camera_upgrade),
     }));
     res.json(orders);
   } catch (err) {
@@ -1396,7 +1436,7 @@ queryDb(`
   )
 `).catch(() => {});
 
-// Create settings table and load shipping cost
+// Create settings table and load all settings
 (async () => {
   try {
     await queryDb(`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
@@ -1404,11 +1444,19 @@ queryDb(`
       `INSERT INTO settings (key, value) VALUES ('shipping_cents', $1) ON CONFLICT (key) DO NOTHING`,
       [String(SHIPPING_CENTS_DEFAULT)]
     );
-    const result = await queryDb(`SELECT value FROM settings WHERE key = 'shipping_cents' LIMIT 1`);
-    if (result.rows.length) shippingCents = Number(result.rows[0].value);
+    await queryDb(
+      `INSERT INTO settings (key, value) VALUES ('camera_upgrade_cents', $1) ON CONFLICT (key) DO NOTHING`,
+      [String(CAMERA_UPGRADE_CENTS_DEFAULT)]
+    );
+    const result = await queryDb(`SELECT key, value FROM settings WHERE key IN ('shipping_cents', 'camera_upgrade_cents')`);
+    for (const row of result.rows) {
+      if (row.key === 'shipping_cents') shippingCents = Number(row.value);
+      if (row.key === 'camera_upgrade_cents') cameraUpgradeCents = Number(row.value);
+    }
     console.log(`   Shipping    : $${(shippingCents / 100).toFixed(2)} AUD`);
+    console.log(`   Cam upgrade : $${(cameraUpgradeCents / 100).toFixed(2)} AUD`);
   } catch (err) {
-    console.error('[settings init] Error loading shipping cost:', err.message);
+    console.error('[settings init] Error loading settings:', err.message);
   }
 })();
 

@@ -377,21 +377,21 @@ const PACKAGES = [
   { id:'ring-only', name:'DartCraft Ring with Camera Mounts', price:150, badge:null,
     bestFor:'Tech-savvy DIY users who already have cameras, lighting, and a computer.',
     includes:['Custom 3D-printed ring','Integrated camera mounts','Designed for standard dartboard setups'],
-    excludes:['LED lighting','Cameras','PC','Keyboard or mouse','Speaker','Dartboard'],
+    excludes:['LED lighting','Cameras','PC','Keyboard or mouse','Dartboard'],
     cta:'Select ring only' },
   { id:'ring-led', name:'DartCraft Ring + LED Lighting', price:199, badge:null,
     bestFor:'Users who want the printed ring and clean lighting handled.',
     includes:['Printed ring with camera mounts','LED strip lighting'],
-    excludes:['Cameras','PC','Keyboard or mouse','Speaker','Dartboard'],
+    excludes:['Cameras','PC','Keyboard or mouse','Dartboard'],
     cta:'Select ring + lighting' },
   { id:'ring-led-cameras', name:'DartCraft Ring + LED + Cameras', price:299, badge:'Most popular',
     bestFor:'Users who already have a spare computer and can configure AutoDarts themselves.',
     includes:['Printed ring with camera mounts','LED lighting','Cameras for AutoDarts tracking'],
-    excludes:['PC','Keyboard or mouse','Speaker','Dartboard'],
+    excludes:['PC','Keyboard or mouse','Dartboard'],
     cta:'Select camera kit' },
   { id:'full-system', name:'Full AutoDarts System', price:599, badge:'Easiest setup',
     bestFor:'Users who want the easiest setup option with the least technical work.',
-    includes:['Printed ring with camera mounts','LED lighting','Cameras','Mini PC pre-configured for AutoDarts','Wireless keyboard with touchpad','Speaker','Digital setup guide'],
+    includes:['Printed ring with camera mounts','LED lighting','Cameras','Mini PC pre-configured for AutoDarts','Wireless keyboard with touchpad','Digital setup guide'],
     excludes:['Dartboard','Monitor / display','In-home installation'],
     cta:'Select full system' },
 ];
@@ -441,7 +441,7 @@ const Packages = ({onSelect, dbPrices={}}) => {
             </h2>
           </div>
           <p style={{fontSize:17, lineHeight:1.6, color:'var(--text-2)', margin:0}}>
-            Already have cameras and a computer? Start with the printed ring. Want the easiest path? Choose the full system with cameras, lighting, mini PC, keyboard, speaker, and digital setup guide.
+            Already have cameras and a computer? Start with the printed ring. Want the easiest path? Choose the full system with cameras, lighting, mini PC, keyboard, and digital setup guide.
           </p>
         </div>
 
@@ -539,8 +539,8 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
           <p style={{fontSize:16, lineHeight:1.6, color:'var(--text-2)', maxWidth:520, margin:'0 0 28px'}}>
             The full system includes the printed ring, LED lighting, cameras, and a mini PC already prepared to run AutoDarts. You still need to mount the hardware, connect everything, and complete final calibration, but the most technical sourcing and setup work is reduced.
           </p>
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px 20px', marginBottom:30}}>
-            {['Pre-configured mini PC','Wireless keyboard with touchpad','Speaker included','Digital setup guide'].map(t=>(
+          <div style={{display:'grid', gridTemplateColumns:'1fr', gap:'10px', marginBottom:30}}>
+            {['Pre-configured mini PC','Wireless keyboard with touchpad','Digital setup guide'].map(t=>(
               <div key={t} style={{display:'flex', gap:8, alignItems:'flex-start', fontSize:14, color:'var(--text)'}}>
                 <span style={{color:'var(--accent)', marginTop:2}}><Icons.Check size={14}/></span>{t}
               </div>
@@ -563,7 +563,8 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
               {i:<Icons.LED size={18}/>,  t:'LED strip lighting'},
               {i:<Icons.Cam size={18}/>,  t:'Cameras for tracking'},
               {i:<Icons.Chip size={18}/>, t:'Mini PC, pre-configured'},
-              {i:<Icons.Box size={18}/>,  t:'Keyboard, speaker, digital guide'},
+              {i:<Icons.Box size={18}/>,  t:'Wireless keyboard with touchpad'},
+              {i:<Icons.Pin size={18}/>,  t:'Digital setup guide'},
             ].map((r,i)=>(
               <div key={i} style={{display:'flex', alignItems:'center', gap:14, padding:'12px 14px', background:'#15171c', border:'1px solid var(--border-2)', borderRadius:12}}>
                 <div style={{color:'var(--accent)'}}>{r.i}</div>
@@ -819,7 +820,9 @@ const FAQ = () => {
     {q:'Is this a complete dartboard setup?', a:'No. These kits are designed to upgrade your existing dartboard setup. The dartboard itself is not included unless specifically stated.'},
     {q:'Do I need to install it myself?', a:'Yes. DIY installation is required. The ring needs to be mounted to your dartboard area, and the system may require adjustment and calibration.'},
     {q:'Do I need a computer?', a:'Yes, AutoDarts requires a computer to run. The full system includes a pre-configured mini PC. Other options require you to supply and configure your own computer.'},
-    {q:'What is included in the full system?', a:'The full system includes the printed ring, LED lighting, cameras, pre-configured mini PC, wireless keyboard with touchpad, speaker, and a digital setup guide sent with your order confirmation.'},
+    {q:'What is included in the full system?', a:'The full system includes the printed ring, LED lighting, cameras, pre-configured mini PC, wireless keyboard with touchpad, and a digital setup guide sent with your order confirmation.'},
+    {q:'What mini PC is included in the full system?', a:'The full system includes a compact mini PC — typically a Dell OptiPlex Micro or equivalent — with an Intel i5 processor and 8GB of RAM. The exact model may vary based on availability, but every PC we include is specifically selected to ensure reliable, smooth performance with AutoDarts.'},
+    {q:'What cameras are included?', a:'We only use high quality, genuine HBV OV9732 cameras — a trusted choice in the AutoDarts community for accurate dart tracking. If you\'d like better image resolution, you can upgrade to the OV2710 cameras when placing your order.'},
     {q:'Does the full system include a monitor or display?', a:<>No — a monitor or display is not included. Most setups use a monitor connected to the mini PC for the full experience, and there are lots of creative ways people mount displays near their board. For setup ideas and inspiration, the AutoDarts Discord community is a great resource: <a href="https://discord.com/invite/autodarts" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)', borderBottom:'1px solid currentColor'}}>discord.com/invite/autodarts</a>. If mounting a monitor isn't practical, you can also control the system from a laptop or iPad through the AutoDarts website instead.</>},
     {q:'Is support included?', a:'Basic setup guidance is included. If customers run into issues, they can reach out for help where possible. The AutoDarts community is also a useful support resource.'},
     {q:'Where do the kits ship from?', a:'DartCraft kits ship from Perth, WA. We currently ship within Australia only.'},

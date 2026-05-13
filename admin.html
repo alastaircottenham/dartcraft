@@ -245,27 +245,57 @@
       </div>
     </div>
 
-    <!-- Postage -->
+    <!-- Settings -->
     <div style="margin-top:40px">
       <div style="margin-bottom:16px">
-        <div style="font-family:var(--sans);font-weight:700;font-size:20px;letter-spacing:-0.02em;margin-bottom:3px">Postage cost</div>
-        <div style="color:var(--text-2);font-size:13px">Charged to customers at checkout. Changes take effect immediately.</div>
+        <div style="font-family:var(--sans);font-weight:700;font-size:20px;letter-spacing:-0.02em;margin-bottom:3px">Pricing settings</div>
+        <div style="color:var(--text-2);font-size:13px">Changes take effect immediately for all new orders.</div>
       </div>
-      <div class="stock-card" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;max-width:420px">
-        <div style="flex:1;min-width:120px">
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Amount (AUD)</div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-family:var(--mono);font-size:14px;color:var(--text-2)">$</span>
-            <input id="shipping-input" type="number" min="0" step="0.01"
-              style="width:100px;background:#0a0b10;border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:15px;font-family:var(--mono);outline:none"
-              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
-              onkeydown="if(event.key==='Enter')saveShipping()"/>
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:480px">
+
+        <!-- Postage -->
+        <div class="stock-card">
+          <div style="font-family:var(--sans);font-weight:600;font-size:14px;margin-bottom:14px">Postage cost</div>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:120px">
+              <div style="font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Amount (AUD)</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:var(--mono);font-size:14px;color:var(--text-2)">$</span>
+                <input id="shipping-input" type="number" min="0" step="0.01"
+                  style="width:100px;background:#0a0b10;border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:15px;font-family:var(--mono);outline:none"
+                  onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+                  onkeydown="if(event.key==='Enter')saveShipping()"/>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding-top:18px">
+              <button class="action-btn" onclick="saveShipping()">Save</button>
+              <span id="shipping-feedback" style="font-family:var(--mono);font-size:12px;color:var(--success);display:none"></span>
+            </div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;padding-top:18px">
-          <button class="action-btn" onclick="saveShipping()">Save</button>
-          <span id="shipping-feedback" style="font-family:var(--mono);font-size:12px;color:var(--success);display:none"></span>
+
+        <!-- Camera upgrade -->
+        <div class="stock-card">
+          <div style="font-family:var(--sans);font-weight:600;font-size:14px;margin-bottom:4px">Camera upgrade price</div>
+          <div style="color:var(--text-2);font-size:12px;margin-bottom:14px">OV2710 upgrade add-on — shown on Ring + LED + Cameras and Full System orders.</div>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:120px">
+              <div style="font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Amount (AUD)</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:var(--mono);font-size:14px;color:var(--text-2)">$</span>
+                <input id="camera-upgrade-input" type="number" min="0" step="0.01"
+                  style="width:100px;background:#0a0b10;border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:15px;font-family:var(--mono);outline:none"
+                  onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+                  onkeydown="if(event.key==='Enter')saveCameraUpgrade()"/>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding-top:18px">
+              <button class="action-btn" onclick="saveCameraUpgrade()">Save</button>
+              <span id="camera-upgrade-feedback" style="font-family:var(--mono);font-size:12px;color:var(--success);display:none"></span>
+            </div>
+          </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -512,9 +542,35 @@ async function loadShipping() {
   try {
     const res = await authFetch('/api/admin/settings');
     if (!res.ok) return;
-    const { shipping_aud } = await res.json();
+    const { shipping_aud, camera_upgrade_aud } = await res.json();
     document.getElementById('shipping-input').value = Number(shipping_aud).toFixed(2);
+    document.getElementById('camera-upgrade-input').value = Number(camera_upgrade_aud).toFixed(2);
   } catch {}
+}
+
+async function saveCameraUpgrade() {
+  const input = document.getElementById('camera-upgrade-input');
+  const fb = document.getElementById('camera-upgrade-feedback');
+  const value = parseFloat(input.value);
+  if (!value || value <= 0) { fb.textContent = 'Enter a valid amount'; fb.style.color = '#ef4444'; fb.style.display = 'inline'; return; }
+  try {
+    const res = await authFetch('/api/admin/settings/camera-upgrade', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ camera_upgrade_aud: value }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    input.value = Number(data.camera_upgrade_aud).toFixed(2);
+    fb.textContent = '✓ Saved';
+    fb.style.color = 'var(--success)';
+    fb.style.display = 'inline';
+    setTimeout(() => fb.style.display = 'none', 2500);
+  } catch (err) {
+    fb.textContent = err.message;
+    fb.style.color = '#ef4444';
+    fb.style.display = 'inline';
+  }
 }
 
 async function saveShipping() {
@@ -761,7 +817,10 @@ function renderOrders(orders) {
             <div>
               <div class="order-date">${fmtDate(o.created)}</div>
               <div class="order-name">${m.customerName || o.customer_email || '—'}</div>
-              <div class="order-pkg">${m.packageName || '—'}</div>
+              <div class="order-pkg" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span>${m.packageName || '—'}</span>
+                ${o.cameraUpgrade ? '<span style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;color:#a78bfa;border:1px solid rgba(167,139,250,0.35);background:rgba(124,92,255,0.12);flex-shrink:0">OV2710 upgrade</span>' : ''}
+              </div>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:16px">
@@ -775,6 +834,7 @@ function renderOrders(orders) {
             <div><div class="detail-label">Email</div><div class="detail-value">${o.customer_email || '—'}</div></div>
             <div><div class="detail-label">Phone</div><div class="detail-value">${m.phone || '—'}</div></div>
             <div><div class="detail-label">Shipping address</div><div class="detail-value">${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia</div></div>
+            <div><div class="detail-label">Camera upgrade</div><div class="detail-value">${o.cameraUpgrade ? '<span style="color:#a78bfa;font-weight:600">⚡ OV2710 upgrade — include in parcel</span>' : '<span style="color:var(--text-3)">No upgrade</span>'}</div></div>
             <div><div class="detail-label">Stripe session</div><div class="detail-value mono">${o.id}</div></div>
             ${notesRow}
           </div>

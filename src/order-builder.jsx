@@ -111,6 +111,9 @@ const Spinner = () => (
 
 const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
   const [shippingAud, setShippingAud] = useState(19.95);
+  const [cameraUpgradeAud, setCameraUpgradeAud] = useState(45);
+  const [cameraUpgrade, setCameraUpgrade] = useState(false);
+  const CAMERA_UPGRADE_PACKAGES = ['ring-led-cameras', 'full-system'];
   const [form, setForm] = useState({
     name:'', email:'', phone:'',
     street:'', suburb:'', state:'', postcode:'',
@@ -165,6 +168,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
         const config = await fetch('/api/config').then(r => r.json());
         if (!active) return;
         if (config.shipping_aud) setShippingAud(config.shipping_aud);
+        if (config.camera_upgrade_aud) setCameraUpgradeAud(config.camera_upgrade_aud);
         if (!config.googleMapsApiKey || window.google?.maps?.places) { attach(); return; }
         const { googleMapsApiKey } = config;
         if (!googleMapsApiKey) return;
@@ -200,6 +204,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
     setPromoInput('');
     setPromoCode('');
     setPromoStatus(null);
+    if (!CAMERA_UPGRADE_PACKAGES.includes(selectedId)) setCameraUpgrade(false);
   }, [selectedId]);
 
   const pkg = PACKAGES.find(p => p.id === selectedId) ?? null;
@@ -207,7 +212,8 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
   const freeShipping = promoStatus?.valid && promoStatus?.freeShipping;
   const effectiveShippingAud = freeShipping ? 0 : shippingAud;
   const discountAud = (promoStatus?.valid && promoStatus.discountCents && !freeShipping) ? promoStatus.discountCents / 100 : 0;
-  const total = pkgPrice + effectiveShippingAud - discountAud;
+  const showCameraUpgrade = pkg && CAMERA_UPGRADE_PACKAGES.includes(pkg.id);
+  const total = pkgPrice + effectiveShippingAud + (cameraUpgrade ? cameraUpgradeAud : 0) - discountAud;
   const currentStock = pkg ? stockQty[pkg.id] : undefined;
   const isSoldOut = typeof currentStock === 'number' && currentStock <= 0;
 
@@ -269,6 +275,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
           street: form.street, suburb: form.suburb, state: form.state, postcode: form.postcode,
           notes: form.notes,
           promoCode: promoCode || undefined,
+          cameraUpgrade: cameraUpgrade && CAMERA_UPGRADE_PACKAGES.includes(pkg.id),
         }),
       });
       const data = await res.json();
@@ -348,9 +355,33 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
               </div>
             </div>
 
+            {/* Camera upgrade */}
+            {showCameraUpgrade && (
+              <div style={{background:'var(--card)', border:`1px solid ${cameraUpgrade ? 'var(--accent)' : 'var(--border)'}`, borderRadius:18, padding:28, transition:'border-color .15s'}}>
+                <SectionHead num="02" title="Add-ons"/>
+                <label style={{display:'grid', gridTemplateColumns:'auto 1fr', gap:16, alignItems:'flex-start', cursor:'pointer'}}>
+                  <div style={{
+                    width:22, height:22, borderRadius:6, border:`2px solid ${cameraUpgrade ? 'var(--accent)' : 'var(--border)'}`,
+                    background: cameraUpgrade ? 'var(--accent)' : 'transparent',
+                    display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2, transition:'all .15s'
+                  }}>
+                    {cameraUpgrade && <Icons.Check size={13} stroke={2.5}/>}
+                  </div>
+                  <input type="checkbox" checked={cameraUpgrade} onChange={e => setCameraUpgrade(e.target.checked)} style={{display:'none'}}/>
+                  <div>
+                    <div style={{display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:5}}>
+                      <span style={{fontFamily:'var(--sans)', fontWeight:600, fontSize:15}}>Upgrade to OV2710 cameras</span>
+                      <span style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--accent)', background:'rgba(124,92,255,0.12)', padding:'2px 8px', borderRadius:99}}>+${cameraUpgradeAud.toFixed(2)}</span>
+                    </div>
+                    <div style={{fontSize:13, color:'var(--text-2)', lineHeight:1.5}}>Better image resolution for improved tracking accuracy. Standard cameras (HBV OV9732) are included with your kit at no extra cost.</div>
+                  </div>
+                </label>
+              </div>
+            )}
+
             {/* Customer details */}
             <div style={{background:'var(--card)', border:'1px solid var(--border)', borderRadius:18, padding:28}}>
-              <SectionHead num="02" title="Your details"/>
+              <SectionHead num={showCameraUpgrade ? '03' : '02'} title="Your details"/>
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:18}} className="dc-details-grid">
                 <Field label="Full name" error={errors.name} span={2}>
                   <input style={inputStyle(errors.name)} value={form.name} onChange={e=>update('name', e.target.value)} placeholder="Jane Smith"/>
@@ -366,7 +397,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
 
             {/* Shipping */}
             <div style={{background:'var(--card)', border:'1px solid var(--border)', borderRadius:18, padding:28}}>
-              <SectionHead num="03" title="Shipping address" tag="Australia only"/>
+              <SectionHead num={showCameraUpgrade ? '04' : '03'} title="Shipping address" tag="Australia only"/>
               <div style={{display:'grid', gridTemplateColumns:'2fr 1fr 1fr', gap:18}} className="dc-ship-fields">
                 <Field label="Street address" error={errors.street} span={3} hint="Start typing to search and auto-fill your address">
                   <input ref={streetRef} style={inputStyle(errors.street)} value={form.street} onChange={e=>update('street', e.target.value)} placeholder="42 Wallaby Way" autoComplete="off"/>
@@ -392,7 +423,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
 
             {/* Notes */}
             <div style={{background:'var(--card)', border:'1px solid var(--border)', borderRadius:18, padding:28}}>
-              <SectionHead num="04" title="Notes (optional)"/>
+              <SectionHead num={showCameraUpgrade ? '05' : '04'} title="Notes (optional)"/>
               <textarea style={{...inputStyle(false), minHeight:100, resize:'vertical', fontFamily:'var(--body)'}}
                 placeholder="Anything else we should know? Delivery instructions, preferred contact details, or other order notes..."
                 value={form.notes} onChange={e=>update('notes', e.target.value)}/>
@@ -472,6 +503,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
 
               {pkg && <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18, display:'flex', flexDirection:'column', gap:8}}>
                 <Row k="Subtotal" v={`$${pkgPrice}.00`}/>
+                {cameraUpgrade && <Row k="Camera upgrade (OV2710)" v={`+$${cameraUpgradeAud.toFixed(2)}`}/>}
                 <Row k="Shipping (AU)" v={freeShipping ? '$0.00' : `$${shippingAud.toFixed(2)}`} discount={freeShipping}/>
                 {freeShipping && <Row k={`Promo (${promoCode})`} v="Free shipping" discount/>}
                 {discountAud > 0 && <Row k={`Promo (${promoCode})`} v={`−$${discountAud.toFixed(2)}`} discount/>}
