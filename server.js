@@ -64,12 +64,12 @@ async function getActivePromo(rawCode) {
   return result.rows[0] || null;
 }
 
-function calcDiscount(promo, priceAud, shippingAud = 0) {
+function calcDiscount(promo, priceAud, shippingAud = 0, cameraUpgradeAud = 0) {
   if (!promo || !promo.active) return 0;
   if (promo.type === 'free_shipping') return Math.round(shippingAud * 100);
   if (promo.type === 'percent') return Math.round(priceAud * promo.value / 100) * 100;
-  // fixed: can apply against total (product + shipping), minimum $1 remaining
-  const totalCents = Math.round((priceAud + shippingAud) * 100);
+  // fixed: can apply against total (product + shipping + camera upgrade), minimum $1 remaining
+  const totalCents = Math.round((priceAud + shippingAud + cameraUpgradeAud) * 100);
   return Math.min(Math.round(promo.value * 100), totalCents - 100);
 }
 
@@ -504,6 +504,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
       return res.status(400).json({ error: 'Please fill in all required fields.' });
     }
 
+    const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId);
+
     let discountCents = 0;
     let appliedPromo = '';
     if (promoCode) {
@@ -512,13 +514,12 @@ app.post('/api/create-checkout-session', async (req, res) => {
         discountCents = calcDiscount(
           { type: promo.type, value: Number(promo.value), active: true },
           Number(pkg.price_aud),
-          shippingCents / 100
+          shippingCents / 100,
+          withCameraUpgrade ? cameraUpgradeCents / 100 : 0
         );
         appliedPromo = String(promo.code).toUpperCase();
       }
     }
-
-    const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId);
 
     const lineItems = [
       {
