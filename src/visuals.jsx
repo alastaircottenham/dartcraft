@@ -256,7 +256,7 @@ const HeroVisual = () => (
       background:'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.18), rgba(255,255,255,0) 60%)',
       pointerEvents:'none',
     }}/>
-    <img src="assets/hero-product.webp" alt="Dartcraft AutoDarts ring around a Winmau dartboard"
+    <img src="assets/hero-product.webp" alt="DartCraft AutoDarts-compatible camera ring with LED lighting mounted around a dartboard"
       style={{
         position:'relative', width:'100%', height:'auto', maxWidth:780, objectFit:'contain',
         filter:'drop-shadow(0 40px 80px rgba(0,0,0,0.6)) drop-shadow(0 0 60px rgba(124,92,255,0.25))',
@@ -275,11 +275,11 @@ const StepPhoto = ({src, alt=''}) => (
 
 const StepVisual = ({step}) => (
   <div style={{position:'relative', width:'100%', height:'100%', overflow:'hidden'}}>
-    {step === 0 && <StepPhoto src="assets/step1-assemble.webp" alt="Ring assembly with LED lighting"/>}
-    {step === 1 && <StepPhoto src="assets/step2-mount.webp" alt="Ring mounted on dartboard"/>}
-    {step === 2 && <StepPhoto src="assets/step3-connect.webp" alt="Connected to mini PC"/>}
+    {step === 0 && <StepPhoto src="assets/step1-assemble.webp" alt="DartCraft AutoDarts ring assembly with LED strip lighting installed"/>}
+    {step === 1 && <StepPhoto src="assets/step2-mount.webp" alt="DartCraft AutoDarts camera ring mounted to dartboard cabinet"/>}
+    {step === 2 && <StepPhoto src="assets/step3-connect.webp" alt="DartCraft AutoDarts kit connected to mini PC via USB for automatic dart scoring"/>}
     {step === 3 && <AutoDartsAccountMock/>}
-    {step === 4 && <StepPhoto src="assets/step5-play.webp" alt="AutoDarts calibrated and ready to play"/>}
+    {step === 4 && <StepPhoto src="assets/step5-play.webp" alt="AutoDarts scoring system calibrated and live — DartCraft full system setup"/>}
   </div>
 );
 
@@ -341,7 +341,7 @@ const ConnectPCMock = () => (
   <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center'}}>
     {/* Ring product on the left, smaller */}
     <div style={{position:'absolute', left:'2%', top:'50%', transform:'translateY(-50%)', width:'52%', aspectRatio:'1/1'}}>
-      <img src="assets/hero-product.webp" alt="Dartcraft ring" loading="lazy" style={{
+      <img src="assets/hero-product.webp" alt="DartCraft AutoDarts camera ring" loading="lazy" style={{
         width:'100%', height:'100%', objectFit:'contain',
         filter: 'drop-shadow(0 16px 30px rgba(0,0,0,0.55)) drop-shadow(0 0 20px rgba(124,92,255,0.2))',
       }}/>
@@ -517,7 +517,7 @@ const ManualSVG = () => (
 const AssembleMock = () => (
   <div style={{position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center'}}>
     {/* Ring image — centred */}
-    <img src="assets/step1-ring.webp" alt="Ring assembly" loading="lazy" style={{
+    <img src="assets/step1-ring.webp" alt="DartCraft 3D-printed AutoDarts camera ring before assembly" loading="lazy" style={{
       position:'absolute', top:'50%', left:'50%', width:'74%', objectFit:'contain',
       transform:'translate(-50%, -50%)',
       filter:'drop-shadow(0 20px 40px rgba(0,0,0,0.6)) drop-shadow(0 0 24px rgba(124,92,255,0.2))',
@@ -614,7 +614,7 @@ const MountMock = () => (
     {/* dark tint so ring reads clearly against stone */}
     <div style={{position:'absolute', inset:0, background:'rgba(5,6,7,0.36)'}}/>
     {/* Ring — centred */}
-    <img src="assets/hero-product.webp" alt="Board mounted on wall" loading="lazy" style={{
+    <img src="assets/hero-product.webp" alt="DartCraft AutoDarts camera ring mounted to wall cabinet" loading="lazy" style={{
       position:'absolute', top:'50%', left:'50%', transform:'translate(-50%, -50%)',
       width:'82%', objectFit:'contain',
       filter:'drop-shadow(0 28px 60px rgba(0,0,0,0.9)) drop-shadow(0 0 30px rgba(124,92,255,0.15))',
@@ -692,7 +692,7 @@ const PlayMock = () => (
   }}>
     {/* Left: live calibrated board feed */}
     <div style={{position:'relative', borderRight:'1px solid var(--border-2)', background:'#08090d', overflow:'hidden'}}>
-      <img src="assets/hero-product.webp" alt="Live board" loading="lazy" style={{
+      <img src="assets/hero-product.webp" alt="DartCraft AutoDarts live scoring — board camera feed" loading="lazy" style={{
         position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover',
         filter:'brightness(0.85)',
       }}/>

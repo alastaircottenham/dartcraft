@@ -132,12 +132,12 @@ const Hero = () => {
               fontSize:'clamp(40px, 5.4vw, 72px)', lineHeight:1.02, letterSpacing:'-0.025em',
               margin:'18px 0 22px', textWrap:'balance'
             }}>
-              Turn your dartboard into an automatic scoring setup.
+              Turn your dartboard into an AutoDarts automatic scoring setup.
             </h1>
             <p style={{
               fontSize:17, lineHeight:1.55, color:'var(--text-2)', maxWidth:460, margin:'0 0 32px'
             }}>
-              Ready-to-ship hardware kits for AutoDarts users. Printed camera rings, LED lighting, cameras, or a full system with a pre-configured mini PC. <span style={{color:'var(--text)'}}>DIY install required.</span> Setup guidance included.
+              Ready-to-ship AutoDarts hardware kits, dispatched from Perth, Australia. Printed camera rings, LED lighting, cameras, or a full system with a pre-configured mini PC. <span style={{color:'var(--text)'}}>DIY install required.</span> Setup guidance included.
             </p>
             <div style={{display:'flex', gap:12, flexWrap:'wrap', marginBottom:36}}>
               <PillButton primary href="#order">Build your kit <Icons.Arrow size={16}/></PillButton>
@@ -147,7 +147,7 @@ const Hero = () => {
             {/* trust badges */}
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px 26px', paddingTop:24, borderTop:'1px solid var(--border-2)'}}>
               {[
-                {i:<Icons.Ship size={16}/>, t:'Ships from Australia'},
+                {i:<Icons.Ship size={16}/>, t:'Ships from Perth, WA'},
                 {i:<Icons.Box size={16}/>,  t:'DIY install'},
                 {i:<Icons.Bolt size={16}/>, t:'AutoDarts-compatible'},
                 {i:<Icons.Chip size={16}/>, t:'Full system available'},
@@ -375,22 +375,22 @@ const HowItWorks = () => {
 // ── Packages ───────────────────────────────────────────────
 const PACKAGES = [
   { id:'ring-only', name:'DartCraft Ring with Camera Mounts', price:150, badge:null,
-    bestFor:'Tech-savvy DIY users who already have cameras, lighting, and a computer.',
+    bestFor:'For AutoDarts users who already have cameras, LED lighting and a computer for running AutoDarts.',
     includes:['Custom 3D-printed ring','Integrated camera mounts','Designed for standard dartboard setups'],
     excludes:['LED lighting','Cameras','PC','Keyboard or mouse','Dartboard'],
     cta:'Select ring only' },
   { id:'ring-led', name:'DartCraft Ring + LED Lighting', price:199, badge:null,
-    bestFor:'Users who want the printed ring and clean lighting handled.',
+    bestFor:'For AutoDarts users who already have cameras and a PC, and want the ring and LED lighting ready to go.',
     includes:['Printed ring with camera mounts','LED strip lighting'],
     excludes:['Cameras','PC','Keyboard or mouse','Dartboard'],
     cta:'Select ring + lighting' },
   { id:'ring-led-cameras', name:'DartCraft Ring + LED + Cameras', price:299, badge:'Most popular',
-    bestFor:'Users who already have a spare computer and can configure AutoDarts themselves.',
+    bestFor:'For users who already have a spare computer and can configure AutoDarts themselves. Our most popular AutoDarts kit.',
     includes:['Printed ring with camera mounts','LED lighting','Cameras for AutoDarts tracking'],
     excludes:['PC','Keyboard or mouse','Dartboard'],
     cta:'Select camera kit' },
   { id:'full-system', name:'Full AutoDarts System', price:599, badge:'Easiest setup',
-    bestFor:'Users who want the easiest setup option with the least technical work.',
+    bestFor:'The easiest AutoDarts setup in Australia — everything included except the dartboard and display.',
     includes:['Printed ring with camera mounts','LED lighting','Cameras','Mini PC pre-configured for AutoDarts','Wireless keyboard with touchpad','Digital setup guide'],
     excludes:['Dartboard','Monitor / display','In-home installation'],
     cta:'Select full system' },
@@ -437,7 +437,7 @@ const Packages = ({onSelect, dbPrices={}}) => {
           <div>
             <Eyebrow>Start simple or go all in</Eyebrow>
             <h2 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:'clamp(34px, 4.6vw, 60px)', lineHeight:1.05, letterSpacing:'-0.025em', margin:'18px 0 0'}}>
-              Choose the kit that matches your setup.
+              Choose your AutoDarts kit.
             </h2>
           </div>
           <p style={{fontSize:17, lineHeight:1.6, color:'var(--text-2)', margin:0}}>
@@ -630,7 +630,7 @@ const KitPhotos = () => (
       <div style={{marginBottom:52}}>
         <Eyebrow>Real builds</Eyebrow>
         <h2 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:'clamp(28px, 3.8vw, 48px)', lineHeight:1.1, letterSpacing:'-0.025em', margin:'16px 0 12px'}}>
-          See the kit up close
+          DartCraft AutoDarts kits
         </h2>
         <p style={{fontSize:16, lineHeight:1.6, color:'var(--text-2)', maxWidth:600, margin:0}}>
           Real photos of DartCraft parts, assembled rings, and example installs so you can see how the system comes together before ordering.
@@ -665,9 +665,10 @@ const KitPhotos = () => (
           </div>
         ))}
       </div>
-      <p style={{marginTop:24, fontSize:13, lineHeight:1.6, color:'var(--text-3)', fontStyle:'italic'}}>
-        Example installs may show dartboards or surrounding setups for demonstration only. Check each kit option for exactly what is included.
-      </p>
+      <div style={{marginTop:40, display:'flex', gap:14, flexWrap:'wrap', alignItems:'center'}}>
+        <PillButton primary href="#order">Build your AutoDarts kit <Icons.Arrow size={16}/></PillButton>
+        <PillButton href="#kits">Compare packages</PillButton>
+      </div>
     </Container>
     <style>{`
       .dc-photo-frame { width: 100%; aspect-ratio: 4/3; }
@@ -689,7 +690,7 @@ const Shipping = () => (
             Ships from Australia.
           </h2>
           <p style={{fontSize:16, lineHeight:1.6, color:'var(--text-2)', margin:'0 0 24px', maxWidth:480}}>
-            DartCraft kits ship from Australia, making them a faster and easier option for Australian AutoDarts users compared with ordering from overseas. We currently ship within Australia only.
+            DartCraft kits ship from Wellard, Perth WA — making them a faster and easier option for Australian AutoDarts users compared with ordering from overseas. We currently ship within Australia only.
           </p>
           <ul style={{listStyle:'none', padding:0, margin:0, display:'flex', flexDirection:'column', gap:12}}>
             {['Australian-based stock','Faster local shipping for Australian customers','Orders ship once payment has been received','Tracking provided when available','Stock is limited — if a kit is unavailable, more units may be built and restocked'].map(t=>(
@@ -816,18 +817,29 @@ const Shipping = () => (
 // ── FAQ ───────────────────────────────────────────────
 const FAQ = () => {
   const faqs = [
+    // ── First 8: shown by default ──
     {q:'What is AutoDarts?', a:'AutoDarts is a smart dart scoring system that uses cameras and software to detect where darts land and keep score automatically.'},
     {q:'Is this a complete dartboard setup?', a:'No. These kits are designed to upgrade your existing dartboard setup. The dartboard itself is not included unless specifically stated.'},
     {q:'Do I need to install it myself?', a:'Yes. DIY installation is required. The ring needs to be mounted to your dartboard area, and the system may require adjustment and calibration.'},
     {q:'Do I need a computer?', a:'Yes, AutoDarts requires a computer to run. The full system includes a pre-configured mini PC. Other options require you to supply and configure your own computer.'},
     {q:'What is included in the full system?', a:'The full system includes the printed ring, LED lighting, cameras, pre-configured mini PC, wireless keyboard with touchpad, and a digital setup guide sent with your order confirmation.'},
+    {q:'Does the full system include a monitor or display?', a:<>No — a monitor or display is not included. Most setups use a monitor connected to the mini PC for the full experience, and there are lots of creative ways people mount displays near their board. For setup ideas and inspiration, the AutoDarts Discord community is a great resource: <a href="https://discord.com/invite/autodarts" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)', borderBottom:'1px solid currentColor'}}>discord.com/invite/autodarts</a>. If mounting a monitor isn't practical, you can also control the system from a laptop or iPad through the AutoDarts website instead.</>},
+    {q:'Where do the kits ship from?', a:'DartCraft kits ship from Wellard, Perth WA. We currently ship within Australia only.'},
+    {q:'How does DartCraft compare to Target Omni or Scolia?', a:'DartCraft sells AutoDarts-compatible hardware kits — the camera ring, LED lighting, cameras, and optionally a pre-configured mini PC. AutoDarts itself is a third-party software platform. Target Omni and Scolia are self-contained commercial products with their own proprietary software and subscriptions. DartCraft kits use the AutoDarts platform, which has its own free tier and subscription options. The main differences come down to software preference, budget, and how much DIY you\'re comfortable with.'},
+    // ── Remaining: revealed with "Show all" ──
     {q:'What mini PC is included in the full system?', a:'The full system includes a compact mini PC — typically a Dell OptiPlex Micro or equivalent — with an Intel i5 processor and 8GB of RAM. The exact model may vary based on availability, but every PC we include is specifically selected to ensure reliable, smooth performance with AutoDarts.'},
     {q:'What cameras are included?', a:'We only use high quality, genuine HBV OV9732 cameras — a trusted choice in the AutoDarts community for accurate dart tracking. If you\'d like better image resolution, you can upgrade to the OV2710 cameras when placing your order.'},
-    {q:'Does the full system include a monitor or display?', a:<>No — a monitor or display is not included. Most setups use a monitor connected to the mini PC for the full experience, and there are lots of creative ways people mount displays near their board. For setup ideas and inspiration, the AutoDarts Discord community is a great resource: <a href="https://discord.com/invite/autodarts" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)', borderBottom:'1px solid currentColor'}}>discord.com/invite/autodarts</a>. If mounting a monitor isn't practical, you can also control the system from a laptop or iPad through the AutoDarts website instead.</>},
+    {q:'What is the difference between the OV9732 and OV2710 camera upgrade?', a:'The OV9732 is the standard camera included with camera kits — a genuine HBV model that\'s well-established in the AutoDarts community and performs accurately. The OV2710 upgrade offers a higher image resolution sensor, which can improve tracking in challenging lighting conditions. You can add the OV2710 upgrade when placing your order.'},
+    {q:'Can I pick up locally in Perth?', a:'Yes — local pickup is available in Wellard, WA. Enter the code PICKUPWA at checkout to remove the shipping cost.'},
     {q:'Is support included?', a:'Basic setup guidance is included. If customers run into issues, they can reach out for help where possible. The AutoDarts community is also a useful support resource.'},
-    {q:'Where do the kits ship from?', a:'DartCraft kits ship from Perth, WA. We currently ship within Australia only.'},
+    {q:'Can I use AutoDarts with any dartboard?', a:'AutoDarts works with most standard bristle dartboards. The camera ring mounts around the outside of your board. Some boards with unusual surrounds or cabinet shapes may require adjustment, but the vast majority of standard setups are compatible.'},
+    {q:'Do I need an internet connection to use AutoDarts?', a:'Yes — AutoDarts requires an internet connection to run. The software operates via the AutoDarts web platform, so your PC needs to be online during play. A stable home Wi-Fi or wired connection is recommended.'},
+    {q:'Can I play online against other players with AutoDarts?', a:'Yes. AutoDarts includes online multiplayer so you can play against other AutoDarts users around the world in real time. It supports popular game modes like 501, Cricket and more.'},
+    {q:'How accurate is the automatic dart scoring?', a:'AutoDarts uses multiple cameras and machine-learning software to detect dart positions accurately. With correct calibration, detection accuracy is very high. Lighting consistency is key — which is why our kits include dedicated LED lighting designed specifically for AutoDarts setups.'},
   ];
-  const [open, setOpen] = useState(0);
+  const [open, setOpen] = useState(-1);
+  const [showAll, setShowAll] = useState(false);
+  const visibleFaqs = showAll ? faqs : faqs.slice(0, 8);
   return (
     <section id="faq" style={{padding:'120px 0', borderTop:'1px solid var(--border-2)'}}>
       <Container>
@@ -842,8 +854,8 @@ const FAQ = () => {
             </p>
           </div>
           <div>
-            {faqs.map((f,i)=>(
-              <div key={i} style={{borderTop:'1px solid var(--border-2)', borderBottom: i===faqs.length-1?'1px solid var(--border-2)':'none'}}>
+            {visibleFaqs.map((f,i)=>(
+              <div key={i} style={{borderTop:'1px solid var(--border-2)', borderBottom: i===visibleFaqs.length-1?'1px solid var(--border-2)':'none'}}>
                 <button onClick={()=>setOpen(open===i?-1:i)} style={{
                   width:'100%', textAlign:'left', background:'none', border:'none', color:'var(--text)',
                   padding:'24px 0', display:'flex', justifyContent:'space-between', alignItems:'center', gap:16,
@@ -855,13 +867,29 @@ const FAQ = () => {
                   </span>
                 </button>
                 <div style={{
-                  maxHeight: open===i ? 200 : 0, overflow:'hidden',
+                  maxHeight: open===i ? 320 : 0, overflow:'hidden',
                   transition:'max-height .3s ease', color:'var(--text-2)'
                 }}>
                   <p style={{fontSize:15, lineHeight:1.65, margin:'0 0 24px', maxWidth:560}}>{f.a}</p>
                 </div>
               </div>
             ))}
+            <div style={{marginTop:20, textAlign:'center'}}>
+              <button
+                onClick={()=>{setShowAll(s=>!s); if(showAll) setOpen(-1);}}
+                style={{
+                  background:'transparent', border:'1px solid var(--border)', color:'var(--text-2)',
+                  padding:'12px 24px', borderRadius:99, fontFamily:'var(--sans)', fontWeight:600, fontSize:14,
+                  cursor:'pointer', display:'inline-flex', alignItems:'center', gap:8,
+                  transition:'border-color .15s, color .15s',
+                }}
+                onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--accent)'; e.currentTarget.style.color='var(--text)';}}
+                onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.color='var(--text-2)';}}
+              >
+                {showAll ? 'Show fewer questions' : `Show all ${faqs.length} questions`}
+                <span style={{display:'inline-block', transition:'transform .25s', transform: showAll?'rotate(180deg)':'rotate(0deg)'}}>↓</span>
+              </button>
+            </div>
           </div>
         </div>
       </Container>
