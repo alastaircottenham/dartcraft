@@ -1,13 +1,13 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
 const { Pool } = require('pg');
 const { Resend } = require('resend');
 const multer = require('multer');
 
 const crypto = require('crypto');
 const sharp = require('sharp');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 const app = express();
@@ -19,6 +19,18 @@ let shippingCents = SHIPPING_CENTS_DEFAULT; // live value, updated from DB at st
 const CAMERA_UPGRADE_CENTS_DEFAULT = 4500; // $45.00 AUD
 let cameraUpgradeCents = CAMERA_UPGRADE_CENTS_DEFAULT;
 const CAMERA_UPGRADE_PACKAGES = ['ring-led-cameras', 'full-system'];
+
+const r2 = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId:     process.env.R2_ACCESS_KEY_ID     || '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+  },
+});
+const R2_BUCKET     = process.env.R2_BUCKET_NAME  || '';
+const R2_PUBLIC_URL = (process.env.R2_PUBLIC_URL  || '').replace(/\/$/, '');
+
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
@@ -269,35 +281,39 @@ app.use(express.static(__dirname));
 
 // ── Review photo uploads ──────────────────────────────────────────────────────
 
-const reviewsDir = path.join(__dirname, 'assets', 'reviews');
-if (!fs.existsSync(reviewsDir)) fs.mkdirSync(reviewsDir, { recursive: true });
-
-// Convert an uploaded review photo to WebP in-place; returns the public URL.
-// If conversion fails for any reason, falls back to keeping the original file.
+// Convert an uploaded photo to WebP in memory, upload to Cloudflare R2.
+// Returns the public R2 URL, or null on failure.
 async function convertReviewPhoto(file) {
   if (!file) return null;
-  const originalPath = file.path;
-  const baseName = path.basename(originalPath, path.extname(originalPath));
-  const webpFilename = baseName + '.webp';
-  const webpPath = path.join(reviewsDir, webpFilename);
+  const key = `reviews/review-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
   try {
-    await sharp(originalPath).webp({ quality: 82 }).toFile(webpPath);
-    fs.unlink(originalPath, () => {}); // delete original async, ignore errors
-    return `/assets/reviews/${webpFilename}`;
+    const webpBuffer = await sharp(file.buffer).webp({ quality: 82 }).toBuffer();
+    await r2.send(new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: key,
+      Body: webpBuffer,
+      ContentType: 'image/webp',
+    }));
+    return `${R2_PUBLIC_URL}/${key}`;
   } catch (err) {
-    console.error('[convertReviewPhoto] Conversion failed, keeping original:', err.message);
-    return `/assets/reviews/${file.filename}`;
+    console.error('[convertReviewPhoto] R2 upload failed:', err.message);
+    return null;
+  }
+}
+
+// Delete a photo from R2 by its public URL.
+async function deleteR2Photo(photoUrl) {
+  if (!photoUrl || !R2_PUBLIC_URL || !photoUrl.startsWith(R2_PUBLIC_URL)) return;
+  const key = photoUrl.slice(R2_PUBLIC_URL.length + 1);
+  try {
+    await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+  } catch (err) {
+    console.error('[deleteR2Photo] Failed:', err.message);
   }
 }
 
 const reviewUpload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, reviewsDir),
-    filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-      cb(null, `review-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-    },
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (/^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)) cb(null, true);
@@ -1240,10 +1256,7 @@ app.post('/api/admin/reviews/:id/photo', requireAdmin, reviewUpload.single('phot
     );
     if (!result.rows.length) return res.status(404).json({ error: 'Review not found.' });
 
-    // Delete old photo file if it was stored locally
-    if (oldPhotoUrl && oldPhotoUrl.startsWith('/assets/reviews/')) {
-      fs.unlink(path.join(__dirname, oldPhotoUrl), () => {});
-    }
+    await deleteR2Photo(oldPhotoUrl);
 
     res.json({ photoUrl });
   } catch (err) {
@@ -1285,10 +1298,7 @@ app.delete('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
   try {
     const result = await queryDb('delete from reviews where id = $1 returning id, photo_url', [id]);
     if (!result.rows.length) return res.status(404).json({ error: 'Review not found.' });
-    const photoUrl = result.rows[0].photo_url;
-    if (photoUrl && photoUrl.startsWith('/assets/reviews/')) {
-      fs.unlink(path.join(__dirname, photoUrl), () => {});
-    }
+    await deleteR2Photo(result.rows[0].photo_url);
     res.json({ deleted: true });
   } catch (err) {
     console.error('[api/admin/reviews DELETE] DB error:', err.message);

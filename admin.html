@@ -1005,7 +1005,11 @@ function renderReviews(reviews) {
       ? 'color:#22c55e;border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.08)'
       : 'color:var(--text-3);border:1px solid var(--border);background:rgba(255,255,255,0.03)';
     const photoHtml = r.photo_url
-      ? `<img src="${r.photo_url}" class="review-photo" alt="Review photo"/>`
+      ? `<label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px" title="Click to replace photo">
+           <img src="${r.photo_url}" class="review-photo" alt="Review photo"/>
+           <span style="font-size:9px;color:var(--text-3);font-family:var(--mono);letter-spacing:0.06em">REPLACE</span>
+           <input type="file" accept="image/*" style="display:none" onchange="uploadPhoto(${r.id}, this)"/>
+         </label>`
       : `<div style="width:72px;height:72px;border-radius:10px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">
            <label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px" title="Upload photo">
              <span style="font-size:18px">📷</span>
