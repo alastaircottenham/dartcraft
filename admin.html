@@ -1171,6 +1171,10 @@ async function deleteReview(id) {
 
 async function uploadPhoto(id, input) {
   if (!input.files || !input.files[0]) return;
+  const card = document.getElementById(`review-card-${id}`);
+  const label = input.closest('label');
+  const origLabel = label ? label.innerHTML : '';
+  if (label) label.innerHTML = '<span style="font-size:10px;font-family:var(--mono);color:var(--text-3);letter-spacing:0.06em">UPLOADING…</span>';
   const formData = new FormData();
   formData.append('photo', input.files[0]);
   try {
@@ -1182,7 +1186,10 @@ async function uploadPhoto(id, input) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Upload failed');
     await loadReviews();
-  } catch (err) { alert('Error: ' + err.message); }
+  } catch (err) {
+    if (label) label.innerHTML = origLabel;
+    alert('Photo upload error: ' + err.message);
+  }
 }
 
 // ── Send email ────────────────────────────────────────────────────────────────

@@ -1244,6 +1244,7 @@ app.post('/api/admin/reviews/:id/photo', requireAdmin, reviewUpload.single('phot
   const { id } = req.params;
   if (!req.file) return res.status(400).json({ error: 'No file uploaded.' });
   const photoUrl = await convertReviewPhoto(req.file);
+  if (!photoUrl) return res.status(500).json({ error: 'Photo upload failed — check R2 configuration and server logs.' });
   try {
     // Fetch existing photo so we can delete it after the update
     const existing = await queryDb('select photo_url from reviews where id = $1 limit 1', [id]);
