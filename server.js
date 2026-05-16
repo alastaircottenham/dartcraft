@@ -287,7 +287,10 @@ async function convertReviewPhoto(file) {
   if (!file) return null;
   const key = `reviews/review-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
   try {
-    const webpBuffer = await sharp(file.buffer).webp({ quality: 82 }).toBuffer();
+    const webpBuffer = await sharp(file.buffer)
+      .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 78 })
+      .toBuffer();
     await r2.send(new PutObjectCommand({
       Bucket: R2_BUCKET,
       Key: key,
