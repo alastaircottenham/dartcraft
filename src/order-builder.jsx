@@ -127,6 +127,9 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
   const [promoCode, setPromoCode] = useState('');
   const [promoStatus, setPromoStatus] = useState(null);
   const [promoLoading, setPromoLoading] = useState(false);
+  const [addons, setAddons] = useState([]);
+  const [selectedAddons, setSelectedAddons] = useState({});
+  const [lightboxImg, setLightboxImg] = useState(null);
 
   const streetRef = useRef(null);
   const acRef = useRef(null);
@@ -165,10 +168,14 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
 
     const load = async () => {
       try {
-        const config = await fetch('/api/config').then(r => r.json());
+        const [config, addonsData] = await Promise.all([
+          fetch('/api/config').then(r => r.json()),
+          fetch('/api/addons').then(r => r.json()).catch(() => []),
+        ]);
         if (!active) return;
         if (config.shipping_aud) setShippingAud(config.shipping_aud);
         if (config.camera_upgrade_aud) setCameraUpgradeAud(config.camera_upgrade_aud);
+        if (Array.isArray(addonsData)) setAddons(addonsData);
         if (!config.googleMapsApiKey || window.google?.maps?.places) { attach(); return; }
         const { googleMapsApiKey } = config;
         if (!googleMapsApiKey) return;
@@ -213,7 +220,8 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
   const effectiveShippingAud = freeShipping ? 0 : shippingAud;
   const discountAud = (promoStatus?.valid && promoStatus.discountCents && !freeShipping) ? promoStatus.discountCents / 100 : 0;
   const showCameraUpgrade = pkg && CAMERA_UPGRADE_PACKAGES.includes(pkg.id);
-  const total = pkgPrice + effectiveShippingAud + (cameraUpgrade ? cameraUpgradeAud : 0) - discountAud;
+  const addonTotalAud = addons.filter(a => selectedAddons[a.id]).reduce((sum, a) => sum + a.price_cents / 100, 0);
+  const total = pkgPrice + effectiveShippingAud + (cameraUpgrade ? cameraUpgradeAud : 0) + addonTotalAud - discountAud;
   const currentStock = pkg ? stockQty[pkg.id] : undefined;
   const isSoldOut = typeof currentStock === 'number' && currentStock <= 0;
 
@@ -276,6 +284,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
           notes: form.notes,
           promoCode: promoCode || undefined,
           cameraUpgrade: cameraUpgrade && CAMERA_UPGRADE_PACKAGES.includes(pkg.id),
+          addons: addons.filter(a => selectedAddons[a.id]).map(a => ({ id: a.id })),
         }),
       });
       const data = await res.json();
@@ -479,6 +488,58 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
                 </div>
               )}
 
+              {/* Optional extras (add-ons) */}
+              {pkg && addons.length > 0 && (
+                <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18}}>
+                  <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em', marginBottom:10}}>OPTIONAL EXTRAS</div>
+                  <div style={{display:'flex', flexDirection:'column', gap:8}}>
+                    {addons.map(a => {
+                      const checked = Boolean(selectedAddons[a.id]);
+                      const outOfStock = a.stock_quantity === 0;
+                      return (
+                        <label key={a.id} style={{
+                          display:'flex', alignItems:'center', gap:10, cursor: outOfStock ? 'not-allowed' : 'pointer',
+                          padding:'9px 11px', borderRadius:10, opacity: outOfStock ? 0.45 : 1,
+                          background: checked ? 'rgba(124,92,255,0.08)' : 'rgba(255,255,255,0.02)',
+                          border:`1px solid ${checked ? 'rgba(124,92,255,0.25)' : 'var(--border-2)'}`,
+                          transition:'all .15s'
+                        }}>
+                          <div style={{
+                            width:17, height:17, borderRadius:5, flexShrink:0,
+                            border:`2px solid ${checked ? 'var(--accent)' : 'var(--border)'}`,
+                            background: checked ? 'var(--accent)' : 'transparent',
+                            display:'flex', alignItems:'center', justifyContent:'center', transition:'all .15s'
+                          }}>
+                            {checked && <Icons.Check size={10} stroke={2.5}/>}
+                          </div>
+                          <input type="checkbox" checked={checked} disabled={outOfStock}
+                            onChange={e => setSelectedAddons(prev => ({...prev, [a.id]: e.target.checked}))}
+                            style={{display:'none'}}/>
+                          {a.image_url
+                            ? <div
+                                onClick={e => { e.preventDefault(); e.stopPropagation(); setLightboxImg({ url: a.image_url, name: a.name }); }}
+                                title="Click to enlarge"
+                                style={{position:'relative', flexShrink:0, cursor:'zoom-in', borderRadius:8}}
+                              >
+                                <img src={a.image_url} alt={a.name} style={{width:48, height:48, objectFit:'cover', borderRadius:8, border:'1px solid var(--border)', display:'block'}}/>
+                                <div style={{position:'absolute', inset:0, borderRadius:8, background:'rgba(0,0,0,0.32)', display:'flex', alignItems:'center', justifyContent:'center', opacity:0, transition:'opacity .15s'}} className="dc-zoom-hint">
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                                </div>
+                              </div>
+                            : <div style={{width:48, height:48, borderRadius:8, border:'1px solid var(--border)', background:'rgba(124,92,255,0.06)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:20}}>🎯</div>
+                          }
+                          <div style={{flex:1, minWidth:0}}>
+                            <div style={{fontFamily:'var(--sans)', fontWeight:600, fontSize:12, letterSpacing:'-0.01em', lineHeight:1.3}}>{a.name}{outOfStock && <span style={{color:'#ef4444', fontSize:10, marginLeft:6, fontFamily:'var(--mono)'}}>sold out</span>}</div>
+                            {a.description && <div style={{fontSize:11, color:'var(--text-3)', lineHeight:1.35, marginTop:2, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical'}}>{a.description}</div>}
+                          </div>
+                          <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--accent)', background:'rgba(124,92,255,0.1)', padding:'2px 7px', borderRadius:99, flexShrink:0}}>+${(a.price_cents/100).toFixed(2)}</div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Promo code input */}
               {pkg && <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18}}>
                 <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em', marginBottom:10}}>PROMO CODE</div>
@@ -504,6 +565,9 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
               {pkg && <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18, display:'flex', flexDirection:'column', gap:8}}>
                 <Row k="Subtotal" v={`$${pkgPrice}.00`}/>
                 {cameraUpgrade && <Row k="Camera upgrade (OV2710)" v={`+$${cameraUpgradeAud.toFixed(2)}`}/>}
+                {addons.filter(a => selectedAddons[a.id]).map(a => (
+                  <Row key={a.id} k={a.name} v={`+$${(a.price_cents/100).toFixed(2)}`}/>
+                ))}
                 <Row k="Shipping (AU)" v={freeShipping ? '$0.00' : `$${shippingAud.toFixed(2)}`} discount={freeShipping}/>
                 {freeShipping && <Row k={`Promo (${promoCode})`} v="Free shipping" discount/>}
                 {discountAud > 0 && <Row k={`Promo (${promoCode})`} v={`−$${discountAud.toFixed(2)}`} discount/>}
@@ -585,7 +649,39 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
         .pac-item-query { color:var(--text); font-size:14px; }
         .pac-matched { color:var(--accent); font-weight:600; }
         .pac-icon { display:none; }
+        .dc-zoom-hint { pointer-events:none; }
+        div:hover > .dc-zoom-hint { opacity:1 !important; }
       `}</style>
+
+      {/* Lightbox overlay */}
+      {lightboxImg && (
+        <div
+          onClick={() => setLightboxImg(null)}
+          style={{
+            position:'fixed', inset:0, zIndex:9999,
+            background:'rgba(0,0,0,0.88)', backdropFilter:'blur(6px)',
+            display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+            padding:24, cursor:'zoom-out', WebkitTapHighlightColor:'transparent'
+          }}
+        >
+          <img
+            src={lightboxImg.url}
+            alt={lightboxImg.name}
+            onClick={e => e.stopPropagation()}
+            style={{
+              maxWidth:'min(90vw, 560px)', maxHeight:'72vh',
+              objectFit:'contain', borderRadius:16,
+              boxShadow:'0 24px 80px rgba(0,0,0,0.7)', cursor:'default'
+            }}
+          />
+          <div style={{marginTop:18, fontFamily:'var(--sans)', fontWeight:600, fontSize:16, color:'rgba(255,255,255,0.92)', letterSpacing:'-0.01em', textAlign:'center'}}>
+            {lightboxImg.name}
+          </div>
+          <div style={{marginTop:8, fontFamily:'var(--mono)', fontSize:10, color:'rgba(255,255,255,0.3)', letterSpacing:'0.1em', textTransform:'uppercase'}}>
+            tap anywhere to close
+          </div>
+        </div>
+      )}
     </section>
   );
 };

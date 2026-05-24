@@ -213,6 +213,7 @@
     <button class="tab" onclick="switchTab('orders', this)">Orders</button>
     <button class="tab" onclick="switchTab('codes', this)">Discount codes</button>
     <button class="tab" onclick="switchTab('reviews', this)">Reviews</button>
+    <button class="tab" onclick="switchTab('addons', this)">Add-ons</button>
     <button class="tab" onclick="switchTab('email', this)">Send email</button>
   </div>
 
@@ -379,6 +380,55 @@
     </div>
   </div>
 
+  <!-- Add-ons tab -->
+  <div id="tab-addons" class="tab-panel">
+    <div class="section-header">
+      <div class="section-title">
+        <h1>Add-ons</h1>
+        <p>Optional extras shown in the order builder. Photos are stored in R2 — safe across deploys.</p>
+      </div>
+      <button class="refresh-btn" onclick="loadAddons()">↻ Refresh</button>
+    </div>
+
+    <!-- Add new add-on form -->
+    <div class="stock-card" style="margin-bottom:24px;display:block">
+      <div class="pkg-label" style="margin-bottom:16px">New add-on</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px" class="addon-form-grid">
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Name <span style="color:#ef4444">*</span></div>
+          <input type="text" id="addon-name" placeholder="e.g. 3D Dart Holder V2"/>
+        </div>
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Price (AUD) <span style="color:#ef4444">*</span></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--mono);font-size:14px;color:var(--text-2)">$</span>
+            <input type="number" id="addon-price" placeholder="25.00" min="0.01" step="0.01" style="flex:1"/>
+          </div>
+        </div>
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Stock qty <span style="color:var(--text-3)">(-1 = unlimited)</span></div>
+          <input type="number" id="addon-stock" value="-1" min="-1" step="1"/>
+        </div>
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Sort order <span style="color:var(--text-3)">(lower = first)</span></div>
+          <input type="number" id="addon-sort" value="0" min="0" step="1"/>
+        </div>
+        <div style="grid-column:span 2">
+          <div class="pkg-label" style="margin-bottom:6px">Description <span style="color:var(--text-3)">(optional)</span></div>
+          <textarea class="admin-textarea" id="addon-desc" placeholder="Short description shown under the name in the order builder…" style="min-height:60px"></textarea>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <button class="save-btn" onclick="addAddon()" style="padding:11px 24px">Add add-on</button>
+        <span id="add-addon-error" style="color:#ef4444;font-size:12px;display:none"></span>
+      </div>
+    </div>
+
+    <div id="addons-list">
+      <div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">Loading…</div>
+    </div>
+  </div>
+
   <!-- Send email tab -->
   <div id="tab-email" class="tab-panel">
     <div class="section-header">
@@ -462,6 +512,7 @@
     .review-form-grid { grid-template-columns: 1fr !important; }
     .review-card { grid-template-columns: 1fr !important; }
     .dc-price-divider { display: none !important; }
+    .addon-form-grid { grid-template-columns: 1fr !important; }
   }
 </style>
 
@@ -506,6 +557,7 @@ function switchTab(name, btn) {
   if (name === 'orders') loadOrders();
   if (name === 'codes') loadCodes();
   if (name === 'reviews') loadReviews();
+  if (name === 'addons') loadAddons();
   if (name === 'email') {
     document.getElementById('send-email-feedback').style.display = 'none';
     document.getElementById('send-email-btn').disabled = false;
@@ -835,6 +887,7 @@ function renderOrders(orders) {
             <div><div class="detail-label">Phone</div><div class="detail-value">${m.phone || '—'}</div></div>
             <div><div class="detail-label">Shipping address</div><div class="detail-value">${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia</div></div>
             <div><div class="detail-label">Camera upgrade</div><div class="detail-value">${o.cameraUpgrade ? '<span style="color:#a78bfa;font-weight:600">⚡ OV2710 upgrade — include in parcel</span>' : '<span style="color:var(--text-3)">No upgrade</span>'}</div></div>
+            ${o.addons && o.addons.length ? `<div style="grid-column:span 2"><div class="detail-label">Add-ons</div><div class="detail-value" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">${o.addons.map(a => `<span style="font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;color:#7C5CFF;border:1px solid rgba(124,92,255,0.3);background:rgba(124,92,255,0.08)">+ ${a.name} ($${(a.price_cents/100).toFixed(2)})</span>`).join('')}</div></div>` : ''}
             <div><div class="detail-label">Stripe session</div><div class="detail-value mono">${o.id}</div></div>
             ${notesRow}
           </div>
@@ -1239,6 +1292,200 @@ async function markPickup(id, btn) {
     alert('Error: ' + err.message);
     btn.disabled = false; btn.textContent = 'Mark as local pickup';
     if (shipBtn) shipBtn.disabled = false;
+  }
+}
+
+// ── Add-ons ───────────────────────────────────────────────────────────────────
+
+async function loadAddons() {
+  document.getElementById('addons-list').innerHTML = '<div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">Loading…</div>';
+  try {
+    const res = await authFetch('/api/admin/addons');
+    if (!res.ok) throw new Error('Failed to load');
+    renderAddons(await res.json());
+  } catch (err) {
+    document.getElementById('addons-list').innerHTML = `<div style="color:#ef4444;font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">${err.message}</div>`;
+  }
+}
+
+function stockQtyLabel(qty) {
+  if (qty === -1) return '<span style="color:var(--text-3);font-family:var(--mono);font-size:11px">∞ Unlimited</span>';
+  if (qty === 0) return '<span style="color:#ef4444;font-family:var(--mono);font-size:11px">Sold out</span>';
+  if (qty <= 3) return `<span style="color:#f59e0b;font-family:var(--mono);font-size:11px">${qty} left</span>`;
+  return `<span style="color:#22c55e;font-family:var(--mono);font-size:11px">${qty} in stock</span>`;
+}
+
+function renderAddons(addons) {
+  if (!addons.length) {
+    document.getElementById('addons-list').innerHTML = '<div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">No add-ons yet. Add one above.</div>';
+    return;
+  }
+  document.getElementById('addons-list').innerHTML = addons.map(a => {
+    const activeBadge = a.active
+      ? 'color:#22c55e;border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.08)'
+      : 'color:var(--text-3);border:1px solid var(--border);background:rgba(255,255,255,0.03)';
+    const photoHtml = a.image_url
+      ? `<label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px" title="Click to replace photo">
+           <img src="${a.image_url}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:block" alt="${a.name}"/>
+           <span style="font-size:9px;color:var(--text-3);font-family:var(--mono);letter-spacing:0.06em">REPLACE</span>
+           <input type="file" accept="image/*" style="display:none" onchange="uploadAddonPhoto(${a.id}, this)"/>
+         </label>`
+      : `<div style="width:72px;height:72px;border-radius:10px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+           <label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px" title="Upload photo">
+             <span style="font-size:20px">📷</span>
+             <span style="font-size:9px;color:var(--text-3);font-family:var(--mono);letter-spacing:0.06em">PHOTO</span>
+             <input type="file" accept="image/*" style="display:none" onchange="uploadAddonPhoto(${a.id}, this)"/>
+           </label>
+         </div>`;
+
+    return `
+      <div class="review-card ${a.active ? '' : 'review-inactive'}" id="addon-card-${a.id}">
+        <div style="min-width:0">
+          <div id="addon-view-${a.id}">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-family:var(--sans);font-weight:600;font-size:16px">${a.name}</span>
+              <span style="font-family:var(--mono);font-size:13px;color:var(--accent)">$${(a.price_cents/100).toFixed(2)}</span>
+              <span style="font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:99px;letter-spacing:0.06em;${activeBadge}">${a.active ? 'ACTIVE' : 'HIDDEN'}</span>
+            </div>
+            ${a.description ? `<div style="font-size:13px;color:var(--text-2);line-height:1.55;margin-bottom:8px">${a.description}</div>` : ''}
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+              ${stockQtyLabel(Number(a.stock_quantity))}
+              <span style="font-family:var(--mono);font-size:11px;color:var(--text-3)">Sort: ${a.sort_order}</span>
+            </div>
+          </div>
+          <div id="addon-edit-${a.id}" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div class="pkg-label" style="margin-bottom:4px">Name</div>
+                <input type="text" id="ae-name-${a.id}" value="${a.name.replace(/"/g,'&quot;')}" style="font-size:13px;padding:9px 12px"/>
+              </div>
+              <div>
+                <div class="pkg-label" style="margin-bottom:4px">Price (AUD)</div>
+                <input type="number" id="ae-price-${a.id}" value="${(a.price_cents/100).toFixed(2)}" min="0.01" step="0.01" style="font-size:13px;padding:9px 12px"/>
+              </div>
+              <div>
+                <div class="pkg-label" style="margin-bottom:4px">Stock qty (-1 = unlimited)</div>
+                <input type="number" id="ae-stock-${a.id}" value="${a.stock_quantity}" min="-1" step="1" style="font-size:13px;padding:9px 12px"/>
+              </div>
+              <div>
+                <div class="pkg-label" style="margin-bottom:4px">Sort order</div>
+                <input type="number" id="ae-sort-${a.id}" value="${a.sort_order}" min="0" step="1" style="font-size:13px;padding:9px 12px"/>
+              </div>
+              <div style="grid-column:span 2">
+                <div class="pkg-label" style="margin-bottom:4px">Description</div>
+                <textarea class="admin-textarea" id="ae-desc-${a.id}" style="min-height:60px;font-size:13px">${(a.description || '').replace(/</g,'&lt;')}</textarea>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="save-btn" onclick="saveEditAddon(${a.id})" style="padding:8px 18px;font-size:13px">Save</button>
+              <button class="btn-ghost" onclick="toggleAddonEdit(${a.id}, false)">Cancel</button>
+              <span id="ae-err-${a.id}" style="color:#ef4444;font-size:12px;align-self:center;display:none"></span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:12px;flex-shrink:0">
+          ${photoHtml}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn-ghost" onclick="toggleAddonEdit(${a.id}, true)" id="addon-edit-btn-${a.id}">Edit</button>
+            <button class="btn-ghost" onclick="toggleAddonActive(${a.id}, ${!a.active})">${a.active ? 'Hide' : 'Show'}</button>
+            <button class="btn-ghost" style="color:#ef4444;border-color:rgba(239,68,68,0.3)" onclick="deleteAddon(${a.id})">Delete</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleAddonEdit(id, open) {
+  document.getElementById(`addon-view-${id}`).style.display = open ? 'none' : '';
+  document.getElementById(`addon-edit-${id}`).style.display = open ? '' : 'none';
+  document.getElementById(`addon-edit-btn-${id}`).style.display = open ? 'none' : '';
+}
+
+async function addAddon() {
+  const name = document.getElementById('addon-name').value.trim();
+  const price = parseFloat(document.getElementById('addon-price').value);
+  const stock = parseInt(document.getElementById('addon-stock').value);
+  const sort  = parseInt(document.getElementById('addon-sort').value);
+  const desc  = document.getElementById('addon-desc').value.trim();
+  const errEl = document.getElementById('add-addon-error');
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = 'Name is required.'; errEl.style.display = 'inline'; return; }
+  if (!price || price <= 0 || isNaN(price)) { errEl.textContent = 'Enter a valid price.'; errEl.style.display = 'inline'; return; }
+  if (!Number.isInteger(stock) || stock < -1) { errEl.textContent = 'Stock must be -1 or a positive integer.'; errEl.style.display = 'inline'; return; }
+  try {
+    const res = await authFetch('/api/admin/addons', {
+      method: 'POST',
+      body: JSON.stringify({ name, description: desc || null, price_aud: price, stock_quantity: stock, sort_order: isNaN(sort) ? 0 : sort, active: true }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    document.getElementById('addon-name').value = '';
+    document.getElementById('addon-price').value = '';
+    document.getElementById('addon-stock').value = '-1';
+    document.getElementById('addon-sort').value = '0';
+    document.getElementById('addon-desc').value = '';
+    await loadAddons();
+  } catch (err) { errEl.textContent = err.message; errEl.style.display = 'inline'; }
+}
+
+async function saveEditAddon(id) {
+  const name  = document.getElementById(`ae-name-${id}`).value.trim();
+  const price = parseFloat(document.getElementById(`ae-price-${id}`).value);
+  const stock = parseInt(document.getElementById(`ae-stock-${id}`).value);
+  const sort  = parseInt(document.getElementById(`ae-sort-${id}`).value);
+  const desc  = document.getElementById(`ae-desc-${id}`).value.trim();
+  const errEl = document.getElementById(`ae-err-${id}`);
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = 'Name required.'; errEl.style.display = 'inline'; return; }
+  if (!price || price <= 0 || isNaN(price)) { errEl.textContent = 'Enter a valid price.'; errEl.style.display = 'inline'; return; }
+  if (!Number.isInteger(stock) || stock < -1) { errEl.textContent = 'Stock must be -1 or a positive integer.'; errEl.style.display = 'inline'; return; }
+  try {
+    const res = await authFetch(`/api/admin/addons/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name, description: desc || null, price_aud: price, stock_quantity: stock, sort_order: isNaN(sort) ? 0 : sort }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    await loadAddons();
+  } catch (err) { errEl.textContent = err.message; errEl.style.display = 'inline'; }
+}
+
+async function toggleAddonActive(id, active) {
+  try {
+    const res = await authFetch(`/api/admin/addons/${id}`, { method: 'PUT', body: JSON.stringify({ active }) });
+    if (!res.ok) throw new Error('Failed');
+    await loadAddons();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function deleteAddon(id) {
+  if (!confirm('Delete this add-on? This cannot be undone.')) return;
+  try {
+    const res = await authFetch(`/api/admin/addons/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed');
+    await loadAddons();
+  } catch (err) { alert('Error: ' + err.message); }
+}
+
+async function uploadAddonPhoto(id, input) {
+  if (!input.files || !input.files[0]) return;
+  const label = input.closest('label');
+  const origHtml = label ? label.innerHTML : '';
+  if (label) label.innerHTML = '<span style="font-size:10px;font-family:var(--mono);color:var(--text-3);letter-spacing:0.06em">UPLOADING…</span>';
+  const formData = new FormData();
+  formData.append('photo', input.files[0]);
+  try {
+    const res = await fetch(`/api/admin/addons/${id}/image`, {
+      method: 'POST',
+      headers: { 'x-admin-password': adminPassword },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Upload failed');
+    await loadAddons();
+  } catch (err) {
+    if (label) label.innerHTML = origHtml;
+    alert('Photo upload error: ' + err.message);
   }
 }
 

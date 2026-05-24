@@ -76,12 +76,12 @@ async function getActivePromo(rawCode) {
   return result.rows[0] || null;
 }
 
-function calcDiscount(promo, priceAud, shippingAud = 0, cameraUpgradeAud = 0) {
+function calcDiscount(promo, priceAud, shippingAud = 0, cameraUpgradeAud = 0, addonsAud = 0) {
   if (!promo || !promo.active) return 0;
   if (promo.type === 'free_shipping') return Math.round(shippingAud * 100);
   if (promo.type === 'percent') return Math.round(priceAud * promo.value / 100) * 100;
-  // fixed: can apply against total (product + shipping + camera upgrade), minimum $1 remaining
-  const totalCents = Math.round((priceAud + shippingAud + cameraUpgradeAud) * 100);
+  // fixed: can apply against total (product + shipping + camera upgrade + addons), minimum $1 remaining
+  const totalCents = Math.round((priceAud + shippingAud + cameraUpgradeAud + addonsAud) * 100);
   return Math.min(Math.round(promo.value * 100), totalCents - 100);
 }
 
@@ -142,6 +142,7 @@ function detailRow(label, value) {
 function confirmationEmailHtml(session) {
   const m = session.metadata || {};
   const amount = session.amount_total ? fmt(session.amount_total) : '';
+  const addonItems = (() => { try { return m.addons ? JSON.parse(m.addons) : []; } catch { return []; } })();
   const body = `
     <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Order confirmed.</p>
     <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Hi ${m.customerName?.split(' ')[0] || 'there'}, your DartCraft kit is confirmed and we're getting it ready to ship.</p>
@@ -150,6 +151,7 @@ function confirmationEmailHtml(session) {
         <table width="100%" cellpadding="0" cellspacing="0">
           ${detailRow('Package', `<strong>${m.packageName || ''}</strong>`)}
           ${m.cameraUpgrade === 'true' ? detailRow('Camera upgrade', '<strong style="color:#7C5CFF">OV2710 cameras ✓</strong>') : ''}
+          ${addonItems.map(a => detailRow('Add-on', `${a.name} — $${(a.price_cents / 100).toFixed(2)}`)).join('')}
           ${detailRow('Amount paid', `<strong>${amount}</strong>`)}
           ${detailRow('Ship to', `${m.customerName || ''}<br>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia`)}
         </table>
@@ -177,6 +179,7 @@ function ownerNotificationHtml(session) {
   const m = session.metadata || {};
   const amount = session.amount_total ? fmt(session.amount_total) : '—';
   const date = new Date(session.created * 1000).toLocaleString('en-AU', { timeZone: 'Australia/Sydney', dateStyle: 'medium', timeStyle: 'short' });
+  const addonItems = (() => { try { return m.addons ? JSON.parse(m.addons) : []; } catch { return []; } })();
   const body = `
     <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">New order received.</p>
     <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">${date} AEST &mdash; ${m.packageName || m.packageId || '—'} &mdash; <strong>${amount}</strong></p>
@@ -185,6 +188,7 @@ function ownerNotificationHtml(session) {
         <table width="100%" cellpadding="0" cellspacing="0">
           ${detailRow('Package', `<strong>${m.packageName || m.packageId || '—'}</strong>`)}
           ${m.cameraUpgrade === 'true' ? detailRow('Camera upgrade', '<strong style="color:#7C5CFF">⚡ OV2710 upgrade — include with order</strong>') : ''}
+          ${addonItems.map(a => detailRow('Add-on', `<strong style="color:#7C5CFF">+ ${a.name} — $${(a.price_cents / 100).toFixed(2)}</strong>`)).join('')}
           ${detailRow('Amount', `<strong>${amount}</strong>`)}
           ${detailRow('Name', m.customerName || '—')}
           ${detailRow('Email', session.customer_email || '—')}
@@ -315,7 +319,37 @@ async function deleteR2Photo(photoUrl) {
   }
 }
 
+async function convertAddonPhoto(file) {
+  if (!file) return null;
+  const key = `addons/addon-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+  try {
+    const webpBuffer = await sharp(file.buffer)
+      .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+    await r2.send(new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: key,
+      Body: webpBuffer,
+      ContentType: 'image/webp',
+    }));
+    return `${R2_PUBLIC_URL}/${key}`;
+  } catch (err) {
+    console.error('[convertAddonPhoto] R2 upload failed:', err.message);
+    return null;
+  }
+}
+
 const reviewUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (/^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
+
+const addonUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
@@ -511,8 +545,21 @@ app.get('/api/reviews', async (_req, res) => {
   }
 });
 
+app.get('/api/addons', async (_req, res) => {
+  try {
+    const result = await queryDb(
+      `select id, name, description, price_cents, image_url, stock_quantity
+       from addons where active = true order by sort_order asc, id asc`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('[api/addons] DB error:', err.message);
+    res.status(500).json({ error: 'Could not load add-ons.' });
+  }
+});
+
 app.post('/api/create-checkout-session', async (req, res) => {
-  const { packageId, name, email, phone, street, suburb, state, postcode, notes, promoCode, cameraUpgrade } = req.body;
+  const { packageId, name, email, phone, street, suburb, state, postcode, notes, promoCode, cameraUpgrade, addons: addonIds } = req.body;
 
   try {
     const pkg = await getActivePackage(packageId);
@@ -527,6 +574,23 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
     const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId);
 
+    // Resolve selected addons from DB
+    const selectedAddons = [];
+    if (Array.isArray(addonIds) && addonIds.length > 0) {
+      const ids = addonIds.map(a => parseInt(a.id)).filter(id => Number.isInteger(id) && id > 0);
+      if (ids.length > 0) {
+        const addonResult = await queryDb(
+          `select id, name, price_cents, stock_quantity from addons where id = ANY($1) and active = true`,
+          [ids]
+        );
+        for (const row of addonResult.rows) {
+          if (Number(row.stock_quantity) === 0) continue;
+          selectedAddons.push({ id: Number(row.id), name: row.name, price_cents: Number(row.price_cents) });
+        }
+      }
+    }
+    const addonsTotalCents = selectedAddons.reduce((sum, a) => sum + a.price_cents, 0);
+
     let discountCents = 0;
     let appliedPromo = '';
     if (promoCode) {
@@ -536,7 +600,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
           { type: promo.type, value: Number(promo.value), active: true },
           Number(pkg.price_aud),
           shippingCents / 100,
-          withCameraUpgrade ? cameraUpgradeCents / 100 : 0
+          withCameraUpgrade ? cameraUpgradeCents / 100 : 0,
+          addonsTotalCents / 100
         );
         appliedPromo = String(promo.code).toUpperCase();
       }
@@ -571,12 +636,20 @@ app.post('/api/create-checkout-session', async (req, res) => {
         },
         quantity: 1,
       }] : []),
+      ...selectedAddons.map(a => ({
+        price_data: {
+          currency: 'aud',
+          product_data: { name: a.name },
+          unit_amount: a.price_cents,
+        },
+        quantity: 1,
+      })),
     ];
 
     // Stripe doesn't allow negative line items — use a coupon instead
     let sessionDiscounts = [];
     if (discountCents > 0) {
-      const totalCents = Number(pkg.price_aud) * 100 + shippingCents + (withCameraUpgrade ? cameraUpgradeCents : 0);
+      const totalCents = Number(pkg.price_aud) * 100 + shippingCents + (withCameraUpgrade ? cameraUpgradeCents : 0) + addonsTotalCents;
       const cappedDiscount = Math.min(discountCents, totalCents - 1);
       const coupon = await stripe.coupons.create({
         amount_off: cappedDiscount,
@@ -608,6 +681,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         promoCode: appliedPromo,
         discountCents: String(discountCents),
         cameraUpgrade: String(withCameraUpgrade),
+        addons: selectedAddons.length ? JSON.stringify(selectedAddons).substring(0, 490) : '',
       },
     });
 
@@ -714,6 +788,27 @@ app.post(['/api/webhook', '/api/webhooks/stripe'], async (req, res) => {
             metadata.cameraUpgrade === 'true',
           ]
         );
+
+        // Save add-ons and decrement their stock (stock_quantity > 0 guard handles unlimited = -1)
+        if (metadata.addons) {
+          try {
+            const addonItems = JSON.parse(metadata.addons);
+            for (const item of addonItems) {
+              await client.query(
+                `insert into order_addons (stripe_session_id, addon_id, addon_name, addon_price_cents, quantity)
+                 values ($1, $2, $3, $4, 1)`,
+                [session.id, item.id, item.name, item.price_cents]
+              );
+              await client.query(
+                `update addons set stock_quantity = stock_quantity - 1, updated_at = now()
+                 where id = $1 and stock_quantity > 0`,
+                [item.id]
+              );
+            }
+          } catch (err) {
+            console.error('[webhook] Error saving addon data:', err.message);
+          }
+        }
 
         const stockResult = await client.query(
           'update packages set quantity = quantity - 1, updated_at = now() where id = $1 and quantity > 0 returning quantity',
@@ -994,7 +1089,25 @@ app.get('/api/admin/orders', requireAdmin, async (_req, res) => {
       shippedAt: o.shipped_at ? new Date(o.shipped_at).toISOString() : null,
       trackingNumber: o.tracking_number || '',
       cameraUpgrade: Boolean(o.camera_upgrade),
+      addons: [],
     }));
+
+    // Fetch add-ons for all orders
+    if (orders.length > 0) {
+      const sessionIds = orders.map(o => o.id);
+      const addonResult = await queryDb(
+        `select stripe_session_id, addon_name, addon_price_cents
+         from order_addons where stripe_session_id = ANY($1)`,
+        [sessionIds]
+      );
+      const addonsBySession = {};
+      for (const row of addonResult.rows) {
+        if (!addonsBySession[row.stripe_session_id]) addonsBySession[row.stripe_session_id] = [];
+        addonsBySession[row.stripe_session_id].push({ name: row.addon_name, price_cents: Number(row.addon_price_cents) });
+      }
+      for (const o of orders) o.addons = addonsBySession[o.id] || [];
+    }
+
     res.json(orders);
   } catch (err) {
     console.error('Orders error:', err.message);
@@ -1110,6 +1223,106 @@ app.post('/api/admin/orders/:id/resend-confirmation', requireAdmin, async (req, 
   } catch (err) {
     console.error('[admin/resend-confirmation] Error:', err.message);
     res.status(500).json({ error: 'Could not resend confirmation email.' });
+  }
+});
+
+// ── Admin add-ons CRUD ────────────────────────────────────────────────────────
+
+app.get('/api/admin/addons', requireAdmin, async (_req, res) => {
+  try {
+    const result = await queryDb(
+      `select id, name, description, price_cents, image_url, stock_quantity, active, sort_order, created_at
+       from addons order by sort_order asc, id asc`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('[api/admin/addons GET] DB error:', err.message);
+    res.status(500).json({ error: 'Could not load add-ons.' });
+  }
+});
+
+app.post('/api/admin/addons', requireAdmin, async (req, res) => {
+  const { name, description, price_aud, stock_quantity, sort_order, active } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Name is required.' });
+  const price = parseFloat(price_aud);
+  if (!price || price <= 0 || !Number.isFinite(price)) return res.status(400).json({ error: 'price_aud must be a positive number.' });
+  const priceCents = Math.round(price * 100);
+  const stockQty = stock_quantity !== undefined ? parseInt(stock_quantity) : -1;
+  if (!Number.isInteger(stockQty) || stockQty < -1) return res.status(400).json({ error: 'stock_quantity must be -1 (unlimited) or a non-negative integer.' });
+  const sortOrd = sort_order !== undefined ? parseInt(sort_order) : 0;
+  try {
+    const result = await queryDb(
+      `insert into addons (name, description, price_cents, stock_quantity, active, sort_order, created_at, updated_at)
+       values ($1, $2, $3, $4, $5, $6, now(), now()) returning *`,
+      [name.trim(), (description || '').trim() || null, priceCents, stockQty, active !== false, isNaN(sortOrd) ? 0 : sortOrd]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('[api/admin/addons POST] DB error:', err.message);
+    res.status(500).json({ error: 'Could not create add-on.' });
+  }
+});
+
+app.put('/api/admin/addons/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { name, description, price_aud, stock_quantity, sort_order, active } = req.body;
+  try {
+    const existing = await queryDb('select * from addons where id = $1 limit 1', [id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Add-on not found.' });
+    const cur = existing.rows[0];
+    const nextName = name !== undefined ? String(name).trim() : cur.name;
+    if (!nextName) return res.status(400).json({ error: 'Name is required.' });
+    const nextDesc = description !== undefined ? (String(description).trim() || null) : cur.description;
+    const nextPrice = price_aud !== undefined ? Math.round(parseFloat(price_aud) * 100) : Number(cur.price_cents);
+    if (!nextPrice || nextPrice <= 0) return res.status(400).json({ error: 'price_aud must be a positive number.' });
+    const nextStock = stock_quantity !== undefined ? parseInt(stock_quantity) : Number(cur.stock_quantity);
+    if (!Number.isInteger(nextStock) || nextStock < -1) return res.status(400).json({ error: 'stock_quantity must be -1 or a non-negative integer.' });
+    const nextSort = sort_order !== undefined ? parseInt(sort_order) : Number(cur.sort_order);
+    const nextActive = active !== undefined ? Boolean(active) : Boolean(cur.active);
+    const result = await queryDb(
+      `update addons set name=$2, description=$3, price_cents=$4, stock_quantity=$5, sort_order=$6, active=$7, updated_at=now()
+       where id=$1 returning *`,
+      [id, nextName, nextDesc, nextPrice, nextStock, isNaN(nextSort) ? 0 : nextSort, nextActive]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('[api/admin/addons PUT] DB error:', err.message);
+    res.status(500).json({ error: 'Could not update add-on.' });
+  }
+});
+
+app.delete('/api/admin/addons/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await queryDb('delete from addons where id = $1 returning id, image_url', [id]);
+    if (!result.rows.length) return res.status(404).json({ error: 'Add-on not found.' });
+    await deleteR2Photo(result.rows[0].image_url);
+    res.json({ deleted: true });
+  } catch (err) {
+    console.error('[api/admin/addons DELETE] DB error:', err.message);
+    res.status(500).json({ error: 'Could not delete add-on.' });
+  }
+});
+
+app.post('/api/admin/addons/:id/image', requireAdmin, addonUpload.single('photo'), async (req, res) => {
+  const { id } = req.params;
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded.' });
+  const imageUrl = await convertAddonPhoto(req.file);
+  if (!imageUrl) return res.status(500).json({ error: 'Photo upload failed — check R2 configuration and server logs.' });
+  try {
+    const existing = await queryDb('select image_url from addons where id = $1 limit 1', [id]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Add-on not found.' });
+    const oldUrl = existing.rows[0].image_url;
+    const result = await queryDb(
+      'update addons set image_url = $2, updated_at = now() where id = $1 returning id, image_url',
+      [id, imageUrl]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Add-on not found.' });
+    await deleteR2Photo(oldUrl);
+    res.json({ imageUrl });
+  } catch (err) {
+    console.error('[api/admin/addons/:id/image] DB error:', err.message);
+    res.status(500).json({ error: 'Could not save photo.' });
   }
 });
 
@@ -1490,6 +1703,35 @@ queryDb(`
     display_date TEXT,
     verified_purchase BOOLEAN NOT NULL DEFAULT false,
     active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`).catch(() => {});
+
+// Create addons table if it doesn't exist yet
+queryDb(`
+  CREATE TABLE IF NOT EXISTS addons (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    price_cents INTEGER NOT NULL,
+    image_url TEXT,
+    stock_quantity INTEGER NOT NULL DEFAULT -1,
+    active BOOLEAN NOT NULL DEFAULT true,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`).catch(() => {});
+
+// Create order_addons table if it doesn't exist yet
+queryDb(`
+  CREATE TABLE IF NOT EXISTS order_addons (
+    id SERIAL PRIMARY KEY,
+    stripe_session_id TEXT NOT NULL,
+    addon_id INTEGER,
+    addon_name TEXT NOT NULL,
+    addon_price_cents INTEGER NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
   )
 `).catch(() => {});
