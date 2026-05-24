@@ -1432,6 +1432,7 @@ app.get('/admin',          (_req, res) => res.sendFile(path.join(__dirname, 'adm
 app.get('/terms',          (_req, res) => res.sendFile(path.join(__dirname, 'terms.html')));
 app.get('/privacy',        (_req, res) => res.sendFile(path.join(__dirname, 'privacy.html')));
 app.get('/submit-review',  (_req, res) => res.sendFile(path.join(__dirname, 'submit-review.html')));
+app.get('/gallery',        (_req, res) => res.sendFile(path.join(__dirname, 'gallery.html')));
 app.get('/',               (_req, res) => res.sendFile(path.join(__dirname, 'Dartcraft.html')));
 
 // ── Start ─────────────────────────────────────────────────────────────────────

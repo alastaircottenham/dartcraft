@@ -11,6 +11,16 @@ const App = () => {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector(hash);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 350);
+    return () => clearTimeout(t);
+  }, []);
+
   const onSelect = useCallback((id) => {
     setSelectedId(id);
     setTimeout(()=>{

@@ -36,16 +36,30 @@ const PillButton = ({children, primary, onClick, href, style={}, type, className
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [active, setActive] = useState('');
+
   useEffect(()=>{
     const onS = ()=> setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onS); return ()=>window.removeEventListener('scroll', onS);
+    window.addEventListener('scroll', onS);
+    return ()=>window.removeEventListener('scroll', onS);
   },[]);
+
+  useEffect(()=>{
+    const ids = ['how','kits','order','gallery','faq'];
+    const obs = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{ if(e.isIntersecting) setActive(e.target.id); });
+    }, {rootMargin:'-30% 0px -65% 0px'});
+    ids.forEach(id=>{ const el=document.getElementById(id); if(el) obs.observe(el); });
+    return ()=>obs.disconnect();
+  },[]);
+
   const navLinks = [
-    {label:'How it works', href:'#how'},
-    {label:'Kits', href:'#kits'},
-    {label:'Order', href:'#order'},
-    {label:'FAQ', href:'#faq'},
+    {label:'How it works', href:'#how', id:'how'},
+    {label:'Kits', href:'#kits', id:'kits'},
+    {label:'Gallery', href:'#gallery', id:'gallery'},
+    {label:'FAQ', href:'#faq', id:'faq'},
   ];
+
   return (
     <header style={{
       position:'fixed', top:0, left:0, right:0, zIndex:50,
@@ -60,18 +74,23 @@ const Header = () => {
         </a>
         <nav style={{display:'flex', alignItems:'center', gap:32}} className="dc-nav">
           <div style={{display:'flex', alignItems:'center', gap:28}} className="dc-nav-links">
-            {navLinks.map(l => (
-              <a key={l.href} href={l.href} style={{
-                fontFamily:'var(--sans)', fontSize:14, fontWeight:500, color:'var(--text)',
-                opacity:0.85, transition:'opacity .15s'
-              }}
-              onMouseEnter={e=>e.currentTarget.style.opacity=1}
-              onMouseLeave={e=>e.currentTarget.style.opacity=0.85}>
-                {l.label}
-              </a>
-            ))}
+            {navLinks.map(l => {
+              const isActive = l.id && active === l.id;
+              return (
+                <a key={l.href} href={l.href} style={{
+                  fontFamily:'var(--sans)', fontSize:14, fontWeight:500,
+                  color: isActive ? 'var(--accent)' : 'var(--text)',
+                  opacity: isActive ? 1 : 0.85,
+                  transition:'color .2s, opacity .2s',
+                }}
+                onMouseEnter={e=>{ e.currentTarget.style.opacity=1; }}
+                onMouseLeave={e=>{ e.currentTarget.style.opacity=isActive?1:0.85; }}>
+                  {l.label}
+                </a>
+              );
+            })}
           </div>
-          <PillButton primary href="#order" style={{padding:'10px 20px', fontSize:14}} className="dc-build-btn">Build your kit</PillButton>
+          <PillButton primary href="#order" style={{padding:'10px 20px', fontSize:14, boxShadow: active==='order' ? '0 0 0 3px rgba(124,92,255,0.4)' : 'none', transition:'box-shadow .3s'}} className="dc-build-btn">Build your kit</PillButton>
           <button onClick={()=>setOpen(o=>!o)} className="dc-burger" style={{
             display:'none', background:'transparent', border:'1px solid var(--border)', color:'var(--text)',
             width:40, height:40, borderRadius:99, alignItems:'center', justifyContent:'center', cursor:'pointer'
@@ -86,12 +105,17 @@ const Header = () => {
           {navLinks.map(l=>(
             <a key={l.href} href={l.href} onClick={()=>setOpen(false)} style={{
               display:'block', padding:'14px 0', borderBottom:'1px solid var(--border-2)',
-              fontFamily:'var(--sans)', fontSize:18, fontWeight:500
+              fontFamily:'var(--sans)', fontSize:18, fontWeight:500,
+              color: l.id && active===l.id ? 'var(--accent)' : 'var(--text)',
             }}>{l.label}</a>
           ))}
           <a href="#order" onClick={()=>setOpen(false)} style={{
             display:'block', padding:'14px 0',
-            fontFamily:'var(--sans)', fontSize:18, fontWeight:600, color:'var(--accent)'
+            fontFamily:'var(--sans)', fontSize:18, fontWeight:600,
+            color: active==='order' ? '#fff' : 'var(--accent)',
+            background: active==='order' ? 'var(--accent)' : 'transparent',
+            borderRadius: active==='order' ? 10 : 0,
+            paddingLeft: active==='order' ? 14 : 0,
           }}>Build your kit →</a>
         </div>
       )}
@@ -625,7 +649,7 @@ const KIT_PHOTOS = [
 ];
 
 const KitPhotos = () => (
-  <section style={{padding:'100px 0 80px', borderTop:'1px solid var(--border-2)'}}>
+  <section id="gallery" style={{padding:'100px 0 80px', borderTop:'1px solid var(--border-2)'}}>
     <Container>
       <div style={{marginBottom:52}}>
         <Eyebrow>Real builds</Eyebrow>
@@ -667,7 +691,7 @@ const KitPhotos = () => (
       </div>
       <div style={{marginTop:40, display:'flex', gap:14, flexWrap:'wrap', alignItems:'center'}}>
         <PillButton primary href="#order">Build your AutoDarts kit <Icons.Arrow size={16}/></PillButton>
-        <PillButton href="#kits">Compare packages</PillButton>
+        <PillButton href="/gallery">View all photos <Icons.Arrow size={16}/></PillButton>
       </div>
     </Container>
     <style>{`
