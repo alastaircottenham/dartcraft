@@ -573,29 +573,12 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
           <PillButton primary onClick={()=>onSelect('full-system')}>Build full system order <Icons.Arrow size={16}/></PillButton>
         </div>
 
-        <div style={{position:'relative'}}>
-          <div style={{
-            background:'#0a0b10', border:'1px solid var(--border)', borderRadius:18, padding:24,
-            display:'flex', flexDirection:'column', gap:14
-          }}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <div style={{fontFamily:'var(--mono)', fontSize:11, color:'var(--text-3)', letterSpacing:'0.08em'}}>FULL SYSTEM · IN THE BOX</div>
-              <div style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:18}}>${fullPrice}</div>
-            </div>
-            {[
-              {i:<Icons.Ring size={18}/>, t:'Printed ring + camera mounts'},
-              {i:<Icons.LED size={18}/>,  t:'LED strip lighting'},
-              {i:<Icons.Cam size={18}/>,  t:'Cameras for tracking'},
-              {i:<Icons.Chip size={18}/>, t:'Mini PC, pre-configured'},
-              {i:<Icons.Box size={18}/>,  t:'Wireless keyboard with touchpad'},
-              {i:<Icons.Pin size={18}/>,  t:'Digital setup guide'},
-            ].map((r,i)=>(
-              <div key={i} style={{display:'flex', alignItems:'center', gap:14, padding:'12px 14px', background:'#15171c', border:'1px solid var(--border-2)', borderRadius:12}}>
-                <div style={{color:'var(--accent)'}}>{r.i}</div>
-                <div style={{fontSize:14, fontFamily:'var(--sans)', fontWeight:500}}>{r.t}</div>
-              </div>
-            ))}
-          </div>
+        <div style={{position:'relative', borderRadius:18, overflow:'hidden', border:'1px solid var(--border)', aspectRatio:'4/3'}}>
+          <img
+            src="assets/gallery/4.webp"
+            alt="DartCraft full system kit contents"
+            style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block'}}
+          />
         </div>
       </div>
     </Container>
@@ -610,45 +593,29 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
 
 // ── Kit Photos ───────────────────────────────────────────────
 const KIT_PHOTOS = [
-  {
-    src: 'assets/gallery-1-camera-mount.webp',
-    label: 'Camera Mount',
-    alt: 'DartCraft 3D-printed camera mount bracket integrated into AutoDarts camera ring',
-    caption: 'Precision-printed camera mount bracket integrated into the ring. Holds the camera at the correct angle for accurate dart tracking.',
-  },
-  {
-    src: 'assets/gallery-2-ring-segments.webp',
-    label: 'Ring segments',
-    alt: 'DartCraft AutoDarts camera ring printed segments assembled around a dartboard',
-    caption: 'The ring ships as printed segments that screw together. Camera come preinstalled.',
-  },
-  {
-    src: 'assets/gallery-3-mount-foot.webp',
-    label: 'Mount foot',
-    alt: 'Low-profile mount foot for DartCraft AutoDarts ring with screw covers',
-    caption: 'Low-profile mount foot sits flush against the surface including covers to hide visible screws.',
-  },
-  {
-    src: 'assets/gallery-4-cabinet-front.webp',
-    label: 'Setup Example',
-    alt: 'DartCraft AutoDarts hardware kit mounted to a dartboard cabinet — example setup',
-    caption: 'Example setup mounted to backing. Dartboard, and surroundings not included or supplied by DartCraft.',
-  },
-  {
-    src: 'assets/gallery-5-wall-mount-angle.webp',
-    label: 'Ring — side profile',
-    alt: 'Side profile of DartCraft AutoDarts camera ring mounted to dartboard — low-profile design',
-    caption: 'Low-profile design sits flush against the board. Minimal obstruction to gameplay.',
-  },
-  {
-    src: 'assets/gallery-6-wall-mount.webp',
-    label: 'Setup Example',
-    alt: 'DartCraft AutoDarts system wall mount installation example — camera ring and LED lighting',
-    caption: 'Example wall mount install. Dartboard and surroundings not included or supplied by DartCraft.',
-  },
+  { src: 'assets/gallery/1.webp', alt: 'DartCraft light ring components', caption: 'Printed ring segments ready to assemble. Each piece is precision-printed for a clean, tight fit.' },
+  { src: 'assets/gallery/2.webp', alt: 'DartCraft light ring components', caption: 'Printed ring segments ready to assemble. Each piece is precision-printed for a clean, tight fit.' },
+  { src: 'assets/gallery/3.webp', alt: 'DartCraft cameras preinstalled on ring', caption: 'Cameras arrive pre-mounted and aligned, no fiddly installation required.' },
+  { src: 'assets/gallery/4.webp', alt: 'DartCraft full system kit contents', caption: 'Everything in the full system kit — ring, cameras, LED lighting, mini PC, and wireless keyboard.' },
+  { src: 'assets/gallery/5.webp', alt: 'DartCraft mount ring close up', caption: 'Low-profile mount ring — sits tight against the board with a minimal footprint.' },
+  { src: 'assets/gallery/6.webp', alt: 'DartCraft full system example setup', caption: 'An example full system setup — AutoDarts up and running on a wall-mounted board.' },
 ];
 
-const KitPhotos = () => (
+const KitPhotos = () => {
+  const [lightbox, setLightbox] = useState(null);
+
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') setLightbox(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = lightbox ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [lightbox]);
+
+  return (
   <section id="gallery" style={{padding:'100px 0 80px', borderTop:'1px solid var(--border-2)'}}>
     <Container>
       <div style={{marginBottom:52}}>
@@ -663,20 +630,14 @@ const KitPhotos = () => (
 
       <div style={{display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:20}} className="dc-photos-grid">
         {KIT_PHOTOS.map((photo, i) => (
-          <div key={i} style={{display:'flex', flexDirection:'column', gap:0}}>
-            <div className="dc-photo-frame" style={{position:'relative', border:'1px solid var(--border)', borderRadius:'14px 14px 0 0', overflow:'hidden'}}>
+          <div key={i} style={{display:'flex', flexDirection:'column', cursor:'pointer'}} onClick={() => setLightbox(photo)}>
+            <div className="dc-photo-frame dc-photo-hover" style={{position:'relative', border:'1px solid var(--border)', borderRadius:'14px 14px 0 0', overflow:'hidden'}}>
               <img
                 src={photo.src}
-                alt={photo.alt || photo.label}
+                alt={photo.alt}
                 loading="lazy"
                 style={{position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block'}}
               />
-              <div style={{
-                position:'absolute', top:12, left:12,
-                background:'rgba(10,11,16,0.75)', backdropFilter:'blur(6px)',
-                padding:'4px 10px', borderRadius:99,
-                fontFamily:'var(--mono)', fontSize:10, letterSpacing:'0.06em', color:'var(--text-2)', textTransform:'uppercase',
-              }}>{photo.label}</div>
             </div>
             <div style={{
               background:'rgba(255,255,255,0.03)', border:'1px solid var(--border)', borderTop:'none',
@@ -694,13 +655,37 @@ const KitPhotos = () => (
         <PillButton href="/gallery">View all photos <Icons.Arrow size={16}/></PillButton>
       </div>
     </Container>
+
+    {lightbox && (
+      <div onClick={() => setLightbox(null)} style={{
+        position:'fixed', inset:0, zIndex:200,
+        background:'rgba(5,6,7,0.92)', backdropFilter:'blur(8px)',
+        display:'flex', alignItems:'center', justifyContent:'center', padding:24,
+      }}>
+        <div onClick={e => e.stopPropagation()} style={{position:'relative', maxWidth:900, width:'100%'}}>
+          <button onClick={() => setLightbox(null)} style={{
+            position:'absolute', top:-14, right:-14,
+            width:36, height:36, borderRadius:99, border:'1px solid var(--border)',
+            background:'var(--card)', color:'var(--text-2)', fontSize:18, cursor:'pointer',
+            display:'flex', alignItems:'center', justifyContent:'center', lineHeight:1,
+          }}>&#x2715;</button>
+          <img src={lightbox.src} alt={lightbox.alt} style={{width:'100%', height:'auto', maxHeight:'80vh', objectFit:'contain', borderRadius:10, display:'block'}}/>
+          <p style={{marginTop:14, fontSize:13, color:'var(--text-3)', fontStyle:'italic', textAlign:'center'}}>{lightbox.caption}</p>
+        </div>
+      </div>
+    )}
+
     <style>{`
       .dc-photo-frame { width: 100%; aspect-ratio: 4/3; }
+      .dc-photo-hover img { transition: transform 0.35s ease; }
+      .dc-photo-hover:hover img { transform: scale(1.03); }
+      .dc-photo-hover:hover { border-color: rgba(124,92,255,0.35) !important; }
       @media (max-width: 900px) { .dc-photos-grid { grid-template-columns: repeat(2, 1fr) !important; } }
       @media (max-width: 560px) { .dc-photos-grid { grid-template-columns: 1fr !important; } }
     `}</style>
   </section>
-);
+  );
+};
 
 
 // ── Shipping ───────────────────────────────────────────────
