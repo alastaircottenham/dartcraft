@@ -219,7 +219,7 @@ const ProductExplain = () => {
     {icon:<Icons.Ring size={22}/>, title:'Clear kit options',
      body:'Choose the level that suits your setup, from a printed ring only through to a full system with the PC included.'},
     {icon:<Icons.Box size={22}/>, title:'Matched components',
-     body:'The ring, lighting, cameras, and full-system hardware are selected to work together for an AutoDarts-style setup.'},
+     body:'The ring, lighting, cameras, and full-system hardware are selected to work together — everything matched to the same AutoDarts kit.'},
     {icon:<Icons.Bolt size={22}/>, title:'Setup guidance included',
      body:'Each kit includes guidance to help you understand what connects where and what needs to happen next.'},
   ];
@@ -413,8 +413,8 @@ const PACKAGES = [
     includes:['Printed ring with camera mounts','LED lighting','Cameras for AutoDarts tracking'],
     excludes:['PC','Keyboard or mouse','Dartboard'],
     cta:'Select camera kit' },
-  { id:'full-system', name:'Full AutoDarts System', price:599, badge:'Easiest setup',
-    bestFor:'The easiest AutoDarts setup in Australia — everything included except the dartboard and display.',
+  { id:'full-system', name:'Full System Kit', price:599, badge:'Easiest setup',
+    bestFor:'The easiest AutoDarts kit in Australia — everything you need except the dartboard and display.',
     includes:['Printed ring with camera mounts','LED lighting','Cameras','Mini PC pre-configured for AutoDarts','Wireless keyboard with touchpad','Digital setup guide'],
     excludes:['Dartboard','Monitor / display','In-home installation'],
     cta:'Select full system' },
@@ -558,10 +558,10 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
         <div style={{position:'relative'}}>
           <Eyebrow>Easiest setup</Eyebrow>
           <h2 style={{fontFamily:'var(--sans)', fontWeight:700, fontSize:'clamp(28px, 3.6vw, 44px)', lineHeight:1.1, letterSpacing:'-0.02em', margin:'14px 0 18px'}}>
-            Want the least technical setup? Choose the full system.
+            Want the least technical path? Choose the Full System Kit.
           </h2>
           <p style={{fontSize:16, lineHeight:1.6, color:'var(--text-2)', maxWidth:520, margin:'0 0 28px'}}>
-            The full system includes the printed ring, LED lighting, cameras, and a mini PC already prepared to run AutoDarts. You still need to mount the hardware, connect everything, and complete final calibration, but the most technical sourcing and setup work is reduced.
+            The Full System Kit includes the printed ring, LED lighting, cameras, and a mini PC already configured for AutoDarts. You still need to mount the hardware, connect everything, and complete final calibration — but the sourcing and configuration work is done for you.
           </p>
           <div style={{display:'grid', gridTemplateColumns:'1fr', gap:'10px', marginBottom:30}}>
             {['Pre-configured mini PC','Wireless keyboard with touchpad','Digital setup guide'].map(t=>(
@@ -570,7 +570,7 @@ const FullSystemCallout = ({onSelect, dbPrices={}}) => {
               </div>
             ))}
           </div>
-          <PillButton primary onClick={()=>onSelect('full-system')}>Build full system order <Icons.Arrow size={16}/></PillButton>
+          <PillButton primary onClick={()=>onSelect('full-system')}>Order Full System Kit <Icons.Arrow size={16}/></PillButton>
         </div>
 
         <div style={{position:'relative', borderRadius:18, overflow:'hidden', border:'1px solid var(--border)', aspectRatio:'4/3'}}>
@@ -624,7 +624,7 @@ const KitPhotos = () => {
           DartCraft AutoDarts kits
         </h2>
         <p style={{fontSize:16, lineHeight:1.6, color:'var(--text-2)', maxWidth:600, margin:0}}>
-          Real photos of DartCraft parts, assembled rings, and example installs so you can see how the system comes together before ordering.
+          Real photos of DartCraft parts, assembled rings, and example installs so you can see how the kit goes together before ordering.
         </p>
       </div>
 
@@ -699,7 +699,7 @@ const Shipping = () => (
             Ships from Australia.
           </h2>
           <p style={{fontSize:16, lineHeight:1.6, color:'var(--text-2)', margin:'0 0 24px', maxWidth:480}}>
-            DartCraft kits ship from Wellard, Perth WA — making them a faster and easier option for Australian AutoDarts users compared with ordering from overseas. We currently ship within Australia only.
+            DartCraft kits ship from Perth, WA — making them a faster and easier option for Australian AutoDarts users compared with ordering from overseas. We currently ship within Australia only.
           </p>
           <ul style={{listStyle:'none', padding:0, margin:0, display:'flex', flexDirection:'column', gap:12}}>
             {['Australian-based stock','Faster local shipping for Australian customers','Orders ship once payment has been received','Tracking provided when available','Stock is limited — if a kit is unavailable, more units may be built and restocked'].map(t=>(
@@ -833,13 +833,13 @@ const FAQ = () => {
     {q:'Do I need a computer?', a:'Yes, AutoDarts requires a computer to run. The full system includes a pre-configured mini PC. Other options require you to supply and configure your own computer.'},
     {q:'What is included in the full system?', a:'The full system includes the printed ring, LED lighting, cameras, pre-configured mini PC, wireless keyboard with touchpad, and a digital setup guide sent with your order confirmation.'},
     {q:'Does the full system include a monitor or display?', a:<>No — a monitor or display is not included. Most setups use a monitor connected to the mini PC for the full experience, and there are lots of creative ways people mount displays near their board. For setup ideas and inspiration, the AutoDarts Discord community is a great resource: <a href="https://discord.com/invite/autodarts" target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)', borderBottom:'1px solid currentColor'}}>discord.com/invite/autodarts</a>. If mounting a monitor isn't practical, you can also control the system from a laptop or iPad through the AutoDarts website instead.</>},
-    {q:'Where do the kits ship from?', a:'DartCraft kits ship from Wellard, Perth WA. We currently ship within Australia only.'},
-    {q:'How does DartCraft compare to Target Omni or Scolia?', a:'DartCraft sells AutoDarts-compatible hardware kits — the camera ring, LED lighting, cameras, and optionally a pre-configured mini PC. AutoDarts itself is a third-party software platform. Target Omni and Scolia are self-contained commercial products with their own proprietary software and subscriptions. DartCraft kits use the AutoDarts platform, which has its own free tier and subscription options. The main differences come down to software preference, budget, and how much DIY you\'re comfortable with.'},
+    {q:'Where do the kits ship from?', a:'DartCraft kits ship from Perth, WA. We currently ship within Australia only.'},
+    {q:'Can I pick up locally in Perth?', a:'No — local pickup is not available. All orders are shipped within Australia.'},
     // ── Remaining: revealed with "Show all" ──
+    {q:'How does DartCraft compare to Target Omni or Scolia?', a:'DartCraft sells AutoDarts-compatible hardware kits — the camera ring, LED lighting, cameras, and optionally a pre-configured mini PC. AutoDarts itself is a third-party software platform. Target Omni and Scolia are self-contained commercial products with their own proprietary software and subscriptions. DartCraft kits use the AutoDarts platform, which has its own free tier and subscription options. The main differences come down to software preference, budget, and how much DIY you\'re comfortable with.'},
     {q:'What mini PC is included in the full system?', a:'The full system includes a compact mini PC — typically a Dell OptiPlex Micro or equivalent — with an Intel i5 processor and 8GB of RAM. The exact model may vary based on availability, but every PC we include is specifically selected to ensure reliable, smooth performance with AutoDarts.'},
     {q:'What cameras are included?', a:'We only use high quality, genuine HBV OV9732 cameras — a trusted choice in the AutoDarts community for accurate dart tracking. If you\'d like better image resolution, you can upgrade to the OV2710 cameras when placing your order.'},
     {q:'What is the difference between the OV9732 and OV2710 camera upgrade?', a:'The OV9732 is the standard camera included with camera kits — a genuine HBV model that\'s well-established in the AutoDarts community and performs accurately. The OV2710 upgrade offers a higher image resolution sensor, which can improve tracking in challenging lighting conditions. You can add the OV2710 upgrade when placing your order.'},
-    {q:'Can I pick up locally in Perth?', a:'Yes — local pickup is available in Wellard, WA. Enter the code PICKUPWA at checkout to remove the shipping cost.'},
     {q:'Is support included?', a:'Basic setup guidance is included. If customers run into issues, they can reach out for help where possible. The AutoDarts community is also a useful support resource.'},
     {q:'Can I use AutoDarts with any dartboard?', a:'AutoDarts works with most standard bristle dartboards. The camera ring mounts around the outside of your board. Some boards with unusual surrounds or cabinet shapes may require adjustment, but the vast majority of standard setups are compatible.'},
     {q:'Do I need an internet connection to use AutoDarts?', a:'Yes — AutoDarts requires an internet connection to run. The software operates via the AutoDarts web platform, so your PC needs to be online during play. A stable home Wi-Fi or wired connection is recommended.'},
