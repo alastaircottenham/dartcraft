@@ -214,6 +214,7 @@
     <button class="tab" onclick="switchTab('codes', this)">Discount codes</button>
     <button class="tab" onclick="switchTab('reviews', this)">Reviews</button>
     <button class="tab" onclick="switchTab('addons', this)">Add-ons</button>
+    <button class="tab" onclick="switchTab('waitlist', this)">Waitlist</button>
     <button class="tab" onclick="switchTab('email', this)">Send email</button>
   </div>
 
@@ -231,19 +232,6 @@
     </div>
     <div class="stock-grid" id="stock-grid">
       <div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">Loading…</div>
-    </div>
-
-    <!-- Waitlists -->
-    <div style="margin-top:40px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-        <div>
-          <div style="font-family:var(--sans);font-weight:700;font-size:20px;letter-spacing:-0.02em;margin-bottom:3px">Back-in-stock waitlists</div>
-          <div style="color:var(--text-2);font-size:13px">Customers waiting to be notified when a kit is back in stock.</div>
-        </div>
-      </div>
-      <div id="notifications-list">
-        <div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:20px 0;text-align:center">Loading…</div>
-      </div>
     </div>
 
     <!-- Settings -->
@@ -269,7 +257,7 @@
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:10px;padding-top:18px">
-              <button class="action-btn" onclick="saveShipping()">Save</button>
+              <button class="save-btn" onclick="saveShipping()">Save</button>
               <span id="shipping-feedback" style="font-family:var(--mono);font-size:12px;color:var(--success);display:none"></span>
             </div>
           </div>
@@ -291,9 +279,18 @@
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:10px;padding-top:18px">
-              <button class="action-btn" onclick="saveCameraUpgrade()">Save</button>
+              <button class="save-btn" onclick="saveCameraUpgrade()">Save</button>
               <span id="camera-upgrade-feedback" style="font-family:var(--mono);font-size:12px;color:var(--success);display:none"></span>
             </div>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div>
+              <div style="font-family:var(--sans);font-weight:500;font-size:13px;margin-bottom:2px">Availability</div>
+              <div style="color:var(--text-2);font-size:12px">When out of stock, customers cannot select the upgrade.</div>
+            </div>
+            <button id="camera-upgrade-stock-btn" onclick="saveCameraUpgradeStock()"
+              style="font-family:var(--mono);font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;cursor:pointer;background:transparent;transition:all .15s">
+            </button>
           </div>
         </div>
 
@@ -429,6 +426,20 @@
     </div>
   </div>
 
+  <!-- Waitlist tab -->
+  <div id="tab-waitlist" class="tab-panel">
+    <div class="section-header">
+      <div class="section-title">
+        <h1>Waitlist</h1>
+        <p>Customers waiting to be notified when a kit is back in stock.</p>
+      </div>
+      <button class="refresh-btn" onclick="loadNotifications()">↻ Refresh</button>
+    </div>
+    <div id="notifications-list">
+      <div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">Loading…</div>
+    </div>
+  </div>
+
   <!-- Send email tab -->
   <div id="tab-email" class="tab-panel">
     <div class="section-header">
@@ -558,6 +569,7 @@ function switchTab(name, btn) {
   if (name === 'codes') loadCodes();
   if (name === 'reviews') loadReviews();
   if (name === 'addons') loadAddons();
+  if (name === 'waitlist') loadNotifications();
   if (name === 'email') {
     document.getElementById('send-email-feedback').style.display = 'none';
     document.getElementById('send-email-btn').disabled = false;
@@ -594,10 +606,38 @@ async function loadShipping() {
   try {
     const res = await authFetch('/api/admin/settings');
     if (!res.ok) return;
-    const { shipping_aud, camera_upgrade_aud } = await res.json();
+    const { shipping_aud, camera_upgrade_aud, camera_upgrade_in_stock } = await res.json();
     document.getElementById('shipping-input').value = Number(shipping_aud).toFixed(2);
     document.getElementById('camera-upgrade-input').value = Number(camera_upgrade_aud).toFixed(2);
+    setCameraUpgradeStockBtn(camera_upgrade_in_stock !== false);
   } catch {}
+}
+
+function setCameraUpgradeStockBtn(inStock) {
+  const btn = document.getElementById('camera-upgrade-stock-btn');
+  btn.dataset.inStock = String(inStock);
+  btn.textContent = inStock ? 'In stock' : 'Out of stock';
+  btn.style.color = inStock ? '#22c55e' : '#ef4444';
+  btn.style.borderColor = inStock ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.35)';
+  btn.style.border = inStock ? '1px solid rgba(34,197,94,0.35)' : '1px solid rgba(239,68,68,0.35)';
+  btn.style.background = inStock ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+}
+
+async function saveCameraUpgradeStock() {
+  const btn = document.getElementById('camera-upgrade-stock-btn');
+  const currentlyInStock = btn.dataset.inStock !== 'false';
+  try {
+    const res = await authFetch('/api/admin/settings/camera-upgrade-stock', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ in_stock: !currentlyInStock }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+    setCameraUpgradeStockBtn(data.camera_upgrade_in_stock);
+  } catch (err) {
+    console.error('Failed to update camera upgrade stock:', err);
+  }
 }
 
 async function saveCameraUpgrade() {

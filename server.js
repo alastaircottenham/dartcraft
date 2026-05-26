@@ -18,6 +18,7 @@ const SHIPPING_CENTS_DEFAULT = 1995; // $19.95 AUD — fallback if DB unavailabl
 let shippingCents = SHIPPING_CENTS_DEFAULT; // live value, updated from DB at startup
 const CAMERA_UPGRADE_CENTS_DEFAULT = 4500; // $45.00 AUD
 let cameraUpgradeCents = CAMERA_UPGRADE_CENTS_DEFAULT;
+let cameraUpgradeInStock = true;
 const CAMERA_UPGRADE_PACKAGES = ['ring-led-cameras', 'full-system'];
 
 const r2 = new S3Client({
@@ -361,7 +362,7 @@ const addonUpload = multer({
 // ── Public API ────────────────────────────────────────────────────────────────
 
 app.get('/api/config', (_req, res) => {
-  res.json({ googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '', shipping_aud: shippingCents / 100, camera_upgrade_aud: cameraUpgradeCents / 100 });
+  res.json({ googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '', shipping_aud: shippingCents / 100, camera_upgrade_aud: cameraUpgradeCents / 100, camera_upgrade_in_stock: cameraUpgradeInStock });
 });
 
 app.get('/api/stock', (_req, res) => {
@@ -409,7 +410,7 @@ app.post('/api/validate-promo', async (req, res) => {
 
     const promoValue = Number(promo.value);
     const freeShipping = promo.type === 'free_shipping';
-    const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId);
+    const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId) && cameraUpgradeInStock;
     const discountCents = calcDiscount(
       { type: promo.type, value: promoValue, active: true },
       Number(pkg.price_aud),
@@ -572,7 +573,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
       return res.status(400).json({ error: 'Please fill in all required fields.' });
     }
 
-    const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId);
+    const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId) && cameraUpgradeInStock;
 
     // Resolve selected addons from DB
     const selectedAddons = [];
@@ -899,7 +900,7 @@ app.put('/api/admin/packages/:id/price', requireAdmin, async (req, res) => {
 });
 
 app.get('/api/admin/settings', requireAdmin, (_req, res) => {
-  res.json({ shipping_aud: shippingCents / 100, camera_upgrade_aud: cameraUpgradeCents / 100 });
+  res.json({ shipping_aud: shippingCents / 100, camera_upgrade_aud: cameraUpgradeCents / 100, camera_upgrade_in_stock: cameraUpgradeInStock });
 });
 
 app.put('/api/admin/settings/camera-upgrade', requireAdmin, async (req, res) => {
@@ -919,6 +920,22 @@ app.put('/api/admin/settings/camera-upgrade', requireAdmin, async (req, res) => 
   } catch (err) {
     console.error('[api/admin/settings/camera-upgrade] DB error:', err.message);
     res.status(500).json({ error: 'Could not update camera upgrade price.' });
+  }
+});
+
+app.put('/api/admin/settings/camera-upgrade-stock', requireAdmin, async (req, res) => {
+  const inStock = req.body.in_stock !== false && req.body.in_stock !== 'false';
+  try {
+    await queryDb(
+      `INSERT INTO settings (key, value) VALUES ('camera_upgrade_in_stock', $1)
+       ON CONFLICT (key) DO UPDATE SET value = $1`,
+      [String(inStock)]
+    );
+    cameraUpgradeInStock = inStock;
+    res.json({ camera_upgrade_in_stock: cameraUpgradeInStock });
+  } catch (err) {
+    console.error('[api/admin/settings/camera-upgrade-stock] DB error:', err.message);
+    res.status(500).json({ error: 'Could not update camera upgrade availability.' });
   }
 });
 
@@ -1679,10 +1696,14 @@ queryDb(`
       `INSERT INTO settings (key, value) VALUES ('camera_upgrade_cents', $1) ON CONFLICT (key) DO NOTHING`,
       [String(CAMERA_UPGRADE_CENTS_DEFAULT)]
     );
-    const result = await queryDb(`SELECT key, value FROM settings WHERE key IN ('shipping_cents', 'camera_upgrade_cents')`);
+    await queryDb(
+      `INSERT INTO settings (key, value) VALUES ('camera_upgrade_in_stock', 'true') ON CONFLICT (key) DO NOTHING`
+    );
+    const result = await queryDb(`SELECT key, value FROM settings WHERE key IN ('shipping_cents', 'camera_upgrade_cents', 'camera_upgrade_in_stock')`);
     for (const row of result.rows) {
       if (row.key === 'shipping_cents') shippingCents = Number(row.value);
       if (row.key === 'camera_upgrade_cents') cameraUpgradeCents = Number(row.value);
+      if (row.key === 'camera_upgrade_in_stock') cameraUpgradeInStock = row.value !== 'false';
     }
     console.log(`   Shipping    : $${(shippingCents / 100).toFixed(2)} AUD`);
     console.log(`   Cam upgrade : $${(cameraUpgradeCents / 100).toFixed(2)} AUD`);
