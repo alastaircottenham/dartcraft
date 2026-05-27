@@ -176,7 +176,7 @@
       <div style="margin-top:20px;padding:20px 24px;background:rgba(30,58,138,0.08);border:1px solid rgba(30,58,138,0.2);border-radius:12px">
         <div style="font-size:13px;font-weight:600;color:#93c5fd;margin-bottom:6px">Your setup guide</div>
         <div style="font-size:13px;color:#bfdbfe;line-height:1.6;margin-bottom:14px">Download your digital setup guide to get familiar with the installation before your kit arrives.</div>
-        <a href="/assets/setup-guide.pdf" target="_blank" rel="noopener" style="display:inline-block;padding:10px 22px;background:#1e3a8a;color:#fff;border-radius:99px;font-family:var(--sans);font-weight:700;font-size:13px;text-decoration:none">Download setup guide &rarr;</a>
+        <a id="guide-link" href="/setup-guide-ring.pdf" target="_blank" rel="noopener" style="display:inline-block;padding:10px 22px;background:#1e3a8a;color:#fff;border-radius:99px;font-family:var(--sans);font-weight:700;font-size:13px;text-decoration:none">Download setup guide &rarr;</a>
       </div>
 
       <div class="actions">
@@ -245,8 +245,12 @@
     const amount = s.amount_total ? (s.amount_total / 100).toFixed(2) : '—';
     document.getElementById('amount').textContent = `$${amount} AUD`;
 
-    // Ship to — prefer metadata (pre-fill), fallback to Stripe shipping_details
+    // Setup guide link — pick correct PDF based on kit purchased
     const m = s.metadata || {};
+    document.getElementById('guide-link').href =
+      m.packageId === 'full-system' ? '/setup-guide-full.pdf' : '/setup-guide-ring.pdf';
+
+    // Ship to — prefer metadata (pre-fill), fallback to Stripe shipping_details
     const sd = s.shipping_details;
     const name = m.customerName || sd?.name || s.customer_email || '—';
     const email = s.customer_email || '';
