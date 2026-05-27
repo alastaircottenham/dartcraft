@@ -18,9 +18,10 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: var(--bg); color: var(--text); font-family: var(--body); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-    header { display: flex; align-items: center; justify-content: space-between; padding: 22px 32px; border-bottom: 1px solid var(--border-2); flex-wrap: wrap; gap: 12px; }
+    header { border-bottom: 1px solid var(--border-2); }
+    .header-inner { max-width: 1200px; margin: 0 auto; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .logo { display: flex; align-items: center; gap: 12px; }
-    .logo img { height: 28px; }
+    .logo img { height: 36px; width: auto; display: block; }
     .logo-text { font-family: var(--sans); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
     .header-tag { font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; }
 
@@ -56,11 +57,13 @@
     #admin-screen { display: none; max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
 
     /* ── Tabs ── */
-    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border-2); margin-bottom: 36px; }
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border-2); margin-bottom: 36px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
     .tab {
       padding: 10px 20px; font-family: var(--sans); font-size: 14px; font-weight: 500;
       color: var(--text-3); cursor: pointer; border: none; background: none;
       border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap; flex-shrink: 0;
     }
     .tab:hover { color: var(--text-2); }
     .tab.active { color: var(--text); border-bottom-color: var(--accent); }
@@ -179,19 +182,36 @@
     @media (max-width: 640px) {
       .stock-card { grid-template-columns: 1fr; }
       .order-details-grid { grid-template-columns: 1fr; }
-      header { padding: 16px 20px; }
+      .header-inner { padding: 14px 20px; }
       #admin-screen { padding: 28px 16px 60px; }
       .order-meta { gap: 8px; }
+      /* Tabs */
+      .tab { padding: 10px 13px; font-size: 13px; }
+      /* Order cards */
+      .order-header { padding: 14px 16px; gap: 10px; }
+      .order-body { padding: 0 16px 18px; }
+      .order-body.open { padding-top: 16px; }
+      .order-amount { font-size: 14px; }
+      /* Ship action */
+      .tracking-input { width: 100%; min-width: 0; }
+      .ship-btn { flex: 1; min-width: 0; text-align: center; }
+      .pickup-btn { flex: 1; min-width: 0; text-align: center; }
+      /* Section header */
+      .section-title h1 { font-size: 22px; }
     }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">
-    <img src="/assets/dartcraft-logo.png" alt="DartCraft" onerror="this.style.display='none'"/>
+  <div class="header-inner">
+    <div class="logo">
+      <a href="/" style="display:flex;align-items:center">
+        <img src="/assets/dartcraft-logo.png" alt="DartCraft" onerror="this.style.display='none'"/>
+      </a>
+    </div>
+    <span class="header-tag">Admin</span>
   </div>
-  <span class="header-tag">Admin</span>
 </header>
 
 <!-- Login -->
@@ -460,10 +480,17 @@
           <div class="pkg-label" style="margin-bottom:6px">Email address</div>
           <input type="text" id="send-email" placeholder="customer@example.com" autocomplete="off"/>
         </div>
-        <div style="padding:16px 18px;background:rgba(124,92,255,0.06);border:1px solid rgba(124,92,255,0.15);border-radius:12px">
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Kit type</div>
+          <select id="send-guide" class="admin-select" onchange="updateEmailPreview()">
+            <option value="ring">Ring Kit (Ring-only, Ring + LED, Ring + LED + Cameras)</option>
+            <option value="full-system">Full System Kit</option>
+          </select>
+        </div>
+        <div id="send-email-preview" style="padding:16px 18px;background:rgba(124,92,255,0.06);border:1px solid rgba(124,92,255,0.15);border-radius:12px">
           <div class="pkg-label" style="margin-bottom:6px;color:var(--accent)">What gets sent</div>
           <ul style="margin:0;padding-left:18px;color:var(--text-2);font-size:13px;line-height:1.9">
-            <li>Setup guide PDF link</li>
+            <li id="preview-guide-line">Setup guide: <span style="font-family:var(--mono);font-size:12px;color:var(--text-3)">setup-guide-ring.pdf</span></li>
             <li>DartCraft website link</li>
             <li>Leave a review link</li>
           </ul>
@@ -519,7 +546,7 @@
 
 <style>
   @media (max-width: 640px) {
-    .codes-form-grid { grid-template-columns: 1fr 1fr !important; }
+    .codes-form-grid { grid-template-columns: 1fr !important; }
     .review-form-grid { grid-template-columns: 1fr !important; }
     .review-card { grid-template-columns: 1fr !important; }
     .dc-price-divider { display: none !important; }
@@ -1287,9 +1314,17 @@ async function uploadPhoto(id, input) {
 
 // ── Send email ────────────────────────────────────────────────────────────────
 
+function updateEmailPreview() {
+  const guide = document.getElementById('send-guide').value;
+  const filename = guide === 'full-system' ? 'setup-guide-full.pdf' : 'setup-guide-ring.pdf';
+  document.getElementById('preview-guide-line').innerHTML =
+    `Setup guide: <span style="font-family:var(--mono);font-size:12px;color:var(--text-3)">${filename}</span>`;
+}
+
 async function sendWelcomeEmail() {
   const name  = document.getElementById('send-name').value.trim();
   const email = document.getElementById('send-email').value.trim();
+  const guide = document.getElementById('send-guide').value;
   const btn   = document.getElementById('send-email-btn');
   const fb    = document.getElementById('send-email-feedback');
 
@@ -1302,7 +1337,7 @@ async function sendWelcomeEmail() {
   btn.disabled = true; btn.textContent = 'Sending…';
 
   try {
-    const res  = await authFetch('/api/admin/send-email', { method: 'POST', body: JSON.stringify({ name, email }) });
+    const res  = await authFetch('/api/admin/send-email', { method: 'POST', body: JSON.stringify({ name, email, guide }) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to send.');
     fb.style.color = '#22c55e';

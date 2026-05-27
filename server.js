@@ -144,6 +144,9 @@ function confirmationEmailHtml(session) {
   const m = session.metadata || {};
   const amount = session.amount_total ? fmt(session.amount_total) : '';
   const addonItems = (() => { try { return m.addons ? JSON.parse(m.addons) : []; } catch { return []; } })();
+  const guideUrl = m.packageId === 'full-system'
+    ? `${BASE_URL}/setup-guide-full.pdf`
+    : `${BASE_URL}/setup-guide-ring.pdf`;
   const body = `
     <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Order confirmed.</p>
     <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Hi ${m.customerName?.split(' ')[0] || 'there'}, your DartCraft kit is confirmed and we're getting it ready to ship.</p>
@@ -168,7 +171,7 @@ function confirmationEmailHtml(session) {
       <tr><td>
         <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#1e3a8a">Your setup guide</p>
         <p style="margin:0 0 14px;font-size:13px;color:#1e40af;line-height:1.65">Download your digital setup guide to get familiar with the installation before your kit arrives.</p>
-        <a href="${BASE_URL}/assets/setup-guide.pdf" style="display:inline-block;padding:10px 20px;background:#1e3a8a;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">Download setup guide &rarr;</a>
+        <a href="${guideUrl}" style="display:inline-block;padding:10px 20px;background:#1e3a8a;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">Download setup guide &rarr;</a>
       </td></tr>
     </table>
     <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
@@ -208,6 +211,9 @@ function ownerNotificationHtml(session) {
 function shippingEmailHtml(session, trackingNumber = '') {
   const m = session.metadata || {};
   const firstName = (m.customerName || 'there').split(' ')[0];
+  const guideUrl = m.packageId === 'full-system'
+    ? `${BASE_URL}/setup-guide-full.pdf`
+    : `${BASE_URL}/setup-guide-ring.pdf`;
   const trackingBlock = trackingNumber
     ? `<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 24px;margin-bottom:32px">
         <tr><td>
@@ -229,6 +235,13 @@ function shippingEmailHtml(session, trackingNumber = '') {
       </td></tr>
     </table>
     ${trackingBlock}
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;border:1px solid #c7d4f8;border-radius:12px;padding:20px 24px;margin-bottom:32px">
+      <tr><td>
+        <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#1e3a8a">Your setup guide</p>
+        <p style="margin:0 0 14px;font-size:13px;color:#1e40af;line-height:1.65">While you wait, download your setup guide to get familiar with the installation before your kit arrives.</p>
+        <a href="${guideUrl}" style="display:inline-block;padding:10px 20px;background:#1e3a8a;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">Download setup guide &rarr;</a>
+      </td></tr>
+    </table>
     <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
   `;
   return emailShell({ badge: '&#9679; Shipped', badgeColor: '#22c55e', body });
@@ -279,6 +292,10 @@ function orderRowToSession(order) {
 ['stock.json','orders.json','codes.json','.env','server.js'].forEach(f =>
   app.get(`/${f}`, (_req, res) => res.status(404).end())
 );
+
+// Clean setup guide URLs → redirect to files in assets folder
+app.get('/setup-guide-full.pdf', (_req, res) => res.redirect('/assets/Setup-Guide-Full.pdf'));
+app.get('/setup-guide-ring.pdf', (_req, res) => res.redirect('/assets/Setup-Guide-Ring.pdf'));
 
 app.use(['/api/webhook', '/api/webhooks/stripe'], express.raw({ type: 'application/json' }));
 app.use(express.json());
@@ -1185,7 +1202,7 @@ app.post('/api/admin/orders/:id/pickup', requireAdmin, async (req, res) => {
   const { id } = req.params;
   try {
     const orderResult = await queryDb(
-      `select stripe_session_id, payment_status, customer_email, customer_name
+      `select stripe_session_id, payment_status, customer_email, customer_name, package_id
        from orders where stripe_session_id = $1 limit 1`,
       [id]
     );
@@ -1200,10 +1217,14 @@ app.post('/api/admin/orders/:id/pickup', requireAdmin, async (req, res) => {
       [id]
     );
 
+    const pickupGuideUrl = order.package_id === 'full-system'
+      ? `${BASE_URL}/setup-guide-full.pdf`
+      : `${BASE_URL}/setup-guide-ring.pdf`;
+
     await sendEmail(
       order.customer_email,
       `Your DartCraft setup guide & links 🎯`,
-      welcomeEmailHtml(order.customer_name || '')
+      welcomeEmailHtml(order.customer_name || '', pickupGuideUrl)
     );
 
     console.log(`[admin] Order ${id} marked as local pickup`);
@@ -1542,8 +1563,9 @@ app.delete('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
 
 // ── Admin send email ──────────────────────────────────────────────────────────
 
-function welcomeEmailHtml(name) {
+function welcomeEmailHtml(name, guideUrl) {
   const firstName = (name || 'there').split(' ')[0];
+  const resolvedGuideUrl = guideUrl || `${BASE_URL}/setup-guide-ring.pdf`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1597,7 +1619,7 @@ function welcomeEmailHtml(name) {
           <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">Setup guide</strong>
           <span style="font-size:13px;color:#666;">Step-by-step instructions for your system</span>
         </td>
-        <td width="130" valign="middle" align="right"><a class="cta-btn" href="${BASE_URL}/assets/setup-guide.pdf">Download PDF</a></td>
+        <td width="130" valign="middle" align="right"><a class="cta-btn" href="${resolvedGuideUrl}">Download PDF</a></td>
       </tr>
     </table>
     <table class="cta-block" cellpadding="0" cellspacing="0">
@@ -1635,18 +1657,21 @@ function welcomeEmailHtml(name) {
 }
 
 app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
-  const { email, name } = req.body;
+  const { email, name, guide } = req.body;
   if (!email || !/^\S+@\S+\.\S+$/.test(String(email))) {
     return res.status(400).json({ error: 'Valid email address required.' });
   }
   const recipientName = (name || '').trim() || 'there';
+  const guideUrl = guide === 'full-system'
+    ? `${BASE_URL}/setup-guide-full.pdf`
+    : `${BASE_URL}/setup-guide-ring.pdf`;
   try {
     await sendEmail(
       email.trim().toLowerCase(),
       `Your DartCraft setup guide & links 🎯`,
-      welcomeEmailHtml(recipientName)
+      welcomeEmailHtml(recipientName, guideUrl)
     );
-    console.log(`[admin] Welcome email sent to ${email} (${recipientName})`);
+    console.log(`[admin] Welcome email sent to ${email} (${recipientName}) — guide: ${guide || 'ring'}`);
     res.json({ ok: true });
   } catch (err) {
     console.error('[api/admin/send-email] Error:', err.message);
