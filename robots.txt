@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
 
+Disallow: /admin
+Disallow: /success
+Disallow: /cancel
+Disallow: /submit-review
+Disallow: /api/
+
 Sitemap: https://dartcraft.com.au/sitemap.xml
