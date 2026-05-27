@@ -293,9 +293,9 @@ function orderRowToSession(order) {
   app.get(`/${f}`, (_req, res) => res.status(404).end())
 );
 
-// Clean setup guide URLs → redirect to files in assets folder
-app.get('/setup-guide-full.pdf', (_req, res) => res.redirect('/assets/Setup-Guide-Full.pdf'));
-app.get('/setup-guide-ring.pdf', (_req, res) => res.redirect('/assets/Setup-Guide-Ring.pdf'));
+// Clean setup guide URLs — serve directly so the URL never changes
+app.get('/setup-guide-full.pdf', (_req, res) => res.sendFile(path.join(__dirname, 'assets', 'Setup-Guide-Full.pdf')));
+app.get('/setup-guide-ring.pdf', (_req, res) => res.sendFile(path.join(__dirname, 'assets', 'Setup-Guide-Ring.pdf')));
 
 app.use(['/api/webhook', '/api/webhooks/stripe'], express.raw({ type: 'application/json' }));
 app.use(express.json());
