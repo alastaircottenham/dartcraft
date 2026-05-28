@@ -18,7 +18,11 @@ const SHIPPING_CENTS_DEFAULT = 1995; // $19.95 AUD — fallback if DB unavailabl
 let shippingCents = SHIPPING_CENTS_DEFAULT; // live value, updated from DB at startup
 const CAMERA_UPGRADE_CENTS_DEFAULT = 4500; // $45.00 AUD
 let cameraUpgradeCents = CAMERA_UPGRADE_CENTS_DEFAULT;
-let cameraUpgradeInStock = true;
+// Camera stock: -1 = unlimited (not tracked), 0 = out of stock, N = exact qty
+// Availability is derived: available when qty !== 0 (i.e. -1 or > 0)
+let standardCameraQty = -1;
+let upgradeCameraQty  = -1;
+const CAMERAS_PER_KIT = 3;
 const CAMERA_UPGRADE_PACKAGES = ['ring-led-cameras', 'full-system'];
 
 const r2 = new S3Client({
@@ -379,7 +383,13 @@ const addonUpload = multer({
 // ── Public API ────────────────────────────────────────────────────────────────
 
 app.get('/api/config', (_req, res) => {
-  res.json({ googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '', shipping_aud: shippingCents / 100, camera_upgrade_aud: cameraUpgradeCents / 100, camera_upgrade_in_stock: cameraUpgradeInStock });
+  res.json({
+    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '',
+    shipping_aud: shippingCents / 100,
+    camera_upgrade_aud: cameraUpgradeCents / 100,
+    camera_upgrade_in_stock: upgradeCameraQty !== 0,
+    standard_camera_in_stock: standardCameraQty !== 0,
+  });
 });
 
 app.get('/api/stock', (_req, res) => {
@@ -427,7 +437,8 @@ app.post('/api/validate-promo', async (req, res) => {
 
     const promoValue = Number(promo.value);
     const freeShipping = promo.type === 'free_shipping';
-    const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId) && cameraUpgradeInStock;
+    const upgradeForced = standardCameraQty === 0 && CAMERA_UPGRADE_PACKAGES.includes(packageId);
+    const withCameraUpgrade = (cameraUpgrade === true || upgradeForced) && CAMERA_UPGRADE_PACKAGES.includes(packageId) && upgradeCameraQty !== 0;
     const discountCents = calcDiscount(
       { type: promo.type, value: promoValue, active: true },
       Number(pkg.price_aud),
@@ -590,7 +601,15 @@ app.post('/api/create-checkout-session', async (req, res) => {
       return res.status(400).json({ error: 'Please fill in all required fields.' });
     }
 
-    const withCameraUpgrade = cameraUpgrade === true && CAMERA_UPGRADE_PACKAGES.includes(packageId) && cameraUpgradeInStock;
+    const isCameraPackage = CAMERA_UPGRADE_PACKAGES.includes(packageId);
+    const standardAvail  = standardCameraQty !== 0;  // -1 (unlimited) or > 0
+    const upgradeAvail   = upgradeCameraQty  !== 0;
+    const upgradeForced  = !standardAvail && isCameraPackage;
+    // Both camera types unavailable for a camera package → block order
+    if (upgradeForced && !upgradeAvail) {
+      return res.status(400).json({ error: 'Cameras are temporarily out of stock. Please contact us at hello@dartcraft.com.au.' });
+    }
+    const withCameraUpgrade = (cameraUpgrade === true || upgradeForced) && isCameraPackage && upgradeAvail;
 
     // Resolve selected addons from DB
     const selectedAddons = [];
@@ -838,6 +857,26 @@ app.post(['/api/webhook', '/api/webhooks/stripe'], async (req, res) => {
           return res.json({ received: true });
         }
 
+        // Decrement camera stock if this is a camera kit
+        const isCameraKit = CAMERA_UPGRADE_PACKAGES.includes(packageId);
+        if (isCameraKit) {
+          const usedUpgrade = metadata.cameraUpgrade === 'true';
+          const cameraKey = usedUpgrade ? 'upgrade_camera_qty' : 'standard_camera_qty';
+          // Only decrement if tracked (value > 0); -1 means unlimited, skip
+          const camResult = await client.query(
+            `UPDATE settings SET value = GREATEST(0, CAST(value AS INTEGER) - $1)::TEXT
+             WHERE key = $2 AND CAST(value AS INTEGER) > 0
+             RETURNING value`,
+            [String(CAMERAS_PER_KIT), cameraKey]
+          );
+          if (camResult.rows.length) {
+            const newCamQty = Number(camResult.rows[0].value);
+            if (usedUpgrade) upgradeCameraQty = newCamQty;
+            else standardCameraQty = newCamQty;
+            console.log(`[webhook] Camera stock decremented: ${cameraKey} -> ${newCamQty}`);
+          }
+        }
+
         await client.query('COMMIT');
         processed = true;
         const newQty = stockResult.rows[0].quantity;
@@ -917,7 +956,12 @@ app.put('/api/admin/packages/:id/price', requireAdmin, async (req, res) => {
 });
 
 app.get('/api/admin/settings', requireAdmin, (_req, res) => {
-  res.json({ shipping_aud: shippingCents / 100, camera_upgrade_aud: cameraUpgradeCents / 100, camera_upgrade_in_stock: cameraUpgradeInStock });
+  res.json({
+    shipping_aud: shippingCents / 100,
+    camera_upgrade_aud: cameraUpgradeCents / 100,
+    standard_camera_qty: standardCameraQty,
+    upgrade_camera_qty: upgradeCameraQty,
+  });
 });
 
 app.put('/api/admin/settings/camera-upgrade', requireAdmin, async (req, res) => {
@@ -940,19 +984,25 @@ app.put('/api/admin/settings/camera-upgrade', requireAdmin, async (req, res) => 
   }
 });
 
-app.put('/api/admin/settings/camera-upgrade-stock', requireAdmin, async (req, res) => {
-  const inStock = req.body.in_stock !== false && req.body.in_stock !== 'false';
+// PUT /api/admin/camera-stock/:type  (type = 'standard' | 'upgrade')
+// qty: -1 = unlimited, 0 = OOS, N = tracked quantity
+app.put('/api/admin/camera-stock/:type', requireAdmin, async (req, res) => {
+  const { type } = req.params;
+  if (type !== 'standard' && type !== 'upgrade') return res.status(400).json({ error: 'Invalid camera type.' });
+  const qty = parseInt(req.body.qty, 10);
+  if (isNaN(qty) || qty < -1) return res.status(400).json({ error: 'qty must be -1 (unlimited) or >= 0.' });
+  const key = type === 'standard' ? 'standard_camera_qty' : 'upgrade_camera_qty';
   try {
     await queryDb(
-      `INSERT INTO settings (key, value) VALUES ('camera_upgrade_in_stock', $1)
-       ON CONFLICT (key) DO UPDATE SET value = $1`,
-      [String(inStock)]
+      `INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2`,
+      [key, String(qty)]
     );
-    cameraUpgradeInStock = inStock;
-    res.json({ camera_upgrade_in_stock: cameraUpgradeInStock });
+    if (type === 'standard') standardCameraQty = qty;
+    else upgradeCameraQty = qty;
+    res.json({ type, qty });
   } catch (err) {
-    console.error('[api/admin/settings/camera-upgrade-stock] DB error:', err.message);
-    res.status(500).json({ error: 'Could not update camera upgrade availability.' });
+    console.error(`[api/admin/camera-stock/${type}] DB error:`, err.message);
+    res.status(500).json({ error: 'Could not update camera stock.' });
   }
 });
 
@@ -1721,17 +1771,24 @@ queryDb(`
       `INSERT INTO settings (key, value) VALUES ('camera_upgrade_cents', $1) ON CONFLICT (key) DO NOTHING`,
       [String(CAMERA_UPGRADE_CENTS_DEFAULT)]
     );
-    await queryDb(
-      `INSERT INTO settings (key, value) VALUES ('camera_upgrade_in_stock', 'true') ON CONFLICT (key) DO NOTHING`
+    // Seed camera qty defaults (-1 = unlimited) — DO NOTHING keeps existing values
+    await queryDb(`INSERT INTO settings (key, value) VALUES ('standard_camera_qty', '-1') ON CONFLICT (key) DO NOTHING`);
+    await queryDb(`INSERT INTO settings (key, value) VALUES ('upgrade_camera_qty',  '-1') ON CONFLICT (key) DO NOTHING`);
+
+    const result = await queryDb(
+      `SELECT key, value FROM settings WHERE key IN ('shipping_cents', 'camera_upgrade_cents', 'standard_camera_qty', 'upgrade_camera_qty')`
     );
-    const result = await queryDb(`SELECT key, value FROM settings WHERE key IN ('shipping_cents', 'camera_upgrade_cents', 'camera_upgrade_in_stock')`);
     for (const row of result.rows) {
-      if (row.key === 'shipping_cents') shippingCents = Number(row.value);
+      if (row.key === 'shipping_cents')       shippingCents      = Number(row.value);
       if (row.key === 'camera_upgrade_cents') cameraUpgradeCents = Number(row.value);
-      if (row.key === 'camera_upgrade_in_stock') cameraUpgradeInStock = row.value !== 'false';
+      if (row.key === 'standard_camera_qty')  standardCameraQty  = Number(row.value);
+      if (row.key === 'upgrade_camera_qty')   upgradeCameraQty   = Number(row.value);
     }
-    console.log(`   Shipping    : $${(shippingCents / 100).toFixed(2)} AUD`);
-    console.log(`   Cam upgrade : $${(cameraUpgradeCents / 100).toFixed(2)} AUD`);
+    const fmtCam = qty => qty === -1 ? 'unlimited' : qty === 0 ? 'OUT OF STOCK' : `${qty} cameras`;
+    console.log(`   Shipping      : $${(shippingCents / 100).toFixed(2)} AUD`);
+    console.log(`   Cam upgrade   : $${(cameraUpgradeCents / 100).toFixed(2)} AUD`);
+    console.log(`   Std cameras   : ${fmtCam(standardCameraQty)}`);
+    console.log(`   Upg cameras   : ${fmtCam(upgradeCameraQty)}`);
   } catch (err) {
     console.error('[settings init] Error loading settings:', err.message);
   }

@@ -114,6 +114,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
   const [cameraUpgradeAud, setCameraUpgradeAud] = useState(45);
   const [cameraUpgrade, setCameraUpgrade] = useState(false);
   const [cameraUpgradeInStock, setCameraUpgradeInStock] = useState(true);
+  const [standardCameraInStock, setStandardCameraInStock] = useState(true);
   const CAMERA_UPGRADE_PACKAGES = ['ring-led-cameras', 'full-system'];
   const [form, setForm] = useState({
     name:'', email:'', phone:'',
@@ -177,6 +178,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
         if (config.shipping_aud) setShippingAud(config.shipping_aud);
         if (config.camera_upgrade_aud) setCameraUpgradeAud(config.camera_upgrade_aud);
         if (typeof config.camera_upgrade_in_stock === 'boolean') setCameraUpgradeInStock(config.camera_upgrade_in_stock);
+        if (typeof config.standard_camera_in_stock === 'boolean') setStandardCameraInStock(config.standard_camera_in_stock);
         if (Array.isArray(addonsData)) setAddons(addonsData);
         if (!config.googleMapsApiKey || window.google?.maps?.places) { attach(); return; }
         const { googleMapsApiKey } = config;
@@ -222,8 +224,10 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
   const effectiveShippingAud = freeShipping ? 0 : shippingAud;
   const discountAud = (promoStatus?.valid && promoStatus.discountCents && !freeShipping) ? promoStatus.discountCents / 100 : 0;
   const showCameraUpgrade = pkg && CAMERA_UPGRADE_PACKAGES.includes(pkg.id);
+  const upgradeForced = !standardCameraInStock && !!showCameraUpgrade;
+  const effectiveCameraUpgrade = cameraUpgrade || upgradeForced;
   const addonTotalAud = addons.filter(a => selectedAddons[a.id]).reduce((sum, a) => sum + a.price_cents / 100, 0);
-  const total = pkgPrice + effectiveShippingAud + (cameraUpgrade ? cameraUpgradeAud : 0) + addonTotalAud - discountAud;
+  const total = pkgPrice + effectiveShippingAud + (effectiveCameraUpgrade ? cameraUpgradeAud : 0) + addonTotalAud - discountAud;
   const currentStock = pkg ? stockQty[pkg.id] : undefined;
   const isSoldOut = typeof currentStock === 'number' && currentStock <= 0;
 
@@ -237,7 +241,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
       const res = await fetch('/api/validate-promo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, packageId: pkg.id, cameraUpgrade: cameraUpgrade && CAMERA_UPGRADE_PACKAGES.includes(pkg.id) }),
+        body: JSON.stringify({ code, packageId: pkg.id, cameraUpgrade: effectiveCameraUpgrade && CAMERA_UPGRADE_PACKAGES.includes(pkg.id) }),
       });
       const data = await res.json();
       if (data.valid) { setPromoCode(code); setPromoStatus(data); }
@@ -285,7 +289,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
           street: form.street, suburb: form.suburb, state: form.state, postcode: form.postcode,
           notes: form.notes,
           promoCode: promoCode || undefined,
-          cameraUpgrade: cameraUpgrade && CAMERA_UPGRADE_PACKAGES.includes(pkg.id),
+          cameraUpgrade: effectiveCameraUpgrade && CAMERA_UPGRADE_PACKAGES.includes(pkg.id),
           addons: addons.filter(a => selectedAddons[a.id]).map(a => ({ id: a.id })),
         }),
       });
@@ -368,26 +372,36 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
 
             {/* Camera upgrade */}
             {showCameraUpgrade && (
-              <div style={{background:'var(--card)', border:`1px solid ${cameraUpgrade ? 'var(--accent)' : 'var(--border)'}`, borderRadius:18, padding:28, transition:'border-color .15s'}}>
+              <div style={{background:'var(--card)', border:`1px solid ${effectiveCameraUpgrade ? 'var(--accent)' : 'var(--border)'}`, borderRadius:18, padding:28, transition:'border-color .15s'}}>
                 <SectionHead num="02" title="Add-ons"/>
-                <label style={{display:'grid', gridTemplateColumns:'auto 1fr', gap:16, alignItems:'flex-start', cursor: cameraUpgradeInStock ? 'pointer' : 'default', opacity: cameraUpgradeInStock ? 1 : 0.6}}>
+                <label style={{display:'grid', gridTemplateColumns:'auto 1fr', gap:16, alignItems:'flex-start', cursor: (upgradeForced || !cameraUpgradeInStock) ? 'default' : 'pointer', opacity: cameraUpgradeInStock ? 1 : 0.6}}>
                   <div style={{
-                    width:22, height:22, borderRadius:6, border:`2px solid ${cameraUpgrade ? 'var(--accent)' : 'var(--border)'}`,
-                    background: cameraUpgrade ? 'var(--accent)' : 'transparent',
+                    width:22, height:22, borderRadius:6, border:`2px solid ${effectiveCameraUpgrade ? 'var(--accent)' : 'var(--border)'}`,
+                    background: effectiveCameraUpgrade ? 'var(--accent)' : 'transparent',
                     display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2, transition:'all .15s'
                   }}>
-                    {cameraUpgrade && <Icons.Check size={13} stroke={2.5}/>}
+                    {effectiveCameraUpgrade && <Icons.Check size={13} stroke={2.5}/>}
                   </div>
-                  <input type="checkbox" checked={cameraUpgrade} disabled={!cameraUpgradeInStock} onChange={e => setCameraUpgrade(e.target.checked)} style={{display:'none'}}/>
+                  <input type="checkbox" checked={effectiveCameraUpgrade} disabled={upgradeForced || !cameraUpgradeInStock} onChange={e => !upgradeForced && setCameraUpgrade(e.target.checked)} style={{display:'none'}}/>
                   <div>
                     <div style={{display:'flex', alignItems:'center', gap:10, flexWrap:'wrap', marginBottom:5}}>
                       <span style={{fontFamily:'var(--sans)', fontWeight:600, fontSize:15}}>Upgrade to OV2710 cameras</span>
-                      {cameraUpgradeInStock
-                        ? <span style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--accent)', background:'rgba(124,92,255,0.12)', padding:'2px 8px', borderRadius:99}}>+${cameraUpgradeAud.toFixed(2)}</span>
-                        : <span style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--text-3)', background:'rgba(255,255,255,0.05)', padding:'2px 8px', borderRadius:99}}>Currently unavailable</span>
+                      {upgradeForced
+                        ? <>
+                            <span style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--accent)', background:'rgba(124,92,255,0.12)', padding:'2px 8px', borderRadius:99}}>+${cameraUpgradeAud.toFixed(2)}</span>
+                            <span style={{fontFamily:'var(--mono)', fontSize:12, color:'#f59e0b', background:'rgba(245,158,11,0.1)', padding:'2px 8px', borderRadius:99}}>Standard cameras unavailable</span>
+                          </>
+                        : cameraUpgradeInStock
+                          ? <span style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--accent)', background:'rgba(124,92,255,0.12)', padding:'2px 8px', borderRadius:99}}>+${cameraUpgradeAud.toFixed(2)}</span>
+                          : <span style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--text-3)', background:'rgba(255,255,255,0.05)', padding:'2px 8px', borderRadius:99}}>Currently unavailable</span>
                       }
                     </div>
-                    <div style={{fontSize:13, color:'var(--text-2)', lineHeight:1.5}}>Better image resolution for improved tracking accuracy. Standard cameras (HBV OV9732) are included with your kit at no extra cost.</div>
+                    <div style={{fontSize:13, color:'var(--text-2)', lineHeight:1.5}}>
+                      {upgradeForced
+                        ? 'Standard HBV OV9732 cameras are temporarily out of stock. OV2710 upgrade cameras will be included with your order.'
+                        : 'Better image resolution for improved tracking accuracy. Standard cameras (HBV OV9732) are included with your kit at no extra cost.'
+                      }
+                    </div>
                   </div>
                 </label>
               </div>
@@ -569,7 +583,7 @@ const OrderBuilder = ({selectedId, onSelect, dbPrices={}}) => {
 
               {pkg && <div style={{borderTop:'1px solid var(--border-2)', paddingTop:18, display:'flex', flexDirection:'column', gap:8}}>
                 <Row k="Subtotal" v={`$${pkgPrice}.00`}/>
-                {cameraUpgrade && <Row k="Camera upgrade (OV2710)" v={`+$${cameraUpgradeAud.toFixed(2)}`}/>}
+                {effectiveCameraUpgrade && <Row k="Camera upgrade (OV2710)" v={`+$${cameraUpgradeAud.toFixed(2)}`}/>}
                 {addons.filter(a => selectedAddons[a.id]).map(a => (
                   <Row key={a.id} k={a.name} v={`+$${(a.price_cents/100).toFixed(2)}`}/>
                 ))}

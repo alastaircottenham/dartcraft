@@ -255,6 +255,57 @@
       <div style="color:var(--text-3);font-family:var(--mono);font-size:13px;padding:40px 0;text-align:center">Loading…</div>
     </div>
 
+    <!-- Camera stock -->
+    <div style="margin-top:32px">
+      <div style="margin-bottom:16px">
+        <div style="font-family:var(--sans);font-weight:700;font-size:20px;letter-spacing:-0.02em;margin-bottom:3px">Camera stock</div>
+        <div style="color:var(--text-2);font-size:13px">Each kit order uses 3 cameras. Set −1 for unlimited (not tracked). Stock auto-decrements when an order is placed.</div>
+      </div>
+      <div class="stock-grid">
+
+        <!-- Standard cameras -->
+        <div class="stock-card" id="cam-card-standard" style="display:block">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:18px">
+            <div class="pkg-label" style="width:100%;margin-bottom:4px">standard-cameras</div>
+            <span class="pkg-name">HBV OV9732 — Standard cameras</span>
+            <span id="cam-badge-standard"></span>
+          </div>
+          <div style="font-size:12px;color:var(--text-3);margin-bottom:14px">Included in Ring + LED + Cameras and Full System kits. When at 0, customers must order with OV2710 upgrade cameras instead.</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--border-2)">
+            <span class="pkg-label">QTY</span>
+            <div class="qty-control">
+              <button class="qty-btn" onclick="adjustCamQty('standard', -1)">−</button>
+              <input class="qty-input" type="number" min="-1" max="9999" value="-1" id="cam-qty-standard" onchange="onCamQtyChange('standard')"/>
+              <button class="qty-btn" onclick="adjustCamQty('standard', 1)">+</button>
+            </div>
+            <button class="save-btn" onclick="saveCamQty('standard')" id="cam-save-standard">Save</button>
+            <span class="feedback" id="cam-fb-standard"></span>
+          </div>
+        </div>
+
+        <!-- Upgrade cameras -->
+        <div class="stock-card" id="cam-card-upgrade" style="display:block">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:18px">
+            <div class="pkg-label" style="width:100%;margin-bottom:4px">upgrade-cameras</div>
+            <span class="pkg-name">OV2710 — Upgrade cameras</span>
+            <span id="cam-badge-upgrade"></span>
+          </div>
+          <div style="font-size:12px;color:var(--text-3);margin-bottom:14px">Optional upgrade for camera kits. When at 0, the upgrade option is hidden and unavailable to customers.</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--border-2)">
+            <span class="pkg-label">QTY</span>
+            <div class="qty-control">
+              <button class="qty-btn" onclick="adjustCamQty('upgrade', -1)">−</button>
+              <input class="qty-input" type="number" min="-1" max="9999" value="-1" id="cam-qty-upgrade" onchange="onCamQtyChange('upgrade')"/>
+              <button class="qty-btn" onclick="adjustCamQty('upgrade', 1)">+</button>
+            </div>
+            <button class="save-btn" onclick="saveCamQty('upgrade')" id="cam-save-upgrade">Save</button>
+            <span class="feedback" id="cam-fb-upgrade"></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Settings -->
     <div style="margin-top:40px">
       <div style="margin-bottom:16px">
@@ -284,7 +335,7 @@
           </div>
         </div>
 
-        <!-- Camera upgrade -->
+        <!-- Camera upgrade price -->
         <div class="stock-card">
           <div style="font-family:var(--sans);font-weight:600;font-size:14px;margin-bottom:4px">Camera upgrade price</div>
           <div style="color:var(--text-2);font-size:12px;margin-bottom:14px">OV2710 upgrade add-on — shown on Ring + LED + Cameras and Full System orders.</div>
@@ -303,15 +354,6 @@
               <button class="save-btn" onclick="saveCameraUpgrade()">Save</button>
               <span id="camera-upgrade-feedback" style="font-family:var(--mono);font-size:12px;color:var(--success);display:none"></span>
             </div>
-          </div>
-          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-            <div>
-              <div style="font-family:var(--sans);font-weight:500;font-size:13px;margin-bottom:2px">Availability</div>
-              <div style="color:var(--text-2);font-size:12px">When out of stock, customers cannot select the upgrade.</div>
-            </div>
-            <button id="camera-upgrade-stock-btn" onclick="saveCameraUpgradeStock()"
-              style="font-family:var(--mono);font-size:12px;font-weight:600;padding:6px 14px;border-radius:99px;cursor:pointer;background:transparent;transition:all .15s">
-            </button>
           </div>
         </div>
 
@@ -634,37 +676,58 @@ async function loadShipping() {
   try {
     const res = await authFetch('/api/admin/settings');
     if (!res.ok) return;
-    const { shipping_aud, camera_upgrade_aud, camera_upgrade_in_stock } = await res.json();
+    const { shipping_aud, camera_upgrade_aud, standard_camera_qty, upgrade_camera_qty } = await res.json();
     document.getElementById('shipping-input').value = Number(shipping_aud).toFixed(2);
     document.getElementById('camera-upgrade-input').value = Number(camera_upgrade_aud).toFixed(2);
-    setCameraUpgradeStockBtn(camera_upgrade_in_stock !== false);
+    setCamQty('standard', standard_camera_qty ?? -1);
+    setCamQty('upgrade',  upgrade_camera_qty  ?? -1);
   } catch {}
 }
 
-function setCameraUpgradeStockBtn(inStock) {
-  const btn = document.getElementById('camera-upgrade-stock-btn');
-  btn.dataset.inStock = String(inStock);
-  btn.textContent = inStock ? 'In stock' : 'Out of stock';
-  btn.style.color = inStock ? '#22c55e' : '#ef4444';
-  btn.style.borderColor = inStock ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.35)';
-  btn.style.border = inStock ? '1px solid rgba(34,197,94,0.35)' : '1px solid rgba(239,68,68,0.35)';
-  btn.style.background = inStock ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+function camBadgeHtml(qty) {
+  if (qty === -1) return '<span style="font-family:var(--mono);font-size:11px;color:var(--text-3);background:rgba(255,255,255,0.05);padding:2px 9px;border-radius:99px;border:1px solid var(--border)">Unlimited</span>';
+  if (qty === 0)  return '<span style="font-family:var(--mono);font-size:11px;color:#ef4444;background:rgba(239,68,68,0.08);padding:2px 9px;border-radius:99px;border:1px solid rgba(239,68,68,0.3)">Out of stock</span>';
+  const kits = Math.floor(qty / 3);
+  return `<span style="font-family:var(--mono);font-size:11px;color:#22c55e;background:rgba(34,197,94,0.08);padding:2px 9px;border-radius:99px;border:1px solid rgba(34,197,94,0.3)">${qty} cameras (${kits} kit${kits !== 1 ? 's' : ''})</span>`;
 }
 
-async function saveCameraUpgradeStock() {
-  const btn = document.getElementById('camera-upgrade-stock-btn');
-  const currentlyInStock = btn.dataset.inStock !== 'false';
+function setCamQty(type, qty) {
+  const input = document.getElementById(`cam-qty-${type}`);
+  if (input) input.value = qty;
+  const badge = document.getElementById(`cam-badge-${type}`);
+  if (badge) badge.innerHTML = camBadgeHtml(qty);
+}
+
+function adjustCamQty(type, delta) {
+  const input = document.getElementById(`cam-qty-${type}`);
+  const cur = parseInt(input.value ?? -1);
+  // Allow -1 (unlimited), then 0, 1, 2 …
+  const next = cur === -1 && delta === 1 ? 0 : cur === 0 && delta === -1 ? -1 : Math.max(-1, cur + delta);
+  input.value = next;
+  onCamQtyChange(type);
+}
+
+function onCamQtyChange(type) { document.getElementById(`cam-fb-${type}`).textContent = ''; }
+
+async function saveCamQty(type) {
+  const qty = parseInt(document.getElementById(`cam-qty-${type}`).value);
+  if (isNaN(qty) || qty < -1) { alert('Enter a valid quantity (-1 for unlimited, 0 or more for tracked).'); return; }
+  const saveBtn = document.getElementById(`cam-save-${type}`);
+  const fb      = document.getElementById(`cam-fb-${type}`);
+  const card    = document.getElementById(`cam-card-${type}`);
+  saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; card.classList.add('saving');
   try {
-    const res = await authFetch('/api/admin/settings/camera-upgrade-stock', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ in_stock: !currentlyInStock }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed');
-    setCameraUpgradeStockBtn(data.camera_upgrade_in_stock);
+    const res = await authFetch(`/api/admin/camera-stock/${type}`, { method: 'PUT', body: JSON.stringify({ qty }) });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Save failed'); }
+    card.classList.replace('saving', 'saved');
+    fb.style.color = '#22c55e'; fb.textContent = '✓ Saved';
+    setCamQty(type, qty);
+    setTimeout(() => { card.classList.remove('saved'); fb.textContent = ''; }, 2500);
   } catch (err) {
-    console.error('Failed to update camera upgrade stock:', err);
+    fb.style.color = '#ef4444'; fb.textContent = err.message;
+    card.classList.remove('saving');
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Save';
   }
 }
 
