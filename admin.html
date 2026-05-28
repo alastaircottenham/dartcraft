@@ -259,7 +259,7 @@
     <div style="margin-top:32px">
       <div style="margin-bottom:16px">
         <div style="font-family:var(--sans);font-weight:700;font-size:20px;letter-spacing:-0.02em;margin-bottom:3px">Camera stock</div>
-        <div style="color:var(--text-2);font-size:13px">Each kit order uses 3 cameras. Set −1 for unlimited (not tracked). Stock auto-decrements when an order is placed.</div>
+        <div style="color:var(--text-2);font-size:13px">Quantity represents sets (1 set = 1 kit's worth of cameras). Set −1 for unlimited (not tracked). Stock auto-decrements by 1 when an order is placed.</div>
       </div>
       <div class="stock-grid">
 
@@ -687,8 +687,7 @@ async function loadShipping() {
 function camBadgeHtml(qty) {
   if (qty === -1) return '<span style="font-family:var(--mono);font-size:11px;color:var(--text-3);background:rgba(255,255,255,0.05);padding:2px 9px;border-radius:99px;border:1px solid var(--border)">Unlimited</span>';
   if (qty === 0)  return '<span style="font-family:var(--mono);font-size:11px;color:#ef4444;background:rgba(239,68,68,0.08);padding:2px 9px;border-radius:99px;border:1px solid rgba(239,68,68,0.3)">Out of stock</span>';
-  const kits = Math.floor(qty / 3);
-  return `<span style="font-family:var(--mono);font-size:11px;color:#22c55e;background:rgba(34,197,94,0.08);padding:2px 9px;border-radius:99px;border:1px solid rgba(34,197,94,0.3)">${qty} cameras (${kits} kit${kits !== 1 ? 's' : ''})</span>`;
+  return `<span style="font-family:var(--mono);font-size:11px;color:#22c55e;background:rgba(34,197,94,0.08);padding:2px 9px;border-radius:99px;border:1px solid rgba(34,197,94,0.3)">${qty} set${qty !== 1 ? 's' : ''} in stock</span>`;
 }
 
 function setCamQty(type, qty) {

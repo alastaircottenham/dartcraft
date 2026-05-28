@@ -22,7 +22,7 @@ let cameraUpgradeCents = CAMERA_UPGRADE_CENTS_DEFAULT;
 // Availability is derived: available when qty !== 0 (i.e. -1 or > 0)
 let standardCameraQty = -1;
 let upgradeCameraQty  = -1;
-const CAMERAS_PER_KIT = 3;
+const CAMERAS_PER_KIT = 1;
 const CAMERA_UPGRADE_PACKAGES = ['ring-led-cameras', 'full-system'];
 
 const r2 = new S3Client({
