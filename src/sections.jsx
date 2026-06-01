@@ -829,6 +829,7 @@ const FAQ = () => {
     // ── First 8: shown by default ──
     {q:'What is AutoDarts?', a:'AutoDarts is a smart dart scoring system that uses cameras and software to detect where darts land and keep score automatically.'},
     {q:'Is this a complete dartboard setup?', a:'No. These kits are designed to upgrade your existing dartboard setup. The dartboard itself is not included unless specifically stated.'},
+    {q:'What do I need that isn\'t included in the kit?', a:"A few things you'll need to source separately: a dartboard, and a dartboard surround (optional but recommended — it protects your darts from going blunt on missed shots and shields the wall around the board). For the full system, you'll also need a monitor or TV with an HDMI input, a DisplayPort to HDMI cable to connect the mini PC, and a speaker. A wired 3.5mm jack speaker is the most reliable option, though Bluetooth works too."},
     {q:'Do I need to install it myself?', a:'Yes. DIY installation is required. The ring needs to be mounted to your dartboard area, and the system may require adjustment and calibration.'},
     {q:'Do I need a computer?', a:'Yes, AutoDarts requires a computer to run. The full system includes a pre-configured mini PC. Other options require you to supply and configure your own computer.'},
     {q:'What is included in the full system?', a:'The full system includes the printed ring, LED lighting, cameras, pre-configured mini PC, wireless keyboard with touchpad, and a digital setup guide sent with your order confirmation.'},
