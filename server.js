@@ -293,6 +293,9 @@ function orderRowToSession(order) {
   app.get(`/${f}`, (_req, res) => res.status(404).end())
 );
 
+// Setup guide web page
+app.get('/setupguide', (_req, res) => res.sendFile(path.join(__dirname, 'setupguide.html')));
+
 // Redirect old PDF setup guide URLs to new web page
 app.get('/setup-guide-full.pdf', (_req, res) => res.redirect(301, '/setupguide'));
 app.get('/setup-guide-ring.pdf', (_req, res) => res.redirect(301, '/setupguide'));
