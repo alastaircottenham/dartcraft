@@ -533,7 +533,7 @@
         <div id="send-email-preview" style="padding:16px 18px;background:rgba(124,92,255,0.06);border:1px solid rgba(124,92,255,0.15);border-radius:12px">
           <div class="pkg-label" style="margin-bottom:6px;color:var(--accent)">What gets sent</div>
           <ul style="margin:0;padding-left:18px;color:var(--text-2);font-size:13px;line-height:1.9">
-            <li id="preview-guide-line">Setup guide: <span style="font-family:var(--mono);font-size:12px;color:var(--text-3)">setup-guide-ring.pdf</span></li>
+            <li id="preview-guide-line">Setup guide: <span style="font-family:var(--mono);font-size:12px;color:var(--text-3)">/setupguide</span></li>
             <li>DartCraft website link</li>
             <li>Leave a review link</li>
           </ul>
@@ -1379,9 +1379,8 @@ async function uploadPhoto(id, input) {
 
 function updateEmailPreview() {
   const guide = document.getElementById('send-guide').value;
-  const filename = guide === 'full-system' ? 'setup-guide-full.pdf' : 'setup-guide-ring.pdf';
   document.getElementById('preview-guide-line').innerHTML =
-    `Setup guide: <span style="font-family:var(--mono);font-size:12px;color:var(--text-3)">${filename}</span>`;
+    `Setup guide: <span style="font-family:var(--mono);font-size:12px;color:var(--text-3)">/setupguide</span>`;
 }
 
 async function sendWelcomeEmail() {

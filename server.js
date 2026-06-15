@@ -148,9 +148,7 @@ function confirmationEmailHtml(session) {
   const m = session.metadata || {};
   const amount = session.amount_total ? fmt(session.amount_total) : '';
   const addonItems = (() => { try { return m.addons ? JSON.parse(m.addons) : []; } catch { return []; } })();
-  const guideUrl = m.packageId === 'full-system'
-    ? `${BASE_URL}/setup-guide-full.pdf`
-    : `${BASE_URL}/setup-guide-ring.pdf`;
+  const guideUrl = `${BASE_URL}/setupguide`;
   const body = `
     <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Order confirmed.</p>
     <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Hi ${m.customerName?.split(' ')[0] || 'there'}, your DartCraft kit is confirmed and we're getting it ready to ship.</p>
@@ -215,9 +213,7 @@ function ownerNotificationHtml(session) {
 function shippingEmailHtml(session, trackingNumber = '') {
   const m = session.metadata || {};
   const firstName = (m.customerName || 'there').split(' ')[0];
-  const guideUrl = m.packageId === 'full-system'
-    ? `${BASE_URL}/setup-guide-full.pdf`
-    : `${BASE_URL}/setup-guide-ring.pdf`;
+  const guideUrl = `${BASE_URL}/setupguide`;
   const trackingBlock = trackingNumber
     ? `<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 24px;margin-bottom:32px">
         <tr><td>
@@ -297,9 +293,9 @@ function orderRowToSession(order) {
   app.get(`/${f}`, (_req, res) => res.status(404).end())
 );
 
-// Clean setup guide URLs — serve directly so the URL never changes
-app.get('/setup-guide-full.pdf', (_req, res) => res.sendFile(path.join(__dirname, 'assets', 'Setup-Guide-Full.pdf')));
-app.get('/setup-guide-ring.pdf', (_req, res) => res.sendFile(path.join(__dirname, 'assets', 'Setup-Guide-Ring.pdf')));
+// Redirect old PDF setup guide URLs to new web page
+app.get('/setup-guide-full.pdf', (_req, res) => res.redirect(301, '/setupguide'));
+app.get('/setup-guide-ring.pdf', (_req, res) => res.redirect(301, '/setupguide'));
 
 app.use(['/api/webhook', '/api/webhooks/stripe'], express.raw({ type: 'application/json' }));
 app.use(express.json());
@@ -1267,9 +1263,7 @@ app.post('/api/admin/orders/:id/pickup', requireAdmin, async (req, res) => {
       [id]
     );
 
-    const pickupGuideUrl = order.package_id === 'full-system'
-      ? `${BASE_URL}/setup-guide-full.pdf`
-      : `${BASE_URL}/setup-guide-ring.pdf`;
+    const pickupGuideUrl = `${BASE_URL}/setupguide`;
 
     await sendEmail(
       order.customer_email,
@@ -1615,7 +1609,7 @@ app.delete('/api/admin/reviews/:id', requireAdmin, async (req, res) => {
 
 function welcomeEmailHtml(name, guideUrl) {
   const firstName = (name || 'there').split(' ')[0];
-  const resolvedGuideUrl = guideUrl || `${BASE_URL}/setup-guide-ring.pdf`;
+  const resolvedGuideUrl = guideUrl || `${BASE_URL}/setupguide`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1712,9 +1706,7 @@ app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Valid email address required.' });
   }
   const recipientName = (name || '').trim() || 'there';
-  const guideUrl = guide === 'full-system'
-    ? `${BASE_URL}/setup-guide-full.pdf`
-    : `${BASE_URL}/setup-guide-ring.pdf`;
+  const guideUrl = `${BASE_URL}/setupguide`;
   try {
     await sendEmail(
       email.trim().toLowerCase(),

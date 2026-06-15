@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DartCraft Setup Guide — Connect, Calibrate, Play</title>
+<meta name="description" content="Step-by-step setup guide for DartCraft LED ring and Full System kits. Covers ring assembly, LED strip, camera positioning, wall installation, PC setup, Autodarts calibration and troubleshooting." />
+<link rel="icon" href="/assets/favicon.png" type="image/png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050607;
+    --bg-2: #0a0c10;
+    --surface: #101216;
+    --card: #151820;
+    --text: #F5F5F0;
+    --text-2: #A5ABB8;
+    --text-3: #6b7280;
+    --accent: #7C5CFF;
+    --accent-2: #22D3EE;
+    --success: #22C55E;
+    --warning: #F59E0B;
+    --border: rgba(255,255,255,0.10);
+    --border-2: rgba(255,255,255,0.06);
+    --sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--body); -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  img { max-width: 100%; display: block; border-radius: 8px; }
+
+  /* PROGRESS BAR */
+  #progress-bar { position: fixed; top: 78px; left: 0; height: 2px; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width 0.08s linear; z-index: 200; pointer-events: none; }
+
+  /* NAV */
+  .nav { border-bottom: 1px solid var(--border-2); background: var(--bg); position: sticky; top: 0; z-index: 100; }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; max-width: 1140px; margin: 0 auto; padding: 18px 32px; }
+  .nav-logo { display: flex; align-items: center; text-decoration: none; }
+  .nav-logo img { height: 42px; width: auto; display: block; }
+  .nav-back { font-size: 14px; color: var(--text-2); display: flex; align-items: center; gap: 6px; }
+  .nav-back:hover { color: var(--text); text-decoration: none; }
+
+  /* HERO */
+  .hero { padding: 0; border-bottom: 1px solid var(--border-2); overflow: hidden; }
+  .hero-inner { display: grid; grid-template-columns: 1fr 1fr; align-items: center; max-width: 1140px; margin: 0 auto; min-height: 380px; }
+  .hero-text { padding: 56px 48px 56px 40px; }
+  .hero-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  .hero h1 { font-family: var(--sans); font-size: clamp(28px, 4vw, 46px); font-weight: 700; margin: 0 0 14px; line-height: 1.1; }
+  .hero-sub { font-size: 16px; color: var(--text-2); margin: 0 0 24px; line-height: 1.65; max-width: 420px; }
+  .hero-steps { display: flex; flex-direction: column; gap: 8px; }
+  .hero-step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-3); }
+  .hero-step-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .hero-img-side { position: relative; height: 100%; min-height: 340px; overflow: hidden; }
+  .hero-img-side::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, rgba(124,92,255,0.15) 0%, transparent 65%); z-index: 1; pointer-events: none; }
+  .hero-img-side::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 80px; background: linear-gradient(to right, var(--bg), transparent); z-index: 2; pointer-events: none; }
+  .hero-img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; opacity: 0.9; }
+  @media (max-width: 700px) {
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-text { padding: 40px 24px 32px; }
+    .hero-img-side { min-height: 220px; }
+    .hero-img-side::after { display: none; }
+    .hero-img-side::before { background: linear-gradient(to bottom, transparent 60%, var(--bg)); }
+  }
+
+  /* LAYOUT */
+  .layout { display: grid; grid-template-columns: 240px 1fr; gap: 0; max-width: 1140px; margin: 0 auto; align-items: start; }
+  .sidebar { position: sticky; top: 78px; height: calc(100vh - 78px); overflow-y: auto; padding: 32px 24px 40px 32px; border-right: 1px solid var(--border-2); scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .page-wrap { padding: 0 40px 80px 48px; min-width: 0; }
+  /* MOBILE STICKY SECTION BAR */
+  #mob-bar { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 300; padding: 0 0 env(safe-area-inset-bottom); background: var(--bg); border-top: 1px solid var(--border); }
+  #mob-bar-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: none; border: none; color: var(--text); cursor: pointer; text-align: left; }
+  #mob-bar-label { font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #mob-bar-arrow { font-size: 11px; color: var(--text-3); flex-shrink: 0; transition: transform 0.2s; }
+  #mob-bar-btn.open #mob-bar-arrow { transform: rotate(180deg); }
+
+  /* MOBILE TOC OVERLAY */
+  #mob-overlay { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0.7); }
+  #mob-overlay.open { display: block; }
+  #mob-panel { position: absolute; bottom: 0; left: 0; right: 0; background: var(--surface); border-radius: 16px 16px 0 0; padding: 0 0 env(safe-area-inset-bottom); max-height: 80vh; display: flex; flex-direction: column; }
+  #mob-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 14px; border-bottom: 1px solid var(--border-2); flex-shrink: 0; }
+  #mob-panel-head span { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-3); }
+  #mob-panel-close { background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: var(--text-2); font-size: 16px; line-height: 1; padding: 4px 9px; border-radius: 6px; cursor: pointer; }
+  #mob-panel-scroll { overflow-y: auto; padding: 12px 0 24px; -webkit-overflow-scrolling: touch; }
+  #mob-panel ol { list-style: none; margin: 0; padding: 0; }
+  #mob-panel li { padding: 0; }
+  #mob-panel li a { display: flex; align-items: center; padding: 11px 20px; font-size: 15px; font-weight: 600; font-family: var(--sans); color: var(--text-2); border-left: 3px solid transparent; }
+  #mob-panel li a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(124,92,255,0.06); }
+  #mob-panel .toc-sub { list-style: none; padding: 0; margin: 0; }
+  #mob-panel .toc-sub li a { font-size: 13px; font-weight: 400; padding: 7px 20px 7px 32px; color: var(--text-3); font-family: var(--body); }
+  #mob-panel .toc-sub li a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(124,92,255,0.04); }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .page-wrap { padding: 0 24px 96px; }
+    #mob-bar { display: block; }
+  }
+
+  /* TOC (sidebar) */
+  .toc { background: none; border: none; border-radius: 0; padding: 0; margin: 0; }
+  .toc h2 { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.10em; text-transform: uppercase; color: var(--text-3); margin: 0 0 14px; }
+  .toc ol { margin: 0; padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .toc li { font-size: 13px; position: relative; }
+  .toc > ol > li { padding: 3px 0; }
+  .toc li a { color: var(--text-3); display: block; padding: 2px 0 2px 10px; border-left: 2px solid transparent; transition: color 0.15s, border-color 0.15s; line-height: 1.4; }
+  .toc > ol > li > a { color: var(--text-2); font-size: 13px; font-weight: 600; font-family: var(--sans); }
+  .toc li a:hover { color: var(--text); text-decoration: none; border-left-color: var(--border); }
+  .toc li a.active { color: var(--accent); border-left-color: var(--accent); }
+  .toc-sub { list-style: none; padding-left: 10px; margin: 2px 0 4px; display: flex; flex-direction: column; gap: 0; }
+  .toc-sub li::before { content: none; }
+  .toc-sub li a { font-size: 12px; color: var(--text-3); padding: 2px 0 2px 10px; }
+  .toc-sub li a.active { color: var(--accent); border-left-color: var(--accent); }
+  .toc-divider { list-style: none; padding: 10px 0 6px; pointer-events: none; }
+  .toc-divider span { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2); opacity: 0.7; padding-left: 10px; }
+  .toc-badge { display: inline-block; font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; background: rgba(34,211,238,0.10); border: 1px solid rgba(34,211,238,0.25); color: var(--accent-2); font-family: var(--sans); letter-spacing: 0.03em; }
+
+  /* SECTIONS */
+  .section { margin-top: 56px; scroll-margin-top: 80px; }
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border-2); }
+  .section-num { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); font-family: var(--sans); font-size: 16px; font-weight: 700; flex-shrink: 0; }
+  .section-num.full-only { background: var(--accent-2); color: #050607; }
+  .section-header h2 { font-family: var(--sans); font-size: 26px; font-weight: 700; margin: 0; }
+  .section-header-meta { display: flex; flex-direction: column; gap: 4px; }
+
+  /* Full-kit-only section banner */
+  .full-kit-banner {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(34,211,238,0.06);
+    border: 1px solid rgba(34,211,238,0.18);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 24px;
+    font-size: 14px; color: var(--accent-2);
+  }
+  .full-kit-banner strong { color: var(--accent-2); }
+  .full-kit-banner-icon { font-size: 18px; flex-shrink: 0; }
+
+  .subsection { margin-top: 40px; scroll-margin-top: 80px; }
+  .subsection h3 { font-family: var(--sans); font-size: 19px; font-weight: 600; color: var(--accent-2); margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border-2); }
+  .subsection h3.purple { color: var(--accent); }
+
+  p { font-size: 15px; line-height: 1.7; color: var(--text-2); margin: 0 0 16px; }
+  p:last-child { margin-bottom: 0; }
+  ul, ol { font-size: 15px; line-height: 1.7; color: var(--text-2); padding-left: 22px; margin: 0 0 16px; }
+  li { margin-bottom: 6px; }
+
+  /* STEPS */
+  .steps { display: flex; flex-direction: column; gap: 20px; margin: 20px 0; }
+  .step { display: flex; gap: 16px; align-items: flex-start; }
+  .step-num { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); font-family: var(--sans); font-size: 13px; font-weight: 700; color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+  .step-body { flex: 1; font-size: 15px; line-height: 1.7; color: var(--text-2); }
+  .step-body strong { color: var(--text); }
+  .step-body ol, .step-body ul { margin-top: 10px; }
+
+  /* IMAGES */
+  .img-wrap { margin: 20px 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-2); cursor: zoom-in; position: relative; }
+  .img-wrap img { width: 100%; transition: opacity 0.15s; }
+  .img-wrap:hover img { opacity: 0.88; }
+  .img-caption { font-size: 13px; color: var(--text-3); text-align: center; padding: 10px 16px; background: var(--card); font-style: italic; }
+  .img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+  .img-grid .img-wrap { margin: 0; display: flex; flex-direction: column; }
+  .img-grid .img-wrap img { flex: 1; height: 260px; object-fit: cover; width: 100%; border-radius: 0; }
+  @media (max-width: 560px) { .img-grid { grid-template-columns: 1fr; } .img-grid .img-wrap img { height: 220px; } }
+
+  /* LIGHTBOX */
+  #lb { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.92); align-items: center; justify-content: center; padding: 20px; }
+  #lb.open { display: flex; }
+  #lb-img { max-width: 100%; max-height: 90vh; border-radius: 8px; box-shadow: 0 24px 80px rgba(0,0,0,0.8); display: block; }
+  #lb-caption { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 13px; color: rgba(255,255,255,0.55); font-style: italic; white-space: nowrap; pointer-events: none; }
+  #lb-close { position: absolute; top: 16px; right: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 20px; line-height: 1; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+  #lb-close:hover { background: rgba(255,255,255,0.2); }
+
+  /* CALLOUTS */
+  .callout { display: flex; gap: 14px; padding: 16px 20px; border-radius: 10px; margin: 20px 0; font-size: 14px; line-height: 1.6; }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { color: var(--text-2); }
+  .callout-body strong { color: var(--text); }
+  .callout.warning { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); }
+  .callout.tip { background: rgba(124,92,255,0.08); border: 1px solid rgba(124,92,255,0.20); }
+  .callout.info { background: rgba(34,211,238,0.06); border: 1px solid rgba(34,211,238,0.18); }
+  .callout.success { background: rgba(34,197,94,0.07); border: 1px solid rgba(34,197,94,0.22); }
+
+  /* CREDENTIALS BOX */
+  .creds-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+  .creds-box-title { font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .creds-row { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 8px; }
+  .cred { font-size: 14px; color: var(--text-2); }
+  .cred strong { color: var(--text); font-family: var(--mono, monospace); }
+  .creds-note { font-size: 13px; color: var(--text-3); font-style: italic; margin: 0; }
+
+  /* TABLES */
+  .meas-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 15px; }
+  .meas-table th { background: var(--surface); color: var(--text); font-family: var(--sans); font-weight: 600; text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .meas-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-2); color: var(--text-2); }
+  .meas-table td:last-child { font-weight: 600; color: var(--text); }
+  .meas-table tr:last-child td { border-bottom: none; }
+
+  .trouble-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+  .trouble-table th { background: var(--surface); color: var(--text); font-family: var(--sans); font-weight: 600; text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .trouble-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-2); color: var(--text-2); vertical-align: top; }
+  .trouble-table td:first-child { font-weight: 600; color: var(--text); width: 30%; }
+  .trouble-table tr:last-child td { border-bottom: none; }
+
+  .support-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 15px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .support-table td { padding: 16px 20px; border-bottom: 1px solid var(--border-2); color: var(--text-2); vertical-align: top; }
+  .support-table tr:last-child td { border-bottom: none; }
+  .support-table td:first-child { font-family: var(--sans); font-weight: 600; color: var(--text); width: 36%; background: var(--card); }
+
+  /* OPTION CARDS */
+  .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  @media (max-width: 560px) { .option-grid { grid-template-columns: 1fr; } }
+  .option-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; transition: border-color 0.15s, background 0.15s; cursor: pointer; }
+  .option-card:hover { border-color: var(--accent); background: rgba(124,92,255,0.08); }
+  .option-card h4 { font-family: var(--sans); font-size: 15px; font-weight: 600; margin: 0 0 8px; color: var(--accent); }
+  .option-card p { font-size: 14px; margin: 0; }
+
+  /* SPEC CHIPS */
+  .spec-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
+  .spec-chip { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; font-size: 14px; }
+  .spec-chip span:first-child { color: var(--text-3); margin-right: 6px; }
+  .spec-chip span:last-child { font-weight: 600; color: var(--text); }
+
+  /* SHUTDOWN OPTIONS */
+  .dual-option { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  @media (max-width: 560px) { .dual-option { grid-template-columns: 1fr; } }
+  .dual-option-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .dual-option-card h4 { font-family: var(--sans); font-size: 14px; font-weight: 600; margin: 0 0 12px; color: var(--text); }
+
+  /* FOOTER */
+  .footer { border-top: 1px solid var(--border-2); padding: 32px 24px; text-align: center; font-size: 13px; color: var(--text-3); }
+  .footer p { color: var(--text-3); font-size: 13px; margin-bottom: 6px; }
+  .footer a { color: var(--text-3); }
+  .footer a:hover { color: var(--accent); }
+
+  hr { border: none; border-top: 1px solid var(--border-2); margin: 48px 0; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <img src="/assets/dartcraft-logo.png" alt="DartCraft" />
+    </a>
+    <a href="/" class="nav-back">← Back to store</a>
+  </div>
+  <div id="progress-bar"></div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-eyebrow">DartCraft</div>
+      <h1>Setup Guide</h1>
+      <p class="hero-sub">Everything you need to assemble your ring, connect your cameras, and start playing with Autodarts.</p>
+      <div class="hero-steps">
+        <div class="hero-step"><div class="hero-step-dot"></div>Ring &amp; camera assembly</div>
+        <div class="hero-step"><div class="hero-step-dot"></div>Wall installation &amp; positioning</div>
+        <div class="hero-step"><div class="hero-step-dot"></div>Autodarts setup &amp; calibration</div>
+        <div class="hero-step"><div class="hero-step-dot"></div>Starting your first game</div>
+      </div>
+    </div>
+    <div class="hero-img-side">
+      <img src="/assets/hero-product.webp" alt="DartCraft LED Ring mounted on dartboard" class="hero-img" />
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+
+<div class="sidebar">
+  <div class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#height">Dartboard Height &amp; Throw Line</a></li>
+      <li>
+        <a href="#ring-setup">LED Ring Setup</a>
+        <ul class="toc-sub">
+          <li><a href="#ring-assembly">Ring Assembly</a></li>
+          <li><a href="#led-strip">LED Strip Installation</a></li>
+          <li><a href="#ring-legs">Ring Legs Assembly</a></li>
+          <li><a href="#camera-positioning">Camera Positioning</a></li>
+          <li><a href="#wall-install">Wall Installation</a></li>
+          <li><a href="#surround">Using Surround</a></li>
+          <li><a href="#surround-clearance">Surround Clearance</a></li>
+          <li><a href="#backing-board">Backing Board Size</a></li>
+          <li><a href="#screw-covers">Screw Covers</a></li>
+        </ul>
+      </li>
+      <li><a href="#pc-setup">PC Setup</a>
+        <ul class="toc-sub">
+          <li><a href="#connections">Connections</a></li>
+          <li><a href="#power-on">Power On</a></li>
+          <li><a href="#wifi">Connect to Wi-Fi</a></li>
+          <li><a href="#shutdown">Shutting Down</a></li>
+        </ul>
+      </li>
+      <li><a href="#autodarts-setup">Autodarts Setup</a>
+        <ul class="toc-sub">
+          <li><a href="#create-account">Create Account</a></li>
+          <li><a href="#sign-in">Sign In &amp; Link Board</a></li>
+          <li><a href="#calibrate">Calibrate</a></li>
+        </ul>
+      </li>
+      <li><a href="#starting-game">Starting a Game</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+      <li><a href="#support">Support</a></li>
+    </ol>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- ── SECTION 1 ── -->
+  <div class="section" id="height">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-header-meta">
+        <h2>Dartboard Height &amp; Throw Line</h2>
+      </div>
+    </div>
+    <p>Before mounting your dartboard, ensure it is positioned at the correct regulation height. These measurements apply to standard steel-tip dartboards.</p>
+    <table class="meas-table">
+      <thead><tr><th>Measurement</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Bullseye height</td><td>173 cm from the floor</td></tr>
+        <tr><td>Throw distance</td><td>237 cm from face of the board</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">The bullseye must be exactly <strong>173 cm from the floor</strong>. The throw line (oche) must be at least <strong>237 cm from the face of the board</strong> — measure from the front surface of the board, not the wall.</div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 2 ── -->
+  <div class="section" id="ring-setup">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <h2>LED Ring Setup</h2>
+    </div>
+    <p>The Autodarts ring provides integrated LED lighting and holds the three cameras. The following steps cover full ring assembly, LED strip installation, and camera leg assembly.</p>
+
+    <!-- 2.1 -->
+    <div class="subsection" id="ring-assembly">
+      <h3 class="purple">2.1 Ring Assembly</h3>
+      <p>The ring is made up of 9 outer segments and a set of inner ring segments. Follow the steps below to assemble the full ring and fit the inner ring.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">Gather the <strong>9 main ring segments</strong>. Connect them firmly together in groups, pressing each joint fully until seated, to form <strong>3 separate sub-sections</strong>.</div>
+        </div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image2.webp" alt="Ring segments being grouped" /><div class="img-caption">Connect segments into 3 sub-sections</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image3.webp" alt="Pressing ring segment joint" /><div class="img-caption">Press each joint firmly until fully seated</div></div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image4.webp" alt="Three completed arc sub-sections" />
+        <div class="img-caption">Three completed sub-sections, ready to join</div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">Using the <strong>3 leg-mount segments</strong>, connect one between each sub-section to complete the full ring. Ensure all joints are <strong>fully clicked into place</strong> before proceeding.</div>
+        </div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image6.webp" alt="Connecting leg mount segment" /><div class="img-caption">Connecting a leg-mount segment</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image5.webp" alt="Completed full ring" /><div class="img-caption">Completed full ring</div></div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            Place one <strong>inner ring segment</strong> at each joint around the inside of the main ring. The inner ring strengthens the overall structure and prevents LED light from bleeding through the outer joints.<br><br>
+            At the three positions where camera legs will be mounted, use the <strong>inner ring leg segments with a hole</strong>. You will need:
+            <ul style="margin-top:10px">
+              <li><strong>6×</strong> Inner Ring Segment (plain)</li>
+              <li><strong>3×</strong> Inner Ring Segment Leg — Left</li>
+              <li><strong>3×</strong> Inner Ring Segment Leg — Right</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image7.webp" alt="Inner ring segment types diagram" />
+        <div class="img-caption">Inner ring segment types: plain (6×), left leg (3×), right leg (3×)</div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image8.webp" alt="Fitting inner ring segments" /><div class="img-caption">Fit inner ring segments around the inside of the ring</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image9.webp" alt="Inner ring fitting continued" /><div class="img-caption">Continue fitting segments all the way around</div></div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image10.webp" alt="Inner ring fully fitted" />
+        <div class="img-caption">All inner ring segments in place</div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">Once all inner ring pieces are in place, <strong>secure each with the included M3 screws</strong>.</div>
+        </div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image11.webp" alt="Securing inner ring with M3 screws" />
+        <div class="img-caption">Secure each inner ring segment with the included M3 screws</div>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="led-strip">
+      <h3 class="purple">2.2 LED Strip Installation</h3>
+      <p>The LED strip runs the full circumference of the ring and is routed through one of the leg-mount pieces to bring the power connector to the outside.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">Wipe down the inner wall of the ring with <strong>isopropyl alcohol</strong> and allow it to dry completely. This ensures a strong, lasting bond.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">Fully unwind the LED strip from its holder. From the outside of the ring, <strong>feed the strip through the larger hole in one of the leg-mount pieces</strong>, leaving just the power connector visible on the outside.</div>
+        </div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image13.webp" alt="LED strip power connector visible outside" /><div class="img-caption">Feed the strip through the leg-mount hole</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image14.webp" alt="Peeling adhesive backing" /><div class="img-caption">Power connector visible on the outside</div></div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">Starting at the end closest to the power connector, <strong>peel back a short section of the adhesive backing</strong> and press the strip firmly into the inner wall groove. Continue peeling and pressing, a section at a time, working around the ring until fully installed.</div>
+        </div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image15.webp" alt="Pressing LED strip into groove" /><div class="img-caption">Peel and press a section at a time</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image16.webp" alt="LED strip continuing around ring" /><div class="img-caption">Press firmly into the inner wall groove</div></div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image16.webp" alt="LED strip continuing around ring" /><div class="img-caption">Continue working around the ring</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image17.webp" alt="LED strip fully installed" /><div class="img-caption">LED strip fully installed</div></div>
+      </div>
+      <div class="callout tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body"><strong>Tip:</strong> For extra bonding strength, reinforce the strip with <strong>3M double-sided tape (1 cm width)</strong> along the groove before application.</div>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="ring-legs">
+      <h3 class="purple">2.3 Ring Legs Assembly</h3>
+      <p>Each leg consists of an upper section with the camera pre-installed and a lower section. Assemble the first two standard legs before moving on to the LED power leg.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">For each of the first two camera legs: <strong>feed the camera USB cable down through the lower leg</strong>, then insert the two hinge pins on the upper leg into the lower leg and <strong>press firmly together</strong> until secure. Repeat for the second leg.</div>
+        </div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image18.webp" alt="Feeding USB cable through lower leg" />
+        <div class="img-caption">Feed the camera USB cable through the lower leg first</div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><strong>Attach the two assembled camera legs to the ring</strong> using the included M4 screws, tightening them securely.</div>
+        </div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image19.webp" alt="Attaching leg to ring" /><div class="img-caption">Attach leg to ring</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image20.webp" alt="Tightening leg screws" /><div class="img-caption">Tighten M4 screws securely</div></div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            For the <strong>third leg at the LED strip power connector</strong>:
+            <ol style="margin-top:10px">
+              <li>Feed the <strong>LED power supply cable</strong> through the lower leg first</li>
+              <li>Feed the <strong>camera USB cable</strong> through in the same way</li>
+              <li><strong>Connect the LED strip connector</strong> to the LED power supply cable</li>
+              <li>Press the upper and lower leg together</li>
+              <li>Attach this leg to the ring using the included <strong>M4 screws</strong></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image22.webp" alt="Connecting LED strip connector" /><div class="img-caption">Feed LED power cable through lower leg</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image23.webp" alt="Attaching LED leg" /><div class="img-caption">Connect LED strip to power cable</div></div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image24.webp" alt="LED leg screws" /><div class="img-caption">Attach LED leg to ring</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image21.webp" alt="LED power cable through leg" /><div class="img-caption">Tighten with M4 screws</div></div>
+      </div>
+    </div>
+
+    <!-- 2.4 -->
+    <div class="subsection" id="camera-positioning">
+      <h3 class="purple">2.4 Camera Positioning</h3>
+      <p>There are two valid camera positioning options for Autodarts. Choose one and apply it consistently — your camera legs must align with either dartboard segment 6 or segment 11 on the horizontal axis.</p>
+      <div class="option-grid">
+        <a class="option-card" href="#wall-option-a" style="text-decoration:none;display:block"><h4>Option A — Camera on Segment 11</h4><p style="color:var(--text-2)">One horizontal camera leg aligns with segment 11 on the left side of the board.</p></a>
+        <a class="option-card" href="#wall-option-b" style="text-decoration:none;display:block"><h4>Option B — Camera on Segment 6</h4><p style="color:var(--text-2)">One horizontal camera leg aligns with segment 6 on the right side of the board.</p></a>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image25.webp" alt="Autodarts camera positioning — segment 6 and 11 options" />
+        <div class="img-caption">Camera positioning — segment 11 (left) or segment 6 (right)</div>
+      </div>
+    </div>
+
+    <!-- 2.5 -->
+    <div class="subsection" id="wall-install">
+      <h3 class="purple">2.5 Wall Installation</h3>
+      <p>Use the supplied two-part installation template to accurately mark the three leg mounting hole positions on the wall. The template must be positioned from the exact bullseye centre — <strong>remove the dartboard first</strong> if already mounted.</p>
+      <div class="callout info">
+        <div class="callout-icon">ℹ️</div>
+        <div class="callout-body">The template has two parts: the <strong>Bullseye Part</strong> (positions at the board centre) and the <strong>Camera Leg Part</strong> (marks mounting holes for each leg).</div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image26.webp" alt="Two template parts" />
+        <div class="img-caption">Template parts: Bullseye part (left) and Camera Leg part (right)</div>
+      </div>
+      <p>Join the two template parts — they should snap together. Use a drop of glue or tape if needed.</p>
+      <div class="img-wrap">
+        <img src="/assets/setup/image27.webp" alt="Template parts joined" />
+        <div class="img-caption">Join the two parts — they snap together. Tip: use a drop of glue or adhesive tape if they don't clip firmly.</div>
+      </div>
+
+      <h4 id="wall-option-a" style="font-family:var(--sans);font-size:18px;font-weight:600;margin:36px 0 12px;color:var(--accent);scroll-margin-top:80px;padding-bottom:10px;border-bottom:1px solid var(--border-2)">Option A — Camera on Segment 11</h4>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">Draw a <strong>vertical and horizontal line</strong> through the bullseye using a spirit level. Place the template corner at the bullseye centre, aligned with those lines. <strong>Mark the 1st camera leg holes</strong> and draw a green reference line.</div></div>
+      </div>
+      <div class="img-wrap"><img src="/assets/setup/image31.webp" alt="Template step 1 segment 11" /><div class="img-caption">Step 1 — Mark 1st leg and draw green reference line</div></div>
+      <div class="steps">
+        <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Rotate the template counter-clockwise</strong>, align to the centre and the green line. The horizontal line should pass through the corners of the template hole. <strong>Mark the 2nd camera leg holes</strong> and draw a blue line.</div></div>
+      </div>
+      <div class="img-wrap"><img src="/assets/setup/image32.webp" alt="Template step 2 segment 11" /><div class="img-caption">Step 2 — Mark 2nd leg and draw blue reference line</div></div>
+      <div class="steps">
+        <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Rotate the template counter-clockwise again</strong>, align to the centre and the blue line. Check the horizontal line. <strong>Mark the 3rd camera leg holes</strong>.</div></div>
+      </div>
+      <div class="img-wrap"><img src="/assets/setup/image33.webp" alt="Template step 3 segment 11" /><div class="img-caption">Step 3 — Mark 3rd leg position</div></div>
+
+      <h4 id="wall-option-b" style="font-family:var(--sans);font-size:18px;font-weight:600;margin:36px 0 12px;color:var(--accent);scroll-margin-top:80px;padding-bottom:10px;border-bottom:1px solid var(--border-2)">Option B — Camera on Segment 6</h4>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">Same starting position as Option A. <strong>Mark the 1st camera leg holes</strong> and draw a green reference line.</div></div>
+      </div>
+      <div class="img-wrap"><img src="/assets/setup/image28.webp" alt="Template step 1 segment 6" /><div class="img-caption">Step 1 — Mark 1st leg and draw green reference line</div></div>
+      <div class="steps">
+        <div class="step"><div class="step-num">2</div><div class="step-body"><strong>Rotate the template clockwise</strong>, align to the centre and the green line. The horizontal line should pass through the corners of the template hole. <strong>Mark the 2nd camera leg holes</strong> and draw a blue line.</div></div>
+      </div>
+      <div class="img-wrap"><img src="/assets/setup/image29.webp" alt="Template step 2 segment 6" /><div class="img-caption">Step 2 — Mark 2nd leg and draw blue reference line</div></div>
+      <div class="steps">
+        <div class="step"><div class="step-num">3</div><div class="step-body"><strong>Rotate the template clockwise again</strong>, align to the centre and the blue line. Check the horizontal line. <strong>Mark the 3rd camera leg holes</strong>.</div></div>
+      </div>
+      <div class="img-wrap"><img src="/assets/setup/image30.webp" alt="Template step 3 segment 6" /><div class="img-caption">Step 3 — Mark 3rd leg position</div></div>
+    </div>
+
+    <!-- 2.6 -->
+    <div class="subsection" id="surround">
+      <h3 class="purple">2.6 Alternative: Position Using Surround</h3>
+      <p>If you have a standard surround with an outer diameter of <strong>67.5 cm</strong>, the ring legs are designed to just touch it. Simply place the ring around the surround and mark the mounting holes.</p>
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body"><strong>Important:</strong> You still need to confirm the horizontal camera position aligns with segment 6 or 11.</div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image34.webp" alt="Ring positioned around surround" />
+        <div class="img-caption">Positioning using a standard 67.5 cm surround — check horizontal camera aligns with segment 6 or 11</div>
+      </div>
+    </div>
+
+    <!-- 2.7 -->
+    <div class="subsection" id="surround-clearance">
+      <h3 class="purple">2.7 Dartboard Surround Clearance</h3>
+      <p>The maximum outer diameter of any dartboard surround used with this ring is <strong>68 cm</strong>.</p>
+      <div class="spec-row">
+        <div class="spec-chip"><span>Max surround outer diameter</span><span>68 cm</span></div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image35.webp" alt="Maximum surround diameter diagram" />
+        <div class="img-caption">Maximum surround outer diameter: 68 cm</div>
+      </div>
+    </div>
+
+    <!-- 2.8 -->
+    <div class="subsection" id="backing-board">
+      <h3 class="purple">2.8 Minimum Backing Board Size</h3>
+      <p>If mounting on a backing board, the minimum size to accommodate the ring with legs is <strong>80 × 76 cm</strong>.</p>
+      <div class="spec-row">
+        <div class="spec-chip"><span>Minimum width</span><span>80 cm</span></div>
+        <div class="spec-chip"><span>Minimum height</span><span>76 cm</span></div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image36.webp" alt="Minimum backing board size diagram" />
+        <div class="img-caption">Minimum base board size: 80 × 76 cm</div>
+      </div>
+    </div>
+
+    <!-- 2.9 -->
+    <div class="subsection" id="screw-covers">
+      <h3 class="purple">2.9 Screw Covers</h3>
+      <p>Each leg includes two snap-on caps (marked <strong>I</strong> and <strong>II</strong>) to cover the mounting screws. Match the markings on the caps to the leg, insert the pins into the holes, and press in. Use a screwdriver in the side slot to remove them.</p>
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">Use screws with a <strong>half-round head, max thread diameter ø4.5 mm</strong>. Oversized heads will prevent the caps from seating properly.</div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image37.webp" alt="Screw cover caps diagram" />
+        <div class="img-caption">Screw cover caps — markings I and II must match the leg. Insert pins into holes and press in. Use a screwdriver in the side slot to remove.</div>
+      </div>
+    </div>
+  </div><!-- /ring-setup -->
+
+  <!-- ── SECTION 3 — FULL KIT ONLY ── -->
+  <div class="section" id="pc-setup">
+    <div class="section-header">
+      <div class="section-num full-only">3</div>
+      <h2>PC Setup</h2>
+    </div>
+    <div class="full-kit-banner">
+      <div class="full-kit-banner-icon">💻</div>
+      <div><strong>Full System Kit only.</strong> This section covers setting up the included mini PC. If you purchased the LED Ring kit only, skip to <a href="#support" style="color:var(--accent-2)">Section 7 — Support</a>.</div>
+    </div>
+    <p>Your DartCraft kit comes with a micro PC pre-configured with Ubuntu. It is set to launch the Autodarts Desktop app on startup — no manual configuration required.</p>
+
+    <!-- 3.1 -->
+    <div class="subsection" id="connections">
+      <h3>3.1 Connections</h3>
+      <p>Connect the following cables before powering on:</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">Plug each <strong>camera USB cable</strong> into a separate USB port on the PC. <strong>Do not use a USB hub</strong> — each camera must have a direct connection.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">Connect a <strong>DisplayPort cable</strong> from the PC to your monitor or TV.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">Plug the <strong>LED strip power adapter</strong> into a mains socket.</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body">Connect the <strong>PC power cable</strong> and plug it into a mains socket.</div></div>
+      </div>
+    </div>
+
+    <!-- 3.2 -->
+    <div class="subsection" id="power-on">
+      <h3>3.2 Power On</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">Press the <strong>power button</strong> on the front of the PC.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">The PC will boot and automatically launch the Autodarts Desktop app. This takes approximately <strong>30–60 seconds</strong>.</div></div>
+      </div>
+    </div>
+
+    <!-- 3.3 -->
+    <div class="subsection" id="wifi">
+      <h3>3.3 Connect to Wi-Fi (First Boot Only)</h3>
+      <div class="callout info">
+        <div class="callout-icon">🔌</div>
+        <div class="callout-body"><strong>Using a wired connection?</strong> If you have connected an Ethernet cable, you can skip this section — the PC will connect to the internet automatically.</div>
+      </div>
+      <p>To connect to your Wi-Fi network:</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">Click the <strong>network icon</strong> in the system tray at the bottom-right corner of the taskbar.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">Select your <strong>Wi-Fi network</strong> from the list that appears.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">Enter your <strong>Wi-Fi password</strong> and click Connect.</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body">Once connected, double-click the Autodarts Desktop app. If it fails to open, reboot the computer by pressing the power button and selecting Restart.</div></div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image38.webp" alt="Wi-Fi network menu" /><div class="img-caption">Click the network icon to see available Wi-Fi networks</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image39.webp" alt="Autodarts Desktop app open" /><div class="img-caption">Autodarts Desktop app ready to sign in</div></div>
+      </div>
+    </div>
+
+    <!-- 3.4 -->
+    <div class="subsection" id="shutdown">
+      <h3>3.4 Shutting Down</h3>
+      <p>Always shut the system down properly before removing power from the PC.</p>
+      <div class="dual-option-card" style="margin-bottom:16px">
+        <h4>Option A — Using the screen</h4>
+        <ol style="margin:0 0 14px;padding-left:18px;font-size:14px">
+          <li>Click "Autodarts" in the top-right corner of the screen</li>
+          <li>Select "Shut Down" from the menu</li>
+          <li>In the confirmation dialog, click "Shut Down"</li>
+          <li>Once the PC has fully powered off, turn off the power to the LED ring</li>
+        </ol>
+        <div class="img-wrap" style="margin-top:14px">
+          <img src="/assets/setup/image51.webp" alt="Autodarts menu showing shutdown button location" />
+          <div class="img-caption">Click "Autodarts" in the top-right corner</div>
+        </div>
+      </div>
+      <div class="dual-option-card">
+        <h4>Option B — Using the power button</h4>
+        <ol style="margin:0 0 14px;padding-left:18px;font-size:14px">
+          <li>Press the power button on the front of the PC</li>
+          <li>Select "Shut Down" when the dialog appears</li>
+          <li>Once the PC has fully powered off, turn off the power to the LED ring</li>
+        </ol>
+        <div class="img-wrap" style="margin:0">
+          <img src="/assets/setup/image52.webp" alt="Shutdown confirmation dialog" />
+          <div class="img-caption">Select "Shut Down" from the dialog</div>
+        </div>
+      </div>
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body"><strong>Important:</strong> Never unplug the PC from the wall while it is running. Always shut it down first to avoid data loss or system errors.</div>
+      </div>
+    </div>
+  </div><!-- /pc-setup -->
+
+  <!-- ── SECTION 4 — FULL KIT ONLY ── -->
+  <div class="section" id="autodarts-setup">
+    <div class="section-header">
+      <div class="section-num full-only">4</div>
+      <h2>Autodarts Setup</h2>
+    </div>
+    <div class="full-kit-banner">
+      <div class="full-kit-banner-icon">🎯</div>
+      <div><strong>Full System Kit only.</strong> Autodarts is the software platform used to detect dart throws and manage your games.</div>
+    </div>
+
+    <!-- 4.1 -->
+    <div class="subsection" id="create-account">
+      <h3>4.1 Create an Autodarts Account</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">On the PC or your phone, navigate to <a href="https://play.autodarts.io" target="_blank" rel="noopener">play.autodarts.io</a> and select <strong>Sign Up</strong>.</div></div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image40.webp" alt="Autodarts sign up screen" />
+        <div class="img-caption">Navigate to play.autodarts.io and select Sign Up</div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-num">2</div><div class="step-body">Fill in the required details and select <strong>Sign Up</strong>.</div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body">Check your email and click the <strong>verification link</strong>.</div></div>
+      </div>
+    </div>
+
+    <!-- 4.2 -->
+    <div class="subsection" id="sign-in">
+      <h3>4.2 Sign In &amp; Link Your Board</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">On the Autodarts PC with the Autodarts app open, select <strong>Sign In</strong>.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">A web browser window will open. Sign in with your Autodarts account. Once signed in, save your password and select <strong>"Open xdg-open"</strong> when prompted.</div></div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image41.webp" alt="Autodarts app sign in" /><div class="img-caption">Select Sign In in the Autodarts app</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image42.webp" alt="Open xdg-open prompt" /><div class="img-caption">Select "Open xdg-open" when prompted</div></div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-num">3</div><div class="step-body">The Autodarts app will sign into your account within 30 seconds, ready to set up your board.</div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body">Give your board a name (e.g. "My Dartboard") and click <strong>Create Board</strong>.</div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-body">You will see a <strong>live image from each of the three cameras</strong>. Verify all three are showing clearly. On first boot, it may take up to 40 seconds for the cameras to load.</div></div>
+      </div>
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image43.webp" alt="Create board screen" /><div class="img-caption">Give your board a name and click Create Board</div></div>
+        <div class="img-wrap" style="margin:0"><img src="/assets/setup/image44.webp" alt="Three camera live views" /><div class="img-caption">Verify all three camera feeds are showing clearly</div></div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-num">6</div><div class="step-body">Click <strong>Next</strong>.</div></div>
+        <div class="step"><div class="step-num">7</div><div class="step-body">The system will automatically calibrate — you should see the <strong>detection overlay</strong> showing the different sections of the board.</div></div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image45.webp" alt="Calibration overlay" />
+        <div class="img-caption">Calibration overlay showing board segments</div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-num">8</div><div class="step-body">Click <strong>Next</strong>.</div></div>
+        <div class="step"><div class="step-num">9</div><div class="step-body">Throw a few darts to confirm detection is working correctly.</div></div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image46.webp" alt="Throw darts test screen" />
+        <div class="img-caption">Throw a few darts to confirm detection</div>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="step-num">10</div><div class="step-body">Click <strong>Finish</strong>.</div></div>
+      </div>
+    </div>
+
+    <!-- 4.3 -->
+    <div class="subsection" id="calibrate">
+      <h3>4.3 How to Calibrate the System</h3>
+      <p>Calibration tells the software exactly where the scoring segments are. You should recalibrate whenever:</p>
+      <ul>
+        <li>The board or cameras have been moved or knocked</li>
+        <li>Detection accuracy seems reduced</li>
+        <li>You have replaced or repositioned the LED strip</li>
+      </ul>
+      <p>To calibrate:</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body">In the Autodarts Desktop app, select <strong>Calibrate</strong>.</div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body">The glow around the board will turn <strong>purple during calibration</strong> and return to green once complete.</div></div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/image47.webp" alt="Calibrate button in Autodarts app" />
+        <div class="img-caption">Select Calibrate in the Autodarts Desktop app</div>
+      </div>
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body"><strong>Before calibrating:</strong> Make sure the LED strip is switched on, the dartboard surface is clean, and no objects are obstructing the camera view.</div>
+      </div>
+    </div>
+  </div><!-- /autodarts-setup -->
+
+  <!-- ── SECTION 5 — FULL KIT ONLY ── -->
+  <div class="section" id="starting-game">
+    <div class="section-header">
+      <div class="section-num full-only">5</div>
+      <h2>Starting a Game</h2>
+    </div>
+    <p>Once calibrated and connected, you're ready to play. Click <strong>Play</strong> in the Autodarts app — a browser window will open and log you in automatically if you've saved your credentials.</p>
+    <div class="img-wrap">
+      <img src="/assets/setup/image50.webp" alt="Play button in Autodarts Desktop app" />
+      <div class="img-caption">Click Play in the Autodarts Desktop app to get started</div>
+    </div>
+    <p>If prompted for the first time, select <strong>Allow</strong>.</p>
+    <div class="img-wrap">
+      <img src="/assets/setup/image48.webp" alt="Game mode selection" />
+      <div class="img-caption">Select a game mode</div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body">Select a <strong>game mode</strong> (e.g. 501, Cricket, Training games).</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body">Configure game settings to your preferences, then select <strong>Open Lobby</strong>.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body">Add local players, bots, or invite online friends.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body">Click <strong>Start Game</strong> when ready.</div></div>
+    </div>
+    <div class="img-wrap">
+      <img src="/assets/setup/image49.webp" alt="In-game 501 view" />
+      <div class="img-caption">In-game view — select the board icon at the top to switch to board view</div>
+    </div>
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">Set your game lobby to <strong>Private</strong> if you do not want random players joining online.</div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 6 — FULL KIT ONLY ── -->
+  <div class="section" id="troubleshooting">
+    <div class="section-header">
+      <div class="section-num full-only">6</div>
+      <h2>Troubleshooting</h2>
+    </div>
+
+    <table class="trouble-table">
+      <thead><tr><th>Issue</th><th>What to try</th></tr></thead>
+      <tbody>
+        <tr><td>Throws not registering</td><td>Check that cameras are not blocked and that lighting is consistent.</td></tr>
+        <tr><td>Inaccurate scoring</td><td>Re-run calibration. Ensure the board is level and nothing has shifted.</td></tr>
+        <tr><td>Camera not detected</td><td>Check USB cables are firmly connected to the PC. Try a different USB port. Restart the Autodarts app.</td></tr>
+        <tr><td>Wi-Fi not connecting</td><td>Restart the system. Move closer to your router or use an Ethernet cable.</td></tr>
+        <tr><td>Camera orientation wrong</td><td>In Autodarts Board Manager, go to Camera Settings and use the Rotate option to correct each camera view.</td></tr>
+        <tr><td>Calibration fails</td><td>Ensure lighting is consistent, cameras are not obstructed, and the ring is centred on the board. Check that all cameras can clearly see the full board, then try again.</td></tr>
+        <tr><td>Auto calibration keeps failing</td><td>Try manual calibration if available. Auto calibration can be affected by lighting, camera angles, reflections, or board movement.</td></tr>
+        <tr><td>Only one or two cameras showing</td><td>Check each camera cable individually. Try swapping USB ports. If using a USB hub, make sure it is powered or try connecting cameras directly to the PC.</td></tr>
+        <tr><td>Camera feed is dark or blurry</td><td>Check the LED lighting is on and evenly lighting the board. Clean the camera lenses carefully if needed. Avoid shadows across the board.</td></tr>
+        <tr><td>Glare or reflections on the board</td><td>Adjust nearby lighting or reduce bright reflections from windows, lamps, or glossy surfaces. Consistent, even lighting gives the best results.</td></tr>
+        <tr><td>Throws appear in the wrong area</td><td>Check that each camera is assigned and oriented correctly, and that the board has not rotated or shifted after calibration. Re-run calibration after making any adjustments.</td></tr>
+        <tr><td>Scoring was accurate, then became inaccurate</td><td>Check whether the dartboard, surround, or ring has moved. Even small movement can affect accuracy. Re-centre the ring and recalibrate.</td></tr>
+        <tr><td>Lag or slow response</td><td>Restart the PC and close any other open applications. If using Wi-Fi, try switching to Ethernet. On the XFCE desktop, right-click the taskbar and open Task Manager to check for high CPU or memory usage.</td></tr>
+        <tr><td>USB devices disconnect randomly</td><td>Try a different USB port or use a powered USB hub. Avoid loose connections or placing tension on the camera cables.</td></tr>
+        <tr><td>Keyboard or mouse not responding</td><td>Check the USB receiver is plugged in. Replace or recharge the keyboard batteries if needed. Try moving the receiver to a different USB port.</td></tr>
+        <tr><td>Sound not working</td><td>Check the speaker is powered on, the USB power cable is connected, and the 3.5mm jack is firmly in the headphone port. On the XFCE desktop, right-click the volume icon in the taskbar and confirm the correct audio output device is selected.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body"><strong>Tip:</strong> If you are unsure what the cameras are seeing, open Autodarts Board Manager and check the live camera view. This is the quickest way to spot blocked cameras, poor lighting, incorrect rotation, or alignment issues.</div>
+    </div>
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body"><strong>After any movement:</strong> If the dartboard, surround, ring, or cameras are moved for any reason, calibration should be checked and re-run before playing again.</div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 7 — ALL KITS ── -->
+  <div class="section" id="support">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <h2>Support</h2>
+    </div>
+    <p>DartCraft kits are sold exclusively through <a href="https://dartcraft.com.au">dartcraft.com.au</a>. If you experience a hardware issue — such as a faulty camera or damaged component — please get in touch and we'll make it right.</p>
+    <table class="support-table">
+      <tbody>
+        <tr><td>Hardware Support</td><td>Email <a href="mailto:hello@dartcraft.com.au">hello@dartcraft.com.au</a> with as much detail as possible, including photos or images if you can.</td></tr>
+        <tr><td>Autodarts Community</td><td>For software questions, calibration tips, and general help, join the Autodarts Discord: <a href="https://discord.com/invite/autodarts" target="_blank" rel="noopener">discord.com/invite/autodarts</a></td></tr>
+        <tr><td>Documentation</td><td>Full Autodarts documentation is available at: <a href="https://autodarts.diy" target="_blank" rel="noopener">autodarts.diy</a></td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:13px;color:var(--text-3);margin-top:24px;font-style:italic;">DartCraft is an independent hardware seller and is not affiliated with, endorsed by, or officially supported by Autodarts.</p>
+    <p style="text-align:center;margin-top:40px;font-family:var(--sans);font-size:17px;color:var(--text-2)">
+      Thank you for choosing <span style="color:var(--accent);font-weight:600">DartCraft</span> — enjoy your game!
+    </p>
+  </div>
+
+</div><!-- /page-wrap -->
+
+</div><!-- /layout -->
+
+<!-- MOBILE STICKY BAR -->
+<div id="mob-bar">
+  <button id="mob-bar-btn">
+    <span id="mob-bar-label">Contents</span>
+    <span id="mob-bar-arrow">▲</span>
+  </button>
+</div>
+
+<!-- MOBILE TOC OVERLAY -->
+<div id="mob-overlay">
+  <div id="mob-panel">
+    <div id="mob-panel-head">
+      <span>Contents</span>
+      <button id="mob-panel-close">✕</button>
+    </div>
+    <div id="mob-panel-scroll">
+      <ol>
+        <li><a href="#height">Dartboard Height &amp; Throw Line</a></li>
+        <li>
+          <a href="#ring-setup">LED Ring Setup</a>
+          <ul class="toc-sub">
+            <li><a href="#ring-assembly">Ring Assembly</a></li>
+            <li><a href="#led-strip">LED Strip Installation</a></li>
+            <li><a href="#ring-legs">Ring Legs Assembly</a></li>
+            <li><a href="#camera-positioning">Camera Positioning</a></li>
+            <li><a href="#wall-install">Wall Installation</a></li>
+            <li><a href="#surround">Alternative: Using Surround</a></li>
+            <li><a href="#surround-clearance">Surround Clearance</a></li>
+            <li><a href="#backing-board">Backing Board Size</a></li>
+            <li><a href="#screw-covers">Screw Covers</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#pc-setup">PC Setup</a>
+          <ul class="toc-sub">
+            <li><a href="#connections">Connections</a></li>
+            <li><a href="#power-on">Power On</a></li>
+            <li><a href="#wifi">Connect to Wi-Fi</a></li>
+            <li><a href="#shutdown">Shutting Down</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="#autodarts-setup">Autodarts Setup</a>
+          <ul class="toc-sub">
+            <li><a href="#create-account">Create Account</a></li>
+            <li><a href="#sign-in">Sign In &amp; Link Board</a></li>
+            <li><a href="#calibrate">Calibrate</a></li>
+          </ul>
+        </li>
+        <li><a href="#starting-game">Starting a Game</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+        <li><a href="#support">Support</a></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><a href="/">dartcraft.com.au</a> &nbsp;·&nbsp; <a href="mailto:hello@dartcraft.com.au">hello@dartcraft.com.au</a></p>
+  <p>© DartCraft. All rights reserved.</p>
+</footer>
+
+<!-- PROGRESS BAR + SCROLL SPY + MOBILE BAR -->
+<script>
+(function() {
+  const bar = document.getElementById('progress-bar');
+  const sidebarLinks = document.querySelectorAll('.sidebar .toc a[href^="#"]');
+  const mobLinks = document.querySelectorAll('#mob-panel a[href^="#"]');
+  const allTocLinks = [...sidebarLinks, ...mobLinks];
+
+  const sections = Array.from(document.querySelectorAll('[id]')).filter(el =>
+    Array.from(sidebarLinks).some(a => a.getAttribute('href') === '#' + el.id)
+  );
+
+  // Section label map for mobile bar
+  const labelMap = {};
+  sections.forEach(s => {
+    const h = s.querySelector('h2, h3');
+    if (h) labelMap[s.id] = h.textContent.trim();
+  });
+
+  const mobLabel = document.getElementById('mob-bar-label');
+  const mobBtn = document.getElementById('mob-bar-btn');
+  const mobOverlay = document.getElementById('mob-overlay');
+  const mobClose = document.getElementById('mob-panel-close');
+
+  function setActive(id) {
+    allTocLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+    if (mobLabel && labelMap[id]) mobLabel.textContent = labelMap[id];
+  }
+
+  // Progress bar
+  function updateProgress() {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+  }
+
+  // Scroll spy
+  function updateActive() {
+    const scrollY = window.scrollY + 120;
+    let current = sections[0]?.id;
+    for (const s of sections) { if (s.offsetTop <= scrollY) current = s.id; }
+    if (current) setActive(current);
+  }
+
+  // Mobile overlay
+  function openOverlay() { mobOverlay.classList.add('open'); mobBtn.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  function closeOverlay() { mobOverlay.classList.remove('open'); mobBtn.classList.remove('open'); document.body.style.overflow = ''; }
+
+  mobBtn?.addEventListener('click', openOverlay);
+  mobClose?.addEventListener('click', closeOverlay);
+  mobOverlay?.addEventListener('click', e => { if (e.target === mobOverlay) closeOverlay(); });
+
+  // Close and jump when a mobile TOC link is clicked
+  mobLinks.forEach(a => a.addEventListener('click', closeOverlay));
+
+  window.addEventListener('scroll', () => { updateProgress(); updateActive(); }, { passive: true });
+  updateProgress();
+  updateActive();
+})();
+</script>
+
+<!-- LIGHTBOX -->
+<div id="lb" role="dialog" aria-modal="true">
+  <button id="lb-close" aria-label="Close">✕</button>
+  <img id="lb-img" src="" alt="" />
+  <div id="lb-caption"></div>
+</div>
+
+<script>
+(function() {
+  const lb = document.getElementById('lb');
+  const lbImg = document.getElementById('lb-img');
+  const lbCap = document.getElementById('lb-caption');
+
+  function open(src, caption) {
+    lbImg.src = src;
+    lbImg.alt = caption;
+    lbCap.textContent = caption;
+    lb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function close() {
+    lb.classList.remove('open');
+    document.body.style.overflow = '';
+    lbImg.src = '';
+  }
+
+  document.querySelectorAll('.img-wrap').forEach(wrap => {
+    wrap.addEventListener('click', () => {
+      const img = wrap.querySelector('img');
+      const cap = wrap.querySelector('.img-caption');
+      if (img) open(img.src, cap ? cap.textContent : '');
+    });
+  });
+
+  document.getElementById('lb-close').addEventListener('click', close);
+  lb.addEventListener('click', e => { if (e.target === lb) close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+})();
+</script>
+
+</body>
+</html>

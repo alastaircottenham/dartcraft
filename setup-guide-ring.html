@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DartCraft LED Ring Setup Guide — Connect, Calibrate, Play</title>
+<meta name="description" content="Step-by-step setup guide for the DartCraft LED ring kit. Learn how to assemble the ring, install the LED strip, mount the cameras, and install on your wall for Autodarts." />
+<link rel="icon" href="/assets/favicon.png" type="image/png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050607;
+    --bg-2: #0a0c10;
+    --surface: #101216;
+    --card: #151820;
+    --text: #F5F5F0;
+    --text-2: #A5ABB8;
+    --text-3: #6b7280;
+    --accent: #7C5CFF;
+    --accent-2: #22D3EE;
+    --success: #22C55E;
+    --warning: #F59E0B;
+    --border: rgba(255,255,255,0.10);
+    --border-2: rgba(255,255,255,0.06);
+    --sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  img { max-width: 100%; display: block; border-radius: 8px; }
+
+  /* ── NAV ── */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border-2);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
+  .nav-logo img { height: 42px; width: auto; display: block; }
+  .nav-back {
+    font-size: 14px;
+    color: var(--text-2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-back:hover { color: var(--text); text-decoration: none; }
+
+  /* ── HERO ── */
+  .hero {
+    text-align: center;
+    padding: 64px 24px 48px;
+    border-bottom: 1px solid var(--border-2);
+  }
+  .hero-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-family: var(--sans);
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 700;
+    margin: 0 0 16px;
+    line-height: 1.1;
+  }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--text-2);
+    margin: 0 auto 24px;
+    max-width: 540px;
+  }
+  .hero-tagline {
+    display: inline-flex;
+    gap: 24px;
+    font-size: 14px;
+    color: var(--text-3);
+    font-style: italic;
+  }
+  .hero-tagline span { display: flex; align-items: center; gap: 6px; }
+
+  /* ── LAYOUT ── */
+  .page-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ── TABLE OF CONTENTS ── */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 40px 0;
+  }
+  .toc h2 {
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin: 0 0 16px;
+  }
+  .toc ol {
+    margin: 0; padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toc li { font-size: 15px; }
+  .toc li a { color: var(--text-2); }
+  .toc li a:hover { color: var(--accent); text-decoration: none; }
+  .toc-sub {
+    list-style: none;
+    padding-left: 16px;
+    margin: 6px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .toc-sub li::before { content: "—  "; color: var(--text-3); }
+  .toc-sub li a { font-size: 14px; color: var(--text-3); }
+  .toc-sub li a:hover { color: var(--accent); }
+
+  /* ── SECTIONS ── */
+  .section {
+    margin-top: 56px;
+    scroll-margin-top: 80px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-2);
+  }
+  .section-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent);
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-family: var(--sans);
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .subsection {
+    margin-top: 40px;
+    scroll-margin-top: 80px;
+  }
+  .subsection h3 {
+    font-family: var(--sans);
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--accent-2);
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-2);
+  }
+
+  p { font-size: 15px; line-height: 1.7; color: var(--text-2); margin: 0 0 16px; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── STEPS ── */
+  .steps { display: flex; flex-direction: column; gap: 24px; margin: 20px 0; }
+  .step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .step-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-body { flex: 1; font-size: 15px; line-height: 1.7; color: var(--text-2); }
+  .step-body strong { color: var(--text); }
+
+  /* ── IMAGE AREAS ── */
+  .img-wrap {
+    margin: 20px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border-2);
+  }
+  .img-wrap img { width: 100%; }
+  .img-caption {
+    font-size: 13px;
+    color: var(--text-3);
+    text-align: center;
+    padding: 10px 16px;
+    background: var(--card);
+    font-style: italic;
+  }
+  .img-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 20px 0;
+  }
+  @media (max-width: 560px) { .img-grid { grid-template-columns: 1fr; } }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    display: flex;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { color: var(--text-2); }
+  .callout-body strong { color: var(--text); }
+  .callout.warning {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+  }
+  .callout.tip {
+    background: rgba(124,92,255,0.08);
+    border: 1px solid rgba(124,92,255,0.20);
+  }
+  .callout.info {
+    background: rgba(34,211,238,0.06);
+    border: 1px solid rgba(34,211,238,0.18);
+  }
+
+  /* ── MEASUREMENT TABLE ── */
+  .meas-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 15px;
+  }
+  .meas-table th {
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .meas-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-2);
+    color: var(--text-2);
+  }
+  .meas-table td:last-child { font-weight: 600; color: var(--text); }
+  .meas-table tr:last-child td { border-bottom: none; }
+
+  /* ── SUPPORT TABLE ── */
+  .support-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 15px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .support-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-2);
+    color: var(--text-2);
+    vertical-align: top;
+  }
+  .support-table tr:last-child td { border-bottom: none; }
+  .support-table td:first-child {
+    font-family: var(--sans);
+    font-weight: 600;
+    color: var(--text);
+    width: 36%;
+    background: var(--card);
+  }
+
+  /* ── CAMERA OPTIONS ── */
+  .option-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+  @media (max-width: 560px) { .option-grid { grid-template-columns: 1fr; } }
+  .option-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .option-card h4 {
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    color: var(--accent);
+  }
+  .option-card p { font-size: 14px; margin: 0; }
+
+  /* ── SPEC CHIPS ── */
+  .spec-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+  }
+  .spec-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+  .spec-chip span:first-child { color: var(--text-3); margin-right: 6px; }
+  .spec-chip span:last-child { font-weight: 600; color: var(--text); }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border-2);
+    padding: 32px 24px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-3);
+  }
+  .footer p { color: var(--text-3); font-size: 13px; margin-bottom: 6px; }
+  .footer a { color: var(--text-3); }
+  .footer a:hover { color: var(--accent); }
+
+  /* ── DIVIDER ── */
+  hr { border: none; border-top: 1px solid var(--border-2); margin: 48px 0; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/assets/dartcraft-logo.png" alt="DartCraft" />
+  </a>
+  <a href="/" class="nav-back">
+    ← Back to store
+  </a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">LED Ring Kit</div>
+  <h1>Setup Guide</h1>
+  <p class="hero-sub">Everything you need to set up your LED ring, connect your cameras, and get started with Autodarts.</p>
+  <div class="hero-tagline">
+    <span>Connect</span>
+    <span style="color:var(--border)">•</span>
+    <span>Calibrate</span>
+    <span style="color:var(--border)">•</span>
+    <span>Play</span>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="page-wrap">
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#height">Dartboard Height &amp; Throw Line</a></li>
+      <li>
+        <a href="#ring-setup">LED Ring Setup</a>
+        <ul class="toc-sub">
+          <li><a href="#ring-assembly">Ring Assembly</a></li>
+          <li><a href="#led-strip">LED Strip Installation</a></li>
+          <li><a href="#ring-legs">Ring Legs Assembly</a></li>
+          <li><a href="#camera-positioning">Camera Positioning</a></li>
+          <li><a href="#wall-install">Wall Installation</a></li>
+          <li><a href="#surround">Alternative: Position Using Surround</a></li>
+          <li><a href="#surround-clearance">Dartboard Surround Clearance</a></li>
+          <li><a href="#backing-board">Minimum Backing Board Size</a></li>
+          <li><a href="#screw-covers">Screw Covers</a></li>
+        </ul>
+      </li>
+      <li><a href="#support">Support</a></li>
+    </ol>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="section" id="height">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <h2>Dartboard Height &amp; Throw Line</h2>
+    </div>
+    <p>Before mounting your dartboard, ensure it is positioned at the correct regulation height. These measurements apply to standard steel-tip dartboards.</p>
+
+    <table class="meas-table">
+      <thead>
+        <tr><th>Measurement</th><th>Value</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Bullseye height</td><td>173 cm from the floor</td></tr>
+        <tr><td>Throw distance</td><td>237 cm from face of the board</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        The bullseye must be exactly <strong>173 cm from the floor</strong>. The throw line (oche) must be at least <strong>237 cm from the face of the board</strong> — measure from the front surface of the board, not the wall.
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2 -->
+  <div class="section" id="ring-setup">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <h2>LED Ring Setup</h2>
+    </div>
+    <p>The Autodarts ring provides integrated LED lighting and holds the three cameras. The following steps cover full ring assembly, LED strip installation, and camera leg assembly.</p>
+
+    <!-- 2.1 -->
+    <div class="subsection" id="ring-assembly">
+      <h3>2.1 Ring Assembly</h3>
+      <p>The ring is made up of 9 outer segments and a set of inner ring segments. Follow the steps below to assemble the full ring and fit the inner ring.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            Gather the <strong>9 main ring segments</strong>. Connect them firmly together in groups, pressing each joint fully until seated, to form <strong>3 separate sub-sections</strong>.
+          </div>
+        </div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/ring-segments-groups.jpg" alt="Three groups of ring segments laid out" />
+        <div class="img-caption">The 9 ring segments connected into 3 sub-sections</div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/ring-segment-joint.jpg" alt="Close up of ring segment joint connection" />
+        <div class="img-caption">Press each joint firmly until fully seated</div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/ring-three-arcs.jpg" alt="Three completed arc sub-sections" />
+        <div class="img-caption">Three completed sub-sections</div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            Using the <strong>3 leg-mount segments</strong>, connect one between each sub-section to complete the full ring. Ensure all joints are <strong>fully clicked into place</strong> before proceeding.
+          </div>
+        </div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/ring-leg-mount-connecting.jpg" alt="Connecting leg mount segment to ring" />
+        <div class="img-caption">Connecting a leg-mount segment between sub-sections</div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/ring-complete.jpg" alt="Completed full ring" />
+        <div class="img-caption">Completed full ring</div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            Place one <strong>inner ring segment</strong> at each joint around the inside of the main ring. The inner ring strengthens the overall structure and prevents light from the LEDs bleeding through the outer joints.<br><br>
+            At the three positions where the camera legs will be mounted, use the <strong>inner ring leg segments with a hole</strong>. You will need:
+            <ul style="margin-top:10px;padding-left:20px;display:flex;flex-direction:column;gap:6px;">
+              <li><strong>6×</strong> Inner Ring Segment (plain)</li>
+              <li><strong>3×</strong> Inner Ring Segment Leg — Left</li>
+              <li><strong>3×</strong> Inner Ring Segment Leg — Right</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/inner-ring-segments-diagram.jpg" alt="Diagram showing inner ring segment types" />
+        <div class="img-caption">Inner ring segment types: plain (6×), left leg (3×), right leg (3×)</div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/inner-ring-fitting.jpg" alt="Fitting inner ring segments" />
+        <div class="img-caption">Fitting inner ring segments around the inside of the ring</div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">Once all the inner ring pieces are in place, <strong>secure each with the included M3 screws</strong>.</div>
+        </div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/inner-ring-screws.jpg" alt="Securing inner ring with M3 screws" />
+        <div class="img-caption">Secure each inner ring segment with the included M3 screws</div>
+      </div>
+    </div>
+
+    <!-- 2.2 -->
+    <div class="subsection" id="led-strip">
+      <h3>2.2 LED Strip Installation</h3>
+      <p>The LED strip runs the full circumference of the ring and is routed through one of the leg-mount pieces to bring the power connector to the outside.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">Wipe down the inner wall of the ring with <strong>isopropyl alcohol</strong> and allow it to dry completely. This ensures a strong, lasting bond.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">Fully unwind the LED strip from its holder. From the outside of the ring, <strong>feed the strip through the larger hole in one of the leg-mount pieces</strong>, leaving just the power connector visible on the outside.</div>
+        </div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/led-strip-threading.jpg" alt="Threading LED strip through leg mount" />
+        <div class="img-caption">Threading the LED strip through the leg-mount hole</div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/led-strip-start.jpg" alt="LED strip starting position in groove" />
+        <div class="img-caption">Start the strip at the end closest to the power connector</div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">Starting at the end closest to the power connector, <strong>peel back a short section of the adhesive backing</strong> and press the strip firmly into the inner wall groove. Continue peeling and pressing, a section at a time, working your way around the ring until the strip is fully installed.</div>
+        </div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/led-strip-peeling.jpg" alt="Peeling adhesive backing from LED strip" />
+        <div class="img-caption">Peel and press a section at a time around the ring</div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/led-strip-installed.jpg" alt="LED strip fully installed in ring" />
+        <div class="img-caption">LED strip fully installed</div>
+      </div>
+
+      <div class="callout tip">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body"><strong>Tip:</strong> For extra bonding strength, reinforce the strip with <strong>3M double-sided tape (1 cm width)</strong> along the groove before application.</div>
+      </div>
+    </div>
+
+    <!-- 2.3 -->
+    <div class="subsection" id="ring-legs">
+      <h3>2.3 Ring Legs Assembly</h3>
+      <p>Each leg consists of an upper section with the camera already pre-installed and a lower section. Assemble the first two standard legs before moving on to the LED power leg.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">For each of the first two camera legs: <strong>feed the camera USB cable down through the lower leg</strong>, then insert the two hinge pins on the upper leg into the lower leg and <strong>press firmly together</strong> until secure. Repeat for the second leg.</div>
+        </div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/leg-usb-cable.jpg" alt="Feeding USB cable through lower leg" />
+        <div class="img-caption">Feed the camera USB cable down through the lower leg first</div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><strong>Attach the two assembled camera legs to the ring</strong> using the included M4 screws, tightening them securely.</div>
+        </div>
+      </div>
+
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0">
+          <img src="/assets/setup/leg-attach-ring.jpg" alt="Attaching leg to ring" />
+          <div class="img-caption">Attach leg to ring with M4 screws</div>
+        </div>
+        <div class="img-wrap" style="margin:0">
+          <img src="/assets/setup/leg-tighten-screws.jpg" alt="Tightening leg screws" />
+          <div class="img-caption">Tighten screws securely</div>
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            For the <strong>third leg at the LED strip power connector</strong>:
+            <ol style="margin-top:10px;padding-left:20px;display:flex;flex-direction:column;gap:8px;">
+              <li>Feed the <strong>LED power supply cable</strong> through the lower leg first</li>
+              <li>Feed the <strong>camera USB cable</strong> through in the same way</li>
+              <li>Press the upper and lower leg together</li>
+              <li><strong>Connect the LED strip connector</strong> to the LED power supply cable</li>
+              <li>Attach this leg to the ring using the included <strong>M4 screws</strong></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0">
+          <img src="/assets/setup/led-leg-power-cable.jpg" alt="LED power cable through leg" />
+          <div class="img-caption">Feed LED power cable through lower leg</div>
+        </div>
+        <div class="img-wrap" style="margin:0">
+          <img src="/assets/setup/led-leg-connector.jpg" alt="Connecting LED strip connector" />
+          <div class="img-caption">Connect the LED strip to the power cable</div>
+        </div>
+      </div>
+
+      <div class="img-grid">
+        <div class="img-wrap" style="margin:0">
+          <img src="/assets/setup/led-leg-attach.jpg" alt="Attaching LED leg to ring" />
+          <div class="img-caption">Attach LED leg to ring</div>
+        </div>
+        <div class="img-wrap" style="margin:0">
+          <img src="/assets/setup/led-leg-screws.jpg" alt="Tightening LED leg screws" />
+          <div class="img-caption">Tighten with M4 screws</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2.4 -->
+    <div class="subsection" id="camera-positioning">
+      <h3>2.4 Camera Positioning</h3>
+      <p>There are two valid camera positioning options for Autodarts. Choose one and apply it consistently — your camera legs must align with either dartboard segment 6 or segment 11 on the horizontal axis.</p>
+
+      <div class="option-grid">
+        <div class="option-card">
+          <h4>Option A — Camera on Segment 6</h4>
+          <p style="color:var(--text-2)">One horizontal camera leg aligns with segment 6 on the right side of the board.</p>
+        </div>
+        <div class="option-card">
+          <h4>Option B — Camera on Segment 11</h4>
+          <p style="color:var(--text-2)">One horizontal camera leg aligns with segment 11 on the left side of the board.</p>
+        </div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/camera-positioning-diagram.jpg" alt="Autodarts camera positioning diagram showing segment 6 and segment 11 options" />
+        <div class="img-caption">Camera positioning options — segment 6 (right) or segment 11 (left)</div>
+      </div>
+    </div>
+
+    <!-- 2.5 -->
+    <div class="subsection" id="wall-install">
+      <h3>2.5 Wall Installation</h3>
+      <p>Use the supplied two-part installation template to accurately mark the three leg mounting hole positions on the wall. The template must be positioned from the exact bullseye centre — <strong>remove the dartboard first</strong> if already mounted.</p>
+
+      <div class="callout info">
+        <div class="callout-icon">ℹ️</div>
+        <div class="callout-body">The template has two parts: the <strong>Bullseye Part</strong> (positions at the board centre) and the <strong>Camera Leg Part</strong> (marks hole positions for each leg).</div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/template-parts.jpg" alt="Two template parts — bullseye part and camera leg part" />
+        <div class="img-caption">Template parts: Bullseye part (left) and Camera Leg part (right)</div>
+      </div>
+
+      <p>Join the two template parts — they should snap together. Use a drop of glue or tape if needed.</p>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/template-joined.jpg" alt="Two template parts joined together" />
+        <div class="img-caption">Join the two parts — they snap together. Tip: use a drop of glue or adhesive tape if they don't clip firmly.</div>
+      </div>
+
+      <h4 style="font-family:var(--sans);font-size:16px;font-weight:600;margin:28px 0 12px;color:var(--text)">Option A — Camera on Segment 6</h4>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">Draw a <strong>vertical and horizontal line</strong> through the bullseye using a spirit level. Place the template corner at the bullseye centre, aligned with those lines. <strong>Mark the 1st camera leg holes</strong> and draw a green reference line.</div>
+        </div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/template-seg6-step1.jpg" alt="Template step 1 for segment 6 positioning" />
+        <div class="img-caption">Step 1 — Mark 1st leg and draw green reference line</div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><strong>Rotate the template clockwise</strong>, align it to the centre and the newly drawn green line. The horizontal line should pass through the corners of the template hole. <strong>Mark the 2nd camera leg holes</strong> and draw a blue line.</div>
+        </div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/template-seg6-step2.jpg" alt="Template step 2 for segment 6 positioning" />
+        <div class="img-caption">Step 2 — Mark 2nd leg and draw blue reference line</div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body"><strong>Rotate the template clockwise again</strong>, align it with the centre and the newly drawn blue line. Check the horizontal line. <strong>Mark the 3rd camera leg holes</strong>.</div>
+        </div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/template-seg6-step3.jpg" alt="Template step 3 for segment 6 positioning" />
+        <div class="img-caption">Step 3 — Mark 3rd leg position</div>
+      </div>
+
+      <h4 style="font-family:var(--sans);font-size:16px;font-weight:600;margin:28px 0 12px;color:var(--text)">Option B — Camera on Segment 11</h4>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">Same starting position as Option A. <strong>Mark the 1st camera leg holes</strong> and draw a green reference line.</div>
+        </div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/template-seg11-step1.jpg" alt="Template step 1 for segment 11 positioning" />
+        <div class="img-caption">Step 1 — Mark 1st leg and draw green reference line</div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body"><strong>Rotate the template counter-clockwise</strong>, align it to the centre and the newly drawn green line. The horizontal line should pass through the corners of the template hole. <strong>Mark the 2nd camera leg holes</strong> and draw a blue line.</div>
+        </div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/template-seg11-step2.jpg" alt="Template step 2 for segment 11 positioning" />
+        <div class="img-caption">Step 2 — Mark 2nd leg and draw blue reference line</div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body"><strong>Rotate the template counter-clockwise again</strong>, align it with the centre and the newly drawn blue line. Check the horizontal line. <strong>Mark the 3rd camera leg holes</strong>.</div>
+        </div>
+      </div>
+      <div class="img-wrap">
+        <img src="/assets/setup/template-seg11-step3.jpg" alt="Template step 3 for segment 11 positioning" />
+        <div class="img-caption">Step 3 — Mark 3rd leg position</div>
+      </div>
+    </div>
+
+    <!-- 2.6 -->
+    <div class="subsection" id="surround">
+      <h3>2.6 Alternative: Position Using Surround</h3>
+      <p>If you have a standard surround with an outer diameter of <strong>67.5 cm</strong>, the ring legs are designed to just touch it. Simply place the ring around the surround and mark the mounting holes.</p>
+
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body"><strong>Important:</strong> You still need to confirm the horizontal camera position aligns with segment 6 or 11.</div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/surround-positioning.jpg" alt="Ring positioned around surround showing segment 6 and 11 alignment" />
+        <div class="img-caption">Positioning the ring using a standard 67.5 cm surround — check horizontal camera aligns with segment 6 or 11</div>
+      </div>
+    </div>
+
+    <!-- 2.7 -->
+    <div class="subsection" id="surround-clearance">
+      <h3>2.7 Dartboard Surround Clearance</h3>
+      <p>The maximum outer diameter of any dartboard surround used with this ring is <strong>68 cm</strong>.</p>
+
+      <div class="spec-row">
+        <div class="spec-chip">
+          <span>Max surround outer diameter</span>
+          <span>68 cm</span>
+        </div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/surround-clearance-diagram.jpg" alt="Diagram showing maximum surround diameter of 68cm" />
+        <div class="img-caption">Maximum surround outer diameter: 68 cm</div>
+      </div>
+    </div>
+
+    <!-- 2.8 -->
+    <div class="subsection" id="backing-board">
+      <h3>2.8 Minimum Backing Board Size</h3>
+      <p>If mounting on a backing board, the minimum size to accommodate the ring with legs is <strong>80 × 76 cm</strong>.</p>
+
+      <div class="spec-row">
+        <div class="spec-chip">
+          <span>Minimum width</span>
+          <span>80 cm</span>
+        </div>
+        <div class="spec-chip">
+          <span>Minimum height</span>
+          <span>76 cm</span>
+        </div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/backing-board-diagram.jpg" alt="Diagram showing minimum backing board size of 80x76cm" />
+        <div class="img-caption">Minimum base board size: 80 × 76 cm</div>
+      </div>
+    </div>
+
+    <!-- 2.9 -->
+    <div class="subsection" id="screw-covers">
+      <h3>2.9 Screw Covers</h3>
+      <p>Each leg includes two snap-on caps (marked <strong>I</strong> and <strong>II</strong>) to cover the mounting screws. Match the markings on the caps to the leg, insert the pins into the holes, and press in. Use a screwdriver in the side slot to remove them.</p>
+
+      <div class="callout warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">Use screws with a <strong>half-round head, max thread diameter ø4.5 mm</strong>. Oversized heads will prevent the caps from seating properly.</div>
+      </div>
+
+      <div class="img-wrap">
+        <img src="/assets/setup/screw-covers-diagram.jpg" alt="Screw cover caps showing markings I and II" />
+        <div class="img-caption">Screw cover caps — markings I and II must match the leg. Insert pins into holes and press in. Use a screwdriver in the side slot to remove.</div>
+      </div>
+    </div>
+
+  </div><!-- /ring-setup -->
+
+  <!-- SECTION 3 -->
+  <div class="section" id="support">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <h2>Support</h2>
+    </div>
+    <p>DartCraft kits are sold exclusively through <a href="https://dartcraft.com.au">dartcraft.com.au</a>. If you experience a hardware issue — such as a faulty camera or damaged component — please get in touch and we'll make it right.</p>
+
+    <table class="support-table">
+      <tbody>
+        <tr>
+          <td>Hardware Support</td>
+          <td>Email <a href="mailto:hello@dartcraft.com.au">hello@dartcraft.com.au</a> with as much detail as possible, including photos or images if you can.</td>
+        </tr>
+        <tr>
+          <td>Autodarts Community</td>
+          <td>For software questions, calibration tips, and general help, join the Autodarts Discord: <a href="https://discord.com/invite/autodarts" target="_blank" rel="noopener">discord.com/invite/autodarts</a></td>
+        </tr>
+        <tr>
+          <td>Documentation</td>
+          <td>Full Autodarts documentation is available at: <a href="https://autodarts.diy" target="_blank" rel="noopener">autodarts.diy</a></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:13px;color:var(--text-3);margin-top:24px;font-style:italic;">DartCraft is an independent hardware seller and is not affiliated with, endorsed by, or officially supported by Autodarts.</p>
+
+    <p style="text-align:center;margin-top:40px;font-family:var(--sans);font-size:17px;color:var(--text-2)">
+      Thank you for choosing <span style="color:var(--accent);font-weight:600">DartCraft</span> — enjoy your game!
+    </p>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p><a href="/">dartcraft.com.au</a> &nbsp;·&nbsp; <a href="mailto:hello@dartcraft.com.au">hello@dartcraft.com.au</a></p>
+  <p>© DartCraft. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
