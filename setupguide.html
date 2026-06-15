@@ -73,11 +73,12 @@
   .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .page-wrap { padding: 0 40px 80px 48px; min-width: 0; }
   /* MOBILE STICKY SECTION BAR */
-  #mob-bar { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 300; padding: 0 0 env(safe-area-inset-bottom); background: var(--bg); border-top: 1px solid var(--border); }
+  #mob-bar { display: none; position: fixed; top: 78px; left: 0; right: 0; z-index: 90; background: var(--bg); border-bottom: 1px solid var(--border); }
   #mob-bar-btn { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: none; border: none; color: var(--text); cursor: pointer; text-align: left; }
   #mob-bar-label { font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #mob-bar-arrow { font-size: 11px; color: var(--text-3); flex-shrink: 0; transition: transform 0.2s; }
   #mob-bar-btn.open #mob-bar-arrow { transform: rotate(180deg); }
+  #mob-bar-btn { padding: 12px 20px; }
 
   /* MOBILE TOC OVERLAY */
   #mob-overlay { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,0.7); }
@@ -98,7 +99,7 @@
   @media (max-width: 860px) {
     .layout { grid-template-columns: 1fr; }
     .sidebar { display: none; }
-    .page-wrap { padding: 0 24px 96px; }
+    .page-wrap { padding: 48px 24px 96px; }
     #mob-bar { display: block; }
   }
 
@@ -898,7 +899,7 @@
 <div id="mob-bar">
   <button id="mob-bar-btn">
     <span id="mob-bar-label">Contents</span>
-    <span id="mob-bar-arrow">▲</span>
+    <span id="mob-bar-arrow">▼</span>
   </button>
 </div>
 
