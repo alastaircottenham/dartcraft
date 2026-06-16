@@ -146,39 +146,95 @@ function detailRow(label, value) {
 
 function confirmationEmailHtml(session) {
   const m = session.metadata || {};
+  const firstName = (m.customerName || 'there').split(' ')[0];
   const amount = session.amount_total ? fmt(session.amount_total) : '';
   const addonItems = (() => { try { return m.addons ? JSON.parse(m.addons) : []; } catch { return []; } })();
   const guideUrl = `${BASE_URL}/setupguide`;
-  const body = `
-    <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Order confirmed.</p>
-    <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Hi ${m.customerName?.split(' ')[0] || 'there'}, your DartCraft kit is confirmed and we're getting it ready to ship.</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-radius:12px;padding:24px 28px;margin-bottom:28px">
-      <tr><td>
-        <table width="100%" cellpadding="0" cellspacing="0">
-          ${detailRow('Package', `<strong>${m.packageName || ''}</strong>`)}
-          ${m.cameraUpgrade === 'true' ? detailRow('Camera upgrade', '<strong style="color:#7C5CFF">OV2710 cameras ✓</strong>') : ''}
-          ${addonItems.map(a => detailRow('Add-on', `${a.name} — $${(a.price_cents / 100).toFixed(2)}`)).join('')}
-          ${detailRow('Amount paid', `<strong>${amount}</strong>`)}
-          ${detailRow('Ship to', `${m.customerName || ''}<br>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia`)}
-        </table>
-      </td></tr>
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order confirmed — DartCraft</title>
+<style>
+  body { margin: 0; padding: 32px 16px; background: #F4F4F8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+  .email-wrap { max-width: 600px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .email-header { background: #1A1A2E; padding: 32px 40px; text-align: center; }
+  .email-logo { color: #fff; font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+  .email-logo span { color: #7C5CFF; }
+  .email-tagline { color: #9999BB; font-size: 13px; margin-top: 4px; }
+  .email-hero { background: #7C5CFF; padding: 28px 40px; text-align: center; }
+  .email-hero h1 { color: #fff; font-size: 20px; font-weight: 600; margin: 0 0 6px; }
+  .email-hero p { color: #D5CEFF; font-size: 14px; margin: 0; }
+  .email-body { background: #ffffff; padding: 32px 40px; }
+  .email-body p { font-size: 15px; color: #1A1A2E; line-height: 1.7; margin: 0 0 16px; }
+  .email-body p.muted { font-size: 14px; color: #666; }
+  .order-table { width: 100%; background: #F7F7FA; border-radius: 12px; padding: 20px 22px; margin: 0 0 20px; border: 1px solid #E8E8F0; border-collapse: separate; }
+  .order-table td { padding: 9px 0; font-size: 13px; border-bottom: 1px solid #EBEBF0; vertical-align: top; }
+  .order-table tr:last-child td { border-bottom: none; }
+  .order-table .label { color: #999; font-family: monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; width: 120px; }
+  .order-table .value { color: #222; line-height: 1.6; }
+  .cta-block { background: #F7F7FA; border-radius: 12px; padding: 20px 22px; margin: 14px 0; border: 1px solid #E8E8F0; width: 100%; border-collapse: separate; }
+  .cta-icon { font-size: 22px; vertical-align: middle; }
+  .cta-btn { display: inline-block; background: #7C5CFF; color: #ffffff !important; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 8px; text-decoration: none; white-space: nowrap; }
+  .divider { border: none; border-top: 1px solid #EBEBF0; margin: 24px 0; }
+  .email-footer { background: #F7F7FA; padding: 20px 40px; text-align: center; border-top: 1px solid #EBEBF0; }
+  .email-footer p { font-size: 12px; color: #999; margin: 0; line-height: 1.6; }
+  .email-footer a { color: #7C5CFF; text-decoration: none; }
+  @media (max-width: 520px) {
+    .email-header, .email-hero, .email-body, .email-footer { padding-left: 20px !important; padding-right: 20px !important; }
+  }
+</style>
+</head>
+<body>
+<div class="email-wrap">
+  <div class="email-header">
+    <div class="email-logo">Dart<span>Craft</span></div>
+    <div class="email-tagline">AutoDarts Kits Australia</div>
+  </div>
+  <div class="email-hero">
+    <h1>Order confirmed! 🎯</h1>
+    <p>We're getting your kit packed and ready to ship.</p>
+  </div>
+  <div class="email-body">
+    <p>Hi ${firstName},</p>
+    <p>Thanks for your order — we're on it. Here's a summary of what you've got coming:</p>
+    <table class="order-table" cellpadding="0" cellspacing="0">
+      <tr><td class="label">Package</td><td class="value"><strong>${m.packageName || ''}</strong></td></tr>
+      ${m.cameraUpgrade === 'true' ? `<tr><td class="label">Camera upgrade</td><td class="value"><strong style="color:#7C5CFF">OV2710 cameras ✓</strong></td></tr>` : ''}
+      ${addonItems.map(a => `<tr><td class="label">Add-on</td><td class="value">${a.name} — $${(a.price_cents / 100).toFixed(2)}</td></tr>`).join('')}
+      <tr><td class="label">Amount paid</td><td class="value"><strong>${amount}</strong></td></tr>
+      <tr><td class="label">Ship to</td><td class="value">${m.customerName || ''}<br>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia</td></tr>
     </table>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:20px 24px;margin-bottom:20px">
-      <tr><td>
-        <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#92400e">What happens next</p>
-        <p style="margin:0;font-size:13px;color:#78350f;line-height:1.65">We'll pack your kit and dispatch it. You'll receive a shipping confirmation once it's on its way.</p>
-      </td></tr>
+    <table class="cta-block" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="44" valign="middle"><span class="cta-icon">📦</span></td>
+        <td valign="middle" style="padding: 0 12px;">
+          <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">What happens next</strong>
+          <span style="font-size:13px;color:#666;">We'll pack your kit and dispatch it — you'll get a shipping confirmation once it's on its way.</span>
+        </td>
+      </tr>
     </table>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;border:1px solid #c7d4f8;border-radius:12px;padding:20px 24px;margin-bottom:32px">
-      <tr><td>
-        <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#1e3a8a">Your setup guide</p>
-        <p style="margin:0 0 14px;font-size:13px;color:#1e40af;line-height:1.65">View your setup guide online to get familiar with the installation before your kit arrives.</p>
-        <a href="${guideUrl}" style="display:inline-block;padding:10px 20px;background:#1e3a8a;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">View setup guide &rarr;</a>
-      </td></tr>
+    <table class="cta-block" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="44" valign="middle"><span class="cta-icon">📄</span></td>
+        <td valign="middle" style="padding: 0 12px;">
+          <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">Setup guide</strong>
+          <span style="font-size:13px;color:#666;">Get familiar with the installation before your kit arrives.</span>
+        </td>
+        <td width="130" valign="middle" align="right"><a class="cta-btn" href="${guideUrl}">View setup guide</a></td>
+      </tr>
     </table>
-    <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
-  `;
-  return emailShell({ badge: '&#9679; Order confirmed', badgeColor: '#22c55e', body });
+    <hr class="divider">
+    <p class="muted">Any questions? Reach out at <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF;text-decoration:none;">hello@dartcraft.com.au</a> — happy to help.</p>
+    <p class="muted">Cheers,<br><strong style="color:#1A1A2E;">The DartCraft Team</strong></p>
+  </div>
+  <div class="email-footer">
+    <p><a href="${BASE_URL}">dartcraft.com.au</a> &nbsp;·&nbsp; Australian-built AutoDarts kits</p>
+  </div>
+</div>
+</body>
+</html>`;
 }
 
 function ownerNotificationHtml(session) {
@@ -214,37 +270,103 @@ function shippingEmailHtml(session, trackingNumber = '') {
   const m = session.metadata || {};
   const firstName = (m.customerName || 'there').split(' ')[0];
   const guideUrl = `${BASE_URL}/setupguide`;
-  const trackingBlock = trackingNumber
-    ? `<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px 24px;margin-bottom:32px">
-        <tr><td>
-          <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#166534">Australia Post tracking</p>
-          <p style="margin:0 0 12px;font-size:13px;color:#15803d;line-height:1.65">Your tracking number is <strong>${trackingNumber}</strong>.</p>
-          <a href="https://auspost.com.au/mypost/track/#/details/${trackingNumber}" style="display:inline-block;padding:10px 20px;background:#166534;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">Track my parcel &rarr;</a>
-        </td></tr>
+  const trackingRow = trackingNumber
+    ? `<table class="cta-block" cellpadding="0" cellspacing="0">
+        <tr>
+          <td width="44" valign="middle"><span class="cta-icon">📬</span></td>
+          <td valign="middle" style="padding: 0 12px;">
+            <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">Australia Post tracking</strong>
+            <span style="font-size:13px;color:#666;">Your tracking number is <strong>${trackingNumber}</strong>.</span>
+          </td>
+          <td width="130" valign="middle" align="right"><a class="cta-btn" href="https://auspost.com.au/mypost/track/#/details/${trackingNumber}">Track parcel</a></td>
+        </tr>
       </table>`
     : '';
-  const body = `
-    <p style="margin:0 0 6px;font-size:26px;font-weight:700;color:#111;letter-spacing:-0.025em">Your order has shipped.</p>
-    <p style="margin:0 0 32px;font-size:15px;color:#666;line-height:1.65">Hi ${firstName}, your <strong>${m.packageName || 'DartCraft kit'}</strong> has been packed and dispatched.</p>
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f7f7f9;border-radius:12px;padding:24px 28px;margin-bottom:28px">
-      <tr><td>
-        <table width="100%" cellpadding="0" cellspacing="0">
-          ${detailRow('Package', `<strong>${m.packageName || 'DartCraft Kit'}</strong>`)}
-          ${detailRow('Delivering to', `${m.customerName || ''}<br>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia`)}
-        </table>
-      </td></tr>
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your order has shipped — DartCraft</title>
+<style>
+  body { margin: 0; padding: 32px 16px; background: #F4F4F8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+  .email-wrap { max-width: 600px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+  .email-header { background: #1A1A2E; padding: 32px 40px; text-align: center; }
+  .email-logo { color: #fff; font-size: 22px; font-weight: 600; letter-spacing: 0.5px; }
+  .email-logo span { color: #7C5CFF; }
+  .email-tagline { color: #9999BB; font-size: 13px; margin-top: 4px; }
+  .email-hero { background: #7C5CFF; padding: 28px 40px; text-align: center; }
+  .email-hero h1 { color: #fff; font-size: 20px; font-weight: 600; margin: 0 0 6px; }
+  .email-hero p { color: #D5CEFF; font-size: 14px; margin: 0; }
+  .email-body { background: #ffffff; padding: 32px 40px; }
+  .email-body p { font-size: 15px; color: #1A1A2E; line-height: 1.7; margin: 0 0 16px; }
+  .email-body p.muted { font-size: 14px; color: #666; }
+  .order-table { width: 100%; background: #F7F7FA; border-radius: 12px; padding: 20px 22px; margin: 0 0 20px; border: 1px solid #E8E8F0; border-collapse: separate; }
+  .order-table td { padding: 9px 0; font-size: 13px; border-bottom: 1px solid #EBEBF0; vertical-align: top; }
+  .order-table tr:last-child td { border-bottom: none; }
+  .order-table .label { color: #999; font-family: monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; width: 120px; }
+  .order-table .value { color: #222; line-height: 1.6; }
+  .cta-block { background: #F7F7FA; border-radius: 12px; padding: 20px 22px; margin: 14px 0; border: 1px solid #E8E8F0; width: 100%; border-collapse: separate; }
+  .cta-icon { font-size: 22px; vertical-align: middle; }
+  .cta-btn { display: inline-block; background: #7C5CFF; color: #ffffff !important; font-size: 13px; font-weight: 600; padding: 10px 20px; border-radius: 8px; text-decoration: none; white-space: nowrap; }
+  .divider { border: none; border-top: 1px solid #EBEBF0; margin: 24px 0; }
+  .email-footer { background: #F7F7FA; padding: 20px 40px; text-align: center; border-top: 1px solid #EBEBF0; }
+  .email-footer p { font-size: 12px; color: #999; margin: 0; line-height: 1.6; }
+  .email-footer a { color: #7C5CFF; text-decoration: none; }
+  @media (max-width: 520px) {
+    .email-header, .email-hero, .email-body, .email-footer { padding-left: 20px !important; padding-right: 20px !important; }
+  }
+</style>
+</head>
+<body>
+<div class="email-wrap">
+  <div class="email-header">
+    <div class="email-logo">Dart<span>Craft</span></div>
+    <div class="email-tagline">AutoDarts Kits Australia</div>
+  </div>
+  <div class="email-hero">
+    <h1>Your order is on its way! 🚚</h1>
+    <p>Your ${m.packageName || 'DartCraft kit'} has been packed and dispatched.</p>
+  </div>
+  <div class="email-body">
+    <p>Hi ${firstName},</p>
+    <table class="order-table" cellpadding="0" cellspacing="0">
+      <tr><td class="label">Package</td><td class="value"><strong>${m.packageName || 'DartCraft Kit'}</strong></td></tr>
+      <tr><td class="label">Delivering to</td><td class="value">${m.customerName || ''}<br>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia</td></tr>
     </table>
-    ${trackingBlock}
-    <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;border:1px solid #c7d4f8;border-radius:12px;padding:20px 24px;margin-bottom:32px">
-      <tr><td>
-        <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#1e3a8a">Your setup guide</p>
-        <p style="margin:0 0 14px;font-size:13px;color:#1e40af;line-height:1.65">While you wait, view your setup guide online to get familiar with the installation before your kit arrives.</p>
-        <a href="${guideUrl}" style="display:inline-block;padding:10px 20px;background:#1e3a8a;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">View setup guide &rarr;</a>
-      </td></tr>
+    ${trackingRow}
+    <table class="cta-block" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="44" valign="middle"><span class="cta-icon">📄</span></td>
+        <td valign="middle" style="padding: 0 12px;">
+          <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">Setup guide</strong>
+          <span style="font-size:13px;color:#666;">Everything you need to get set up is right here.</span>
+        </td>
+        <td width="130" valign="middle" align="right"><a class="cta-btn" href="${guideUrl}">View setup guide</a></td>
+      </tr>
     </table>
-    <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
-  `;
-  return emailShell({ badge: '&#9679; Shipped', badgeColor: '#22c55e', body });
+    <hr class="divider">
+    <p>If you have any mates looking to set up their own board, feel free to point them our way — we ship across Australia and every kit is built to the same standard as yours.</p>
+    <table class="cta-block" cellpadding="0" cellspacing="0">
+      <tr>
+        <td width="44" valign="middle"><span class="cta-icon">⭐</span></td>
+        <td valign="middle" style="padding: 0 12px;">
+          <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">Leave a review</strong>
+          <span style="font-size:13px;color:#666;">It only takes a minute and means a lot!</span>
+        </td>
+        <td width="130" valign="middle" align="right"><a class="cta-btn" href="${BASE_URL}/submit-review">Review us</a></td>
+      </tr>
+    </table>
+    <hr class="divider">
+    <p class="muted">Any questions or issues getting set up? Don't hesitate to reach out at <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF;text-decoration:none;">hello@dartcraft.com.au</a> — happy to help.</p>
+    <p class="muted">Cheers,<br><strong style="color:#1A1A2E;">The DartCraft Team</strong></p>
+  </div>
+  <div class="email-footer">
+    <p><a href="${BASE_URL}">dartcraft.com.au</a> &nbsp;·&nbsp; Australian-built AutoDarts kits</p>
+  </div>
+</div>
+</body>
+</html>`;
 }
 
 function restockEmailHtml(packageName, unsubscribeUrl) {
@@ -1696,7 +1818,7 @@ function welcomeEmailHtml(name, guideUrl) {
     <p class="muted">Cheers,<br><strong style="color:#1A1A2E;">The DartCraft Team</strong></p>
   </div>
   <div class="email-footer">
-    <p><a href="${BASE_URL}">dartcraft.com.au</a> &nbsp;·&nbsp; Australian-built AutoDarts kits &nbsp;·&nbsp; Ships from Australia</p>
+    <p><a href="${BASE_URL}">dartcraft.com.au</a> &nbsp;·&nbsp; Australian-built AutoDarts kits</p>
   </div>
 </div>
 </body>
