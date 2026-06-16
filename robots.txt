@@ -6,5 +6,8 @@ Disallow: /success
 Disallow: /cancel
 Disallow: /submit-review
 Disallow: /api/
+Disallow: /setupguide
+Disallow: /setup-guide-full.pdf
+Disallow: /setup-guide-ring.pdf
 
 Sitemap: https://dartcraft.com.au/sitemap.xml
