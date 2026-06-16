@@ -544,6 +544,26 @@
         </div>
       </div>
     </div>
+
+    <div class="section-header" style="margin-top:40px">
+      <div class="section-title">
+        <h1>Test emails</h1>
+        <p>Send a test version of the order confirmation or shipping email to review how they look. Uses mock order data with a Full System Kit.</p>
+      </div>
+    </div>
+    <div class="stock-card" style="display:block;max-width:520px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <div class="pkg-label" style="margin-bottom:6px">Send test to</div>
+          <input type="text" id="test-email" placeholder="your@email.com" autocomplete="off"/>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="save-btn" onclick="sendTestEmail('confirmation')" id="test-confirm-btn" style="padding:11px 22px;width:auto">Send order confirmation</button>
+          <button class="save-btn" onclick="sendTestEmail('shipping')" id="test-ship-btn" style="padding:11px 22px;width:auto;background:var(--surface);border:1px solid var(--border)">Send shipping email</button>
+        </div>
+        <span id="test-email-feedback" style="font-size:13px;display:none"></span>
+      </div>
+    </div>
   </div>
 
   <!-- Codes tab -->
@@ -1413,6 +1433,34 @@ async function sendWelcomeEmail() {
     fb.style.color = '#ef4444'; fb.textContent = err.message; fb.style.display = 'inline';
     btn.disabled = false; btn.textContent = 'Send email';
   }
+}
+
+async function sendTestEmail(type) {
+  const email = document.getElementById('test-email').value.trim();
+  const fb    = document.getElementById('test-email-feedback');
+  const confirmBtn = document.getElementById('test-confirm-btn');
+  const shipBtn    = document.getElementById('test-ship-btn');
+
+  fb.style.display = 'none';
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    fb.style.color = '#ef4444'; fb.textContent = 'Enter a valid email address.'; fb.style.display = 'inline'; return;
+  }
+
+  const btn = type === 'confirmation' ? confirmBtn : shipBtn;
+  const origText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Sending…';
+
+  try {
+    const res  = await authFetch(`/api/admin/send-test-${type}`, { method: 'POST', body: JSON.stringify({ email }) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to send.');
+    fb.style.color = '#22c55e';
+    fb.textContent = `✓ Test ${type === 'confirmation' ? 'order confirmation' : 'shipping email'} sent to ${email}`;
+    fb.style.display = 'inline';
+  } catch (err) {
+    fb.style.color = '#ef4444'; fb.textContent = err.message; fb.style.display = 'inline';
+  }
+  btn.disabled = false; btn.textContent = origText;
 }
 
 async function markPickup(id, btn) {

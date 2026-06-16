@@ -172,8 +172,8 @@ function confirmationEmailHtml(session) {
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;border:1px solid #c7d4f8;border-radius:12px;padding:20px 24px;margin-bottom:32px">
       <tr><td>
         <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#1e3a8a">Your setup guide</p>
-        <p style="margin:0 0 14px;font-size:13px;color:#1e40af;line-height:1.65">Download your digital setup guide to get familiar with the installation before your kit arrives.</p>
-        <a href="${guideUrl}" style="display:inline-block;padding:10px 20px;background:#1e3a8a;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">Download setup guide &rarr;</a>
+        <p style="margin:0 0 14px;font-size:13px;color:#1e40af;line-height:1.65">View your setup guide online to get familiar with the installation before your kit arrives.</p>
+        <a href="${guideUrl}" style="display:inline-block;padding:10px 20px;background:#1e3a8a;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">View setup guide &rarr;</a>
       </td></tr>
     </table>
     <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
@@ -238,8 +238,8 @@ function shippingEmailHtml(session, trackingNumber = '') {
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4ff;border:1px solid #c7d4f8;border-radius:12px;padding:20px 24px;margin-bottom:32px">
       <tr><td>
         <p style="margin:0 0 5px;font-size:13px;font-weight:700;color:#1e3a8a">Your setup guide</p>
-        <p style="margin:0 0 14px;font-size:13px;color:#1e40af;line-height:1.65">While you wait, download your setup guide to get familiar with the installation before your kit arrives.</p>
-        <a href="${guideUrl}" style="display:inline-block;padding:10px 20px;background:#1e3a8a;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">Download setup guide &rarr;</a>
+        <p style="margin:0 0 14px;font-size:13px;color:#1e40af;line-height:1.65">While you wait, view your setup guide online to get familiar with the installation before your kit arrives.</p>
+        <a href="${guideUrl}" style="display:inline-block;padding:10px 20px;background:#1e3a8a;color:#fff;border-radius:99px;text-decoration:none;font-size:13px;font-weight:700">View setup guide &rarr;</a>
       </td></tr>
     </table>
     <p style="margin:0;font-size:13px;color:#bbb;line-height:1.6">Questions? <a href="mailto:hello@dartcraft.com.au" style="color:#7C5CFF">hello@dartcraft.com.au</a></p>
@@ -1666,7 +1666,7 @@ function welcomeEmailHtml(name, guideUrl) {
           <strong style="display:block;font-size:14px;font-weight:600;color:#1A1A2E;margin-bottom:2px;">Setup guide</strong>
           <span style="font-size:13px;color:#666;">Step-by-step instructions for your system</span>
         </td>
-        <td width="130" valign="middle" align="right"><a class="cta-btn" href="${resolvedGuideUrl}">Download PDF</a></td>
+        <td width="130" valign="middle" align="right"><a class="cta-btn" href="${resolvedGuideUrl}">View setup guide</a></td>
       </tr>
     </table>
     <table class="cta-block" cellpadding="0" cellspacing="0">
@@ -1702,6 +1702,57 @@ function welcomeEmailHtml(name, guideUrl) {
 </body>
 </html>`;
 }
+
+app.post('/api/admin/send-test-confirmation', requireAdmin, async (req, res) => {
+  const { email } = req.body;
+  if (!email || !/^\S+@\S+\.\S+$/.test(String(email))) {
+    return res.status(400).json({ error: 'Valid email address required.' });
+  }
+  const mockSession = {
+    amount_total: 49900,
+    metadata: {
+      customerName: 'Test Customer',
+      packageName: 'Full System Kit',
+      packageId: 'full-system',
+      cameraUpgrade: 'false',
+      addons: '[]',
+      street: '123 Example Street',
+      suburb: 'Perth',
+      state: 'WA',
+      postcode: '6000',
+    },
+    customer_details: { email },
+  };
+  try {
+    await sendEmail(email.trim().toLowerCase(), `[TEST] Order confirmed — DartCraft`, confirmationEmailHtml(mockSession));
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send.' });
+  }
+});
+
+app.post('/api/admin/send-test-shipping', requireAdmin, async (req, res) => {
+  const { email } = req.body;
+  if (!email || !/^\S+@\S+\.\S+$/.test(String(email))) {
+    return res.status(400).json({ error: 'Valid email address required.' });
+  }
+  const mockSession = {
+    metadata: {
+      customerName: 'Test Customer',
+      packageName: 'Full System Kit',
+      street: '123 Example Street',
+      suburb: 'Perth',
+      state: 'WA',
+      postcode: '6000',
+    },
+  };
+  try {
+    await sendEmail(email.trim().toLowerCase(), `[TEST] Your order has shipped — DartCraft`, shippingEmailHtml(mockSession, 'ABC123456789'));
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send.' });
+  }
+});
 
 app.post('/api/admin/send-email', requireAdmin, async (req, res) => {
   const { email, name, guide } = req.body;
