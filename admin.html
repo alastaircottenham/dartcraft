@@ -963,6 +963,15 @@ async function savePrice(id) {
 
 // ── Orders ────────────────────────────────────────────────────────────────────
 
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓';
+    btn.style.color = '#22c55e';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 1500);
+  });
+}
+
 function fmtDate(ts) {
   return new Date(ts * 1000).toLocaleString('en-AU', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
@@ -1033,9 +1042,10 @@ function renderOrders(orders) {
         </div>
         <div class="order-body" id="body-${o.id}">
           <div class="order-details-grid">
-            <div><div class="detail-label">Email</div><div class="detail-value">${o.customer_email || '—'}</div></div>
-            <div><div class="detail-label">Phone</div><div class="detail-value">${m.phone || '—'}</div></div>
-            <div><div class="detail-label">Shipping address</div><div class="detail-value">${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia</div></div>
+            <div><div class="detail-label">Name</div><div class="detail-value" style="display:flex;align-items:center;gap:6px">${m.customerName || '—'}<button data-copy="${(m.customerName || '').replace(/"/g,'&quot;')}" onclick="copyText(this.dataset.copy,this)" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:12px;padding:0;line-height:1;flex-shrink:0" title="Copy name">⧉</button></div></div>
+            <div><div class="detail-label">Email</div><div class="detail-value" style="display:flex;align-items:center;gap:6px">${o.customer_email || '—'}<button data-copy="${(o.customer_email || '').replace(/"/g,'&quot;')}" onclick="copyText(this.dataset.copy,this)" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:12px;padding:0;line-height:1;flex-shrink:0" title="Copy email">⧉</button></div></div>
+            <div><div class="detail-label">Phone</div><div class="detail-value" style="display:flex;align-items:center;gap:6px">${m.phone || '—'}<button data-copy="${(m.phone || '').replace(/"/g,'&quot;')}" onclick="copyText(this.dataset.copy,this)" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:12px;padding:0;line-height:1;flex-shrink:0" title="Copy phone">⧉</button></div></div>
+            <div><div class="detail-label">Shipping address</div><div class="detail-value" style="display:flex;align-items:flex-start;gap:6px"><span>${m.street || ''}<br>${m.suburb || ''} ${m.state || ''} ${m.postcode || ''}<br>Australia</span><button data-copy="${((m.street||'') + '\n' + (m.suburb||'') + ' ' + (m.state||'') + ' ' + (m.postcode||'') + '\nAustralia').replace(/"/g,'&quot;')}" onclick="copyText(this.dataset.copy,this)" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:12px;padding:0;line-height:1;flex-shrink:0;margin-top:2px" title="Copy address">⧉</button></div></div>
             <div><div class="detail-label">Camera upgrade</div><div class="detail-value">${o.cameraUpgrade ? '<span style="color:#a78bfa;font-weight:600">⚡ OV2710 upgrade — include in parcel</span>' : '<span style="color:var(--text-3)">No upgrade</span>'}</div></div>
             ${o.addons && o.addons.length ? `<div style="grid-column:span 2"><div class="detail-label">Add-ons</div><div class="detail-value" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px">${o.addons.map(a => `<span style="font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;color:#7C5CFF;border:1px solid rgba(124,92,255,0.3);background:rgba(124,92,255,0.08)">+ ${a.name} ($${(a.price_cents/100).toFixed(2)})</span>`).join('')}</div></div>` : ''}
             <div><div class="detail-label">Stripe session</div><div class="detail-value mono">${o.id}</div></div>
