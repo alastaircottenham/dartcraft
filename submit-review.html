@@ -165,7 +165,7 @@
           <div id="upload-placeholder">
             <div class="upload-icon">📷</div>
             <div class="upload-label">Tap to add a photo of your setup</div>
-            <div class="upload-hint">JPG, PNG or WEBP · max 5 MB</div>
+            <div class="upload-hint">JPG, PNG, HEIC or WEBP · max 15 MB</div>
           </div>
         </div>
       </div>
@@ -208,14 +208,36 @@ function highlightStars(n) {
 }
 
 // Photo preview
+const MAX_PHOTO_MB = 15;
+
 function handlePhotoChange(input) {
   const file = input.files && input.files[0];
   if (!file) return;
+
+  if (file.size > MAX_PHOTO_MB * 1024 * 1024) {
+    input.value = '';
+    resetPhotoPreview();
+    showError(`That photo is ${(file.size / (1024 * 1024)).toFixed(1)} MB — please use one under ${MAX_PHOTO_MB} MB.`);
+    return;
+  }
+
+  document.getElementById('error-msg').style.display = 'none';
+
   const preview = document.getElementById('photo-preview');
   const placeholder = document.getElementById('upload-placeholder');
+  // Browsers other than Safari can't render HEIC, so fall back to the
+  // placeholder rather than showing a broken image. The upload still works.
+  preview.onerror = resetPhotoPreview;
   preview.src = URL.createObjectURL(file);
   preview.style.display = 'block';
   placeholder.style.display = 'none';
+}
+
+function resetPhotoPreview() {
+  const preview = document.getElementById('photo-preview');
+  preview.removeAttribute('src');
+  preview.style.display = 'none';
+  document.getElementById('upload-placeholder').style.display = 'block';
 }
 
 // Drag over styling
@@ -263,8 +285,12 @@ async function submitReview() {
     if (photoFile) formData.append('photo', photoFile);
 
     const res = await fetch('/api/reviews/submit', { method: 'POST', body: formData });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+    const raw = await res.text();
+    let data = {};
+    try { data = JSON.parse(raw); } catch (_) { /* HTML error page, not JSON */ }
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || 'Something went wrong. Please try again, or email us if it keeps happening.');
+    }
 
     document.getElementById('form-state').style.display = 'none';
     document.getElementById('success-state').style.display = 'block';

@@ -483,21 +483,28 @@ async function convertAddonPhoto(file) {
   }
 }
 
+// Phone cameras routinely produce 8-12 MB photos, and iOS/Android send HEIC,
+// HEIF and AVIF alongside the classic formats, so accept any image type and let
+// sharp downscale it. A format sharp can't read fails inside convertReviewPhoto,
+// which returns null, so the review still saves without the photo.
+const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
+const NOT_AN_IMAGE = 'Only image files are allowed';
+
 const reviewUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: MAX_PHOTO_BYTES },
   fileFilter: (_req, file, cb) => {
-    if (/^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)) cb(null, true);
-    else cb(new Error('Only image files are allowed'));
+    if (/^image\//.test(file.mimetype)) cb(null, true);
+    else cb(new Error(NOT_AN_IMAGE));
   },
 });
 
 const addonUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: MAX_PHOTO_BYTES },
   fileFilter: (_req, file, cb) => {
-    if (/^image\/(jpeg|png|webp|gif)$/.test(file.mimetype)) cb(null, true);
-    else cb(new Error('Only image files are allowed'));
+    if (/^image\//.test(file.mimetype)) cb(null, true);
+    else cb(new Error(NOT_AN_IMAGE));
   },
 });
 
@@ -1907,6 +1914,31 @@ app.get('/privacy',        (_req, res) => res.sendFile(path.join(__dirname, 'pri
 app.get('/submit-review',  (_req, res) => res.sendFile(path.join(__dirname, 'submit-review.html')));
 app.get('/gallery',        (_req, res) => res.sendFile(path.join(__dirname, 'gallery.html')));
 app.get('/',               (_req, res) => res.sendFile(path.join(__dirname, 'Dartcraft.html')));
+
+// ── Errors ───────────────────────────────────────────────────────────────────
+
+// Without this, a rejected upload (photo too large, non-image file) falls
+// through to Express's default handler, which replies with an HTML error page.
+// Front-end code calling res.json() on that gets "JSON.parse: unexpected
+// character at line 1 column 1" and no clue what actually went wrong.
+app.use((err, req, res, _next) => {
+  let status = 500;
+  let message = 'Something went wrong. Please try again.';
+
+  if (err instanceof multer.MulterError) {
+    status = 400;
+    message = err.code === 'LIMIT_FILE_SIZE'
+      ? `That photo is too large — please use an image under ${MAX_PHOTO_BYTES / (1024 * 1024)} MB.`
+      : 'That photo could not be uploaded. Please try a different one.';
+  } else if (err && err.message === NOT_AN_IMAGE) {
+    status = 400;
+    message = 'That file is not an image. Please upload a JPG, PNG, HEIC or WEBP.';
+  }
+
+  console.error(`[${req.method} ${req.originalUrl}]`, err && err.message);
+  if (req.path.startsWith('/api/')) res.status(status).json({ error: message });
+  else res.status(status).send(message);
+});
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
